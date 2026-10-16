@@ -1,0 +1,20 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    # Código generado por `flutter gen-l10n` a partir de los ARB.
+    - lib/l10n/app_localizations*.dart
+    - android/**
+    - ios/**
+    - web/**
+
+linter:
+  rules:
+    # Pensada para paquetes publicados en pub.dev: exige documentar cada
+    # miembro público. En una app solo agrega ruido; documentamos lo que
+    # no sea obvio.
+    public_member_api_docs: false
+    # En Flame, `add()` devuelve FutureOr<void> y lo normal es no esperarlo:
+    # el componente se monta en el siguiente ciclo de vida del juego.
+    discarded_futures: false

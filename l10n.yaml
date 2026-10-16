@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+# El español es el idioma base: toda clave nueva nace en app_es.arb.
+template-arb-file: app_es.arb
+output-localization-file: app_localizations.dart
+# AppLocalizations.of(context) devuelve un valor no nulo (sin `!`).
+nullable-getter: false

@@ -1,0 +1,33 @@
+name: guardianes_chacra
+description: "Tower defense andino: guardianes que defienden la cosecha de la collca."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flame: ^1.38.2
+  # Dibuja los mapas de Tiled. Fija `tiled` en ^0.11 (aunque ya existe la 0.12).
+  flame_tiled: ^3.1.2
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  # La versión de intl la fija flutter_localizations; "any" evita conflictos.
+  intl: any
+  # @immutable y otras anotaciones en Dart puro (sirve dentro de domain/).
+  meta: ^1.19.0
+  # Progreso y ajustes como un documento JSON versionado (Fase 7).
+  shared_preferences: ^2.5.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  uses-material-design: true
+  # Genera AppLocalizations a partir de los ARB (configuración en l10n.yaml).
+  generate: true

@@ -1,0 +1,11 @@
+{
+  "@@locale": "es",
+  "appTitle": "Guardianes de la Chacra",
+  "@appTitle": {
+    "description": "Nombre del juego: pantalla de título y título de la ventana o pestaña."
+  },
+  "tagline": "¡Defiende la cosecha de la collca!",
+  "@tagline": {
+    "description": "Lema que aparece bajo el título del juego."
+  }
+}
