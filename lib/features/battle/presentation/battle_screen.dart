@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flame/game.dart';
 // `material.dart` también exporta una `Simulation` (la de física de Flutter).
 import 'package:flutter/material.dart' hide Simulation;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/battle_stats.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
@@ -10,7 +15,9 @@ import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart'
 import 'package:guardianes_chacra/features/battle/domain/engine/stars.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
+import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart';
+import 'package:guardianes_chacra/features/battle/presentation/feedback/battle_feedback.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
 import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.dart';
@@ -26,6 +33,7 @@ import 'package:guardianes_chacra/features/content/presentation/content_provider
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/progress/domain/progression.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
+import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
 /// Estrategias de apuntado en el orden en que se recorren con el botón
@@ -45,12 +53,13 @@ const _targetingCycle = ['first', 'last', 'strongest', 'closest'];
 /// - Los eventos que le importan a la app y no al dibujo (descubrir plagas
 ///   y guardianes, ganar o perder) los escucha esta pantalla.
 class BattleScreen extends ConsumerStatefulWidget {
-  const new({required this.levelId, this.loadMap, super.key});
+  const new({required this.levelId, this.assets, super.key});
 
   final String levelId;
 
-  /// Para los tests: un mapa ya cargado (ver `BattleGame.loadMap`).
-  final LoadMap? loadMap;
+  /// Para los tests: el mapa y las imágenes ya cargados (ver
+  /// `BattleAssets`).
+  final BattleAssets? assets;
 
   @override
   ConsumerState<BattleScreen> createState() => _BattleScreenState();
@@ -88,6 +97,10 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   /// Pausa la partida cuando la app pasa a segundo plano.
   late final AppLifecycleListener _lifecycle;
 
+  /// Se lee la primera vez que se usa (al empezar la partida): al cerrar
+  /// la pantalla (en `dispose`) ya no se puede leer de Riverpod.
+  late final AudioService _audio = ref.read(audioServiceProvider);
+
   bool _paused = false;
 
   String? _selectedSlot;
@@ -106,6 +119,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    // De vuelta en los menús, suena su música.
+    if (_session != null) _audio.playMusic(_content.audio.menuMusic);
     super.dispose();
   }
 
@@ -231,7 +246,17 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     final game = BattleGame(
       simulation: simulation,
       level: level,
-      loadMap: widget.loadMap ?? BattleGame.loadTiledMap,
+      battleAssets: widget.assets ?? const BattleAssets(),
+      sprites: {
+        for (final pest in content.pests.values) ?pest.sprite,
+        for (final guardian in guardians.values) ...[
+          ?guardian.sprite,
+          for (final level in guardian.levels) ?level.sprite,
+          for (final branch in guardian.branches) ?branch.level.sprite,
+        ],
+      },
+      showDamageNumbers: ref.read(settingsProvider).damageNumbers,
+      reduceMotion: MediaQuery.disableAnimationsOf(context),
       labelFor: (type) => _guardianName(type).characters.first.toUpperCase(),
       onSlotTapped: _onSlotTapped,
       onGuardianTapped: _onGuardianTapped,
@@ -247,6 +272,17 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       guardians: guardians,
     );
     simulation.events.on<SimEvent>((event) => _onSimEvent(session, event));
+    BattleFeedback(
+      events: simulation.events,
+      audio: _audio,
+      pests: content.pests,
+      music: level.music,
+      vibrationEnabled: () => ref.read(settingsProvider).vibration,
+      vibrate: (haptic) => unawaited(switch (haptic) {
+        Haptic.collcaDamaged => HapticFeedback.mediumImpact(),
+        Haptic.boss => HapticFeedback.heavyImpact(),
+      }),
+    );
     // El HUD se muestra apenas termina este frame (no se puede cambiar un
     // provider mientras se construye la pantalla).
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncHud(session));
@@ -354,6 +390,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     session.game
       ..pauseEngine()
       ..overlays.add(BattleOverlays.pause);
+    _audio.pauseMusic();
     setState(() => _paused = true);
   }
 
@@ -363,6 +400,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     session.game
       ..overlays.remove(BattleOverlays.pause)
       ..resumeEngine();
+    _audio.resumeMusic();
     setState(() => _paused = false);
   }
 

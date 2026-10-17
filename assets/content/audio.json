@@ -1,0 +1,12 @@
+{
+  "menuMusic": "music/menu.wav",
+  "sfx": {
+    "shot": "sfx/shot.wav",
+    "impact": "sfx/impact.wav",
+    "pestDefeated": "sfx/pest_defeated.wav",
+    "collcaDamaged": "sfx/collca_damaged.wav",
+    "victory": "sfx/victory.wav",
+    "defeat": "sfx/defeat.wav",
+    "boss": "sfx/boss.wav"
+  }
+}

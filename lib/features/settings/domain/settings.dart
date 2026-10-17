@@ -11,23 +11,30 @@ class Settings {
     this.music = true,
     this.effects = true,
     this.vibration = true,
+    this.damageNumbers = false,
     this.language = AppLanguage.system,
   });
 
   final bool music;
   final bool effects;
   final bool vibration;
+
+  /// Muestra el daño que recibe cada plaga (apagado por defecto: la
+  /// pantalla queda más limpia).
+  final bool damageNumbers;
   final AppLanguage language;
 
   Settings copyWith({
     bool? music,
     bool? effects,
     bool? vibration,
+    bool? damageNumbers,
     AppLanguage? language,
   }) => Settings(
     music: music ?? this.music,
     effects: effects ?? this.effects,
     vibration: vibration ?? this.vibration,
+    damageNumbers: damageNumbers ?? this.damageNumbers,
     language: language ?? this.language,
   );
 
@@ -37,8 +44,10 @@ class Settings {
       other.music == music &&
       other.effects == effects &&
       other.vibration == vibration &&
+      other.damageNumbers == damageNumbers &&
       other.language == language;
 
   @override
-  int get hashCode => Object.hash(music, effects, vibration, language);
+  int get hashCode =>
+      Object.hash(music, effects, vibration, damageNumbers, language);
 }

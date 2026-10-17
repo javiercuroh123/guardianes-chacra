@@ -430,9 +430,9 @@
   "@settingsVibration": {
     "description": "Ajuste."
   },
-  "settingsSoundNote": "El sonido llega en una próxima versión",
-  "@settingsSoundNote": {
-    "description": "Nota bajo los ajustes de sonido."
+  "settingsDamageNumbers": "Números de daño",
+  "@settingsDamageNumbers": {
+    "description": "Interruptor: mostrar el daño que recibe cada plaga."
   },
   "settingsLanguage": "Idioma",
   "@settingsLanguage": {

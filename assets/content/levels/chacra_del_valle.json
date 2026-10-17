@@ -1,4 +1,5 @@
 {
+  "music": "music/batalla.wav",
   "map": "chacra_del_valle.tmx",
   "startingCorn": 220,
   "startingPotatoes": 20,

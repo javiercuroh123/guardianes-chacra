@@ -40,12 +40,11 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.vibration,
                 onChanged: (on) => controller.vibration = on,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  l10n.settingsSoundNote,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+              SwitchListTile(
+                key: const ValueKey('settings-damage-numbers'),
+                title: Text(l10n.settingsDamageNumbers),
+                value: settings.damageNumbers,
+                onChanged: (on) => controller.damageNumbers = on,
               ),
               const Divider(height: 32),
               ListTile(title: Text(l10n.settingsLanguage)),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart';
+import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/creature_icons.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
@@ -13,12 +13,12 @@ import 'package:guardianes_chacra/l10n/app_localizations.dart';
 /// Antes de jugar: el nombre del nivel, cuántas oleadas tiene y las plagas
 /// que vienen (las que el jugador todavía no vio llevan "Nueva").
 class LevelPreviewScreen extends ConsumerWidget {
-  const new({required this.levelId, this.loadMap, super.key});
+  const new({required this.levelId, this.assets, super.key});
 
   final String levelId;
 
-  /// Para los tests: se pasa a la partida (ver `BattleScreen.loadMap`).
-  final LoadMap? loadMap;
+  /// Para los tests: se pasa a la partida (ver `BattleScreen.assets`).
+  final BattleAssets? assets;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -93,7 +93,7 @@ class LevelPreviewScreen extends ConsumerWidget {
                     onPressed: () => Navigator.of(context).pushReplacement(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            BattleScreen(levelId: level.id, loadMap: loadMap),
+                            BattleScreen(levelId: level.id, assets: assets),
                       ),
                     ),
                     child: Text(l10n.previewStart),

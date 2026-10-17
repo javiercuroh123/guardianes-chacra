@@ -1,6 +1,8 @@
+import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/features/content/data/asset_source.dart';
 import 'package:guardianes_chacra/features/content/data/json_reader.dart';
 import 'package:guardianes_chacra/features/content/data/tiled_map_reader.dart';
+import 'package:guardianes_chacra/features/content/domain/audio_def.dart';
 import 'package:guardianes_chacra/features/content/domain/battle_rules.dart';
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
@@ -8,6 +10,7 @@ import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/sprite_def.dart';
 import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 
 /// Convierte los JSON de `assets/content/` y los mapas de `assets/tiles/`
@@ -32,6 +35,7 @@ class ContentLoader {
     final index = await _json('index.json');
     final languages = _ids(index, 'languages');
     final rules = _rules(await _json('rules.json'));
+    final audio = _audio(await _json('audio.json'));
 
     // Los ids de los niveles se conocen antes de leerlos: las reglas de
     // desbloqueo de guardianes y niveles los mencionan.
@@ -64,6 +68,7 @@ class ContentLoader {
       guardians: guardians,
       levels: levels,
       texts: texts,
+      audio: audio,
     );
   }
 
@@ -131,6 +136,28 @@ class ContentLoader {
       abilities: [for (final spec in node.listOr('abilities')) _spec(spec)],
       boss: node.boolOr('boss', fallback: false),
       color: _color(node),
+      sprite: _sprite(node),
+    );
+  }
+
+  static final _imagePattern = RegExp(r'^[a-z0-9_/]+\.png$');
+
+  /// `"sprite": {"image": "pests/gorgojo.png", "frames": 4, "fps": 8}`
+  /// (opcional; `frames` y `fps`, también). Que la imagen exista lo
+  /// comprueba el test del contenido real.
+  SpriteDef? _sprite(JsonNode def) {
+    if (!def.has('sprite')) return null;
+    final node = def['sprite'];
+    final image = node['image'];
+    if (!_imagePattern.hasMatch(image.asString())) {
+      throw image.error(
+        'debe ser una ruta .png en minúsculas dentro de assets/images/',
+      );
+    }
+    return SpriteDef(
+      image: image.asString(),
+      frames: node.has('frames') ? node.integer('frames', min: 1) : 1,
+      fps: node.numberOr('fps', 8, min: 1),
     );
   }
 
@@ -205,6 +232,7 @@ class ContentLoader {
           : 'first',
       color: _color(node),
       unlock: _unlock(node, levelIds),
+      sprite: _sprite(node),
       levels: [for (final level in levels) _guardianLevel(level)],
       branches: [
         for (final branch in branches)
@@ -221,6 +249,7 @@ class ContentLoader {
     range: node.number('range', min: 0),
     targets: _tags(node.listOr('targets')),
     behaviors: [for (final spec in node.listOr('behaviors')) _spec(spec)],
+    sprite: _sprite(node),
   );
 
   // --- levels/<id>.json + tiles/<mapa>.tmx
@@ -250,6 +279,7 @@ class ContentLoader {
       startingPotatoes: node.integer('startingPotatoes', min: 1),
       earlyCallCornPerSecond: node.number('earlyCallCornPerSecond', min: 0),
       unlock: _unlock(node, levelIds),
+      music: node.has('music') ? _audioFile(node['music']) : null,
       waves: [
         for (final wave in waves)
           _wave(wave, pests: pests, map: map, mapFile: mapFile),
@@ -300,6 +330,41 @@ class ContentLoader {
     final id = node.asString();
     if (!exists(id)) throw node.error(missing(id));
     return id;
+  }
+
+  // --- audio.json y "music" de los niveles
+
+  static final _audioPattern = RegExp(r'^[a-z0-9_/]+\.(wav|ogg|mp3|m4a)$');
+
+  AudioDef _audio(JsonNode node) {
+    final sfx = <Sfx, String>{};
+    if (node.has('sfx')) {
+      for (final MapEntry(:key, :value) in node['sfx'].asObject().entries) {
+        final effect =
+            Sfx.values.asNameMap()[key] ??
+            (throw value.error(
+              'efecto desconocido (válidos: ${_names(Sfx.values)})',
+            ));
+        sfx[effect] = _audioFile(value);
+      }
+    }
+    return AudioDef(
+      menuMusic: node.has('menuMusic') ? _audioFile(node['menuMusic']) : null,
+      sfx: sfx,
+    );
+  }
+
+  /// Ruta dentro de `assets/audio/` (que exista lo comprueba el test del
+  /// contenido real).
+  String _audioFile(JsonNode node) {
+    final path = node.asString();
+    if (!_audioPattern.hasMatch(path)) {
+      throw node.error(
+        'debe ser una ruta en minúsculas dentro de assets/audio/ con '
+        'extensión .wav, .ogg, .mp3 o .m4a',
+      );
+    }
+    return path;
   }
 
   // --- "unlock" de guardianes y niveles

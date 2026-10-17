@@ -20,6 +20,7 @@ void main() {
     settings: const Settings(
       music: false,
       vibration: false,
+      damageNumbers: true,
       language: AppLanguage.en,
     ),
   );
@@ -54,6 +55,16 @@ void main() {
       codec.decode('{"version": 1, "settings": {"music": false}}').settings,
       const Settings(music: false),
     );
+  });
+
+  test('un guardado de antes de la Fase 8 tiene los números de daño '
+      'apagados', () {
+    final settings = codec
+        .decode('{"version": 1, "settings": {"music": true}}')
+        .settings;
+
+    expect(settings.damageNumbers, isFalse);
+    expect(settings.effects, isTrue);
   });
 
   test('un idioma desconocido vuelve al del teléfono', () {

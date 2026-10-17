@@ -18,6 +18,7 @@ void main() {
       'settings-music',
       'settings-effects',
       'settings-vibration',
+      'settings-damage-numbers',
     ]) {
       await tester.tap(find.byKey(ValueKey(key)));
       await tester.pump();
@@ -27,6 +28,8 @@ void main() {
     expect(settings.music, isFalse);
     expect(settings.effects, isFalse);
     expect(settings.vibration, isFalse);
+    // Los números de daño empiezan apagados: el toque los enciende.
+    expect(settings.damageNumbers, isTrue);
   });
 
   testWidgets('elegir un idioma cambia el de toda la app', (tester) async {

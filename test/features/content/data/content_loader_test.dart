@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/features/content/data/content_loader.dart';
 import 'package:guardianes_chacra/features/content/data/json_reader.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/sprite_def.dart';
 import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 
 import '../../../helpers/content_fixture.dart';
@@ -84,6 +86,107 @@ void main() {
       content.guardians['llama']!.unlock,
       const UnlockRule(afterLevel: 'segundo'),
     );
+  });
+
+  test('lee el audio: menú, efectos y música de cada nivel', () async {
+    final fixture = ContentFixture()
+      ..levels['prueba'] = {...levelJson(), 'music': 'music/valle.ogg'};
+    final content = await ContentLoader(fixture.toSource()).load();
+
+    expect(content.audio.menuMusic, 'music/menu.wav');
+    expect(content.audio.sfx, {Sfx.shot: 'sfx/shot.wav'});
+    expect(content.levels.single.music, 'music/valle.ogg');
+  });
+
+  test('lee los sprites de plagas, guardianes y sus niveles', () async {
+    final hondero = honderoJson();
+    final fixture = ContentFixture()
+      ..pests['gorgojo'] = {
+        ...gorgojoJson(),
+        'sprite': {'image': 'pests/gorgojo.png', 'frames': 4, 'fps': 10},
+      }
+      ..guardians['hondero'] = {
+        ...hondero,
+        'sprite': {'image': 'guardians/hondero.png'},
+        'levels': [
+          (hondero['levels']! as List).first,
+          {
+            ...(hondero['levels']! as List)[1] as Map<String, Object?>,
+            'sprite': {'image': 'guardians/hondero_2.png'},
+          },
+        ],
+      };
+    final content = await ContentLoader(fixture.toSource()).load();
+
+    expect(
+      content.pests['gorgojo']!.sprite,
+      const SpriteDef(image: 'pests/gorgojo.png', frames: 4, fps: 10),
+    );
+    final def = content.guardians['hondero']!;
+    // Sin "frames" ni "fps": una imagen fija.
+    expect(def.sprite, const SpriteDef(image: 'guardians/hondero.png'));
+    expect(def.spriteAt(level: 1)!.image, 'guardians/hondero.png');
+    expect(def.spriteAt(level: 2)!.image, 'guardians/hondero_2.png');
+    // La rama no tiene imagen propia: usa la del guardián.
+    expect(
+      def.spriteAt(level: 2, branchId: 'piedra')!.image,
+      'guardians/hondero.png',
+    );
+  });
+
+  group('sprites', () {
+    test('una imagen que no es .png', () async {
+      final fixture = ContentFixture()
+        ..pests['gorgojo'] = {
+          ...gorgojoJson(),
+          'sprite': {'image': 'pests/Gorgojo.jpg'},
+        };
+
+      expect(
+        await errorOf(fixture),
+        'pests/gorgojo.json → sprite.image: debe ser una ruta .png en '
+        'minúsculas dentro de assets/images/',
+      );
+    });
+
+    test('cero cuadros', () async {
+      final fixture = ContentFixture()
+        ..pests['gorgojo'] = {
+          ...gorgojoJson(),
+          'sprite': {'image': 'pests/gorgojo.png', 'frames': 0},
+        };
+
+      expect(
+        await errorOf(fixture),
+        'pests/gorgojo.json → sprite.frames: debe ser al menos 1',
+      );
+    });
+  });
+
+  group('audio', () {
+    test('un efecto desconocido', () async {
+      final fixture = ContentFixture()
+        ..audio = {
+          'sfx': {'disparo': 'sfx/shot.wav'},
+        };
+
+      expect(
+        await errorOf(fixture),
+        'audio.json → sfx.disparo: efecto desconocido (válidos: shot, impact, '
+        'pestDefeated, collcaDamaged, victory, defeat, boss)',
+      );
+    });
+
+    test('una ruta que no es de audio', () async {
+      final fixture = ContentFixture()
+        ..levels['prueba'] = {...levelJson(), 'music': 'Musica/Valle.txt'};
+
+      expect(
+        await errorOf(fixture),
+        'levels/prueba.json → music: debe ser una ruta en minúsculas dentro '
+        'de assets/audio/ con extensión .wav, .ogg, .mp3 o .m4a',
+      );
+    });
   });
 
   group('reglas de desbloqueo', () {

@@ -15,6 +15,7 @@ class LevelDef {
     required this.earlyCallCornPerSecond,
     required this.waves,
     this.unlock = UnlockRule.always,
+    this.music,
   });
 
   final String id;
@@ -34,6 +35,9 @@ class LevelDef {
 
   /// Qué hace falta para poder jugarlo.
   final UnlockRule unlock;
+
+  /// Música del nivel, relativa a `assets/audio/` (sin ella, silencio).
+  final String? music;
 }
 
 /// Lo que la simulación necesita del mapa de Tiled, en casillas.

@@ -43,7 +43,12 @@ void main() {
       BattleGame(
         simulation: simulation,
         level: level,
-        loadMap: await preloadMap(tester, level),
+        battleAssets: await preloadAssets(
+          tester,
+          level,
+          images: spriteImagesOf(content),
+        ),
+        sprites: [for (final pest in content.pests.values) ?pest.sprite],
       ),
     );
   }

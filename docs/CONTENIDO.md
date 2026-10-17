@@ -59,7 +59,8 @@ assets/tiles/          mapas de Tiled (ver docs/TILED.md)
 | `immunities` | lista | no | Tipos de efecto que no le afectan, por ejemplo `["slow"]`. |
 | `abilities` | lista | no | Habilidades (ver abajo). |
 | `boss` | true/false | no (false) | La última oleada de cada nivel debe traer un jefe. |
-| `color` | `"#RRGGBB"` | no | Color de reemplazo para dibujarla hasta que tenga imagen (Fase 8). Sin él, se usa uno derivado del id. |
+| `color` | `"#RRGGBB"` | no | Color de reemplazo para dibujarla si no tiene imagen. Sin él, se usa uno derivado del id. |
+| `sprite` | objeto | no | Imagen animada: `{"image": "pests/gorgojo.png", "frames": 4, "fps": 8}` (ver `docs/ASSETS.md`). |
 
 Fórmula de daño: `daño × resistencia del tipo × bonus contra sus etiquetas`; si es físico, `max(daño − armadura, daño × minDamageFraction)`. El fuego ignora la armadura.
 
@@ -79,6 +80,7 @@ Fórmula de daño: `daño × resistencia del tipo × bonus contra sus etiquetas`
 | `levels` | lista (≥ 1) | El primero se construye; los siguientes son las mejoras, en orden. |
 | `branches` | lista (0 o ≥ 2) | La especialización final: después de la última mejora se elige una. Cada rama tiene además un `id`. |
 | `unlock` | objeto | Opcional. Qué hace falta para poder construirlo (ver [Desbloqueos](#desbloqueos)). |
+| `sprite` | objeto | Opcional. Imagen del guardián; cada nivel o rama puede tener la suya (ver `docs/ASSETS.md`). |
 
 Cada nivel o rama tiene **todas** sus estadísticas (no solo las diferencias):
 
@@ -117,6 +119,7 @@ Un comportamiento nuevo se programa como una clase que se registra en `lib/featu
 | `earlyCallCornPerSecond` | número ≥ 0 | Maíz por cada segundo de cuenta regresiva que se salta al llamar la oleada antes. |
 | `waves` | lista (≥ 1) | Ver abajo. Cada nivel debe tener entre 10 y 15 oleadas y un jefe en la última (lo comprueba `real_content_test.dart`). |
 | `unlock` | objeto | Opcional. Qué hace falta para poder jugarlo (ver [Desbloqueos](#desbloqueos)). |
+| `music` | texto | Opcional. Música del nivel, ruta dentro de `assets/audio/` (ver `docs/ASSETS.md`). |
 
 Cada oleada:
 
@@ -125,6 +128,13 @@ Cada oleada:
 | `prepTime` | segundos | Cuenta regresiva antes de empezar: la primera, desde el inicio del nivel; las demás, desde que terminó de aparecer la anterior. |
 | `reward` | entero | Maíz al completarla (aparecieron todas sus plagas y no queda ninguna). |
 | `groups` | lista (≥ 1) | `pest`, `count` (≥ 1), `path` (nombre de un camino del mapa), `delay` (s desde el inicio de la oleada, 0) e `interval` (s entre plagas, 0). |
+
+## audio.json
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `menuMusic` | texto | Música de los menús (ruta dentro de `assets/audio/`). |
+| `sfx` | objeto | Efecto → archivo. Efectos: `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat`, `boss`. Uno que falta no suena. |
 
 ## Desbloqueos
 

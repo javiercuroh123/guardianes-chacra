@@ -1,5 +1,6 @@
 {
   "unlock": { "afterLevel": "chacra_del_valle" },
+  "music": "music/batalla.wav",
   "map": "andenes.tmx",
   "startingCorn": 260,
   "startingPotatoes": 20,

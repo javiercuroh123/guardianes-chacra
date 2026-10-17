@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app.dart';
+import 'package:guardianes_chacra/app/audio.dart';
+import 'package:guardianes_chacra/core/services/flame_audio_service.dart';
 import 'package:guardianes_chacra/features/progress/data/local_progress_repository.dart';
 import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +34,7 @@ Future<void> main() async {
       overrides: [
         progressRepositoryProvider.overrideWithValue(repository),
         savedGameProvider.overrideWithValue(saved),
+        audioServiceProvider.overrideWithValue(FlameAudioService()),
       ],
       child: const GuardianesApp(),
     ),

@@ -19,6 +19,9 @@ class SettingsController extends Notifier<Settings> {
   set vibration(bool on) => state = state.copyWith(vibration: on);
   bool get vibration => state.vibration;
 
+  set damageNumbers(bool on) => state = state.copyWith(damageNumbers: on);
+  bool get damageNumbers => state.damageNumbers;
+
   set language(AppLanguage language) =>
       state = state.copyWith(language: language);
   AppLanguage get language => state.language;

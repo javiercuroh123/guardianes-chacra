@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart';
+import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
@@ -12,11 +12,11 @@ import '../../helpers/test_app.dart';
 void main() {
   final content = useRealContent();
 
-  Future<void> pumpPreview(WidgetTester tester, {LoadMap? loadMap}) async {
+  Future<void> pumpPreview(WidgetTester tester, {BattleAssets? assets}) async {
     usePhoneLandscape(tester);
     await tester.pumpWidget(
       testApp(
-        LevelPreviewScreen(levelId: 'chacra_del_valle', loadMap: loadMap),
+        LevelPreviewScreen(levelId: 'chacra_del_valle', assets: assets),
         overrides: [contentOverride(content())],
       ),
     );
@@ -68,8 +68,8 @@ void main() {
   });
 
   testWidgets('Comenzar abre la partida', (tester) async {
-    final loadMap = await preloadMap(tester, content().levels.first);
-    await pumpPreview(tester, loadMap: loadMap);
+    final assets = await preloadAssets(tester, content().levels.first);
+    await pumpPreview(tester, assets: assets);
 
     await tester.tap(find.byKey(const ValueKey('preview-start')));
     await tester.pump();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Simulation;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
@@ -24,6 +25,7 @@ import 'package:guardianes_chacra/features/progress/presentation/progress_provid
 import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 
 import '../../../helpers/battle_game_helpers.dart';
+import '../../../helpers/fake_audio_service.dart';
 import '../../../helpers/test_app.dart';
 
 void main() {
@@ -40,15 +42,22 @@ void main() {
     int maps = 1,
     GameContent? withContent,
     Progress progress = const Progress(),
+    FakeAudioService? audio,
   }) async {
     usePhoneLandscape(tester);
-    final loadMap = await preloadMap(tester, level, count: maps);
+    final assets = await preloadAssets(
+      tester,
+      level,
+      count: maps,
+      images: spriteImagesOf(content),
+    );
     await tester.pumpWidget(
       testApp(
-        BattleScreen(levelId: level.id, loadMap: loadMap),
+        BattleScreen(levelId: level.id, assets: assets),
         overrides: [
           gameContentProvider.overrideWith((ref) => withContent ?? content),
           savedGameProvider.overrideWithValue(SaveData(progress: progress)),
+          audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
         ],
       ),
     );
@@ -128,6 +137,26 @@ void main() {
     expect(game.paused, isFalse);
     expect(key('pause-resume'), findsNothing);
     expect(key('hud-pause'), findsOneWidget);
+  });
+
+  testWidgets('la partida toca la música del nivel y la pausa la detiene', (
+    tester,
+  ) async {
+    final audio = FakeAudioService();
+    await pumpScreen(tester, audio: audio);
+    expect(audio.music, ['music/batalla.wav']);
+
+    await tester.tap(key('hud-pause'));
+    await tester.pump();
+    expect(audio.musicPaused, isTrue);
+
+    await tester.tap(key('pause-resume'));
+    await tester.pump();
+    expect(audio.musicPaused, isFalse);
+
+    // Al salir de la partida vuelve la música del menú.
+    await tester.pumpWidget(const SizedBox());
+    expect(audio.music, ['music/batalla.wav', 'music/menu.wav']);
   });
 
   testWidgets('al pasar a segundo plano se pausa y sigue así al volver', (

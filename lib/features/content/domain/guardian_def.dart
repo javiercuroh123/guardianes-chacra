@@ -1,5 +1,6 @@
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/sprite_def.dart';
 import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 import 'package:meta/meta.dart';
 
@@ -17,6 +18,7 @@ class GuardianDef {
     this.defaultTargeting = 'first',
     this.color,
     this.unlock = UnlockRule.always,
+    this.sprite,
   });
 
   final String id;
@@ -32,6 +34,17 @@ class GuardianDef {
 
   /// Qué hace falta para poder construirlo.
   final UnlockRule unlock;
+
+  /// Imagen del guardián; cada nivel o rama puede cambiarla.
+  final SpriteDef? sprite;
+
+  /// La imagen en el [level] dado (desde 1) o con la rama [branchId]: la
+  /// de ese nivel o rama si tiene una, si no la del guardián.
+  SpriteDef? spriteAt({required int level, String? branchId}) {
+    final branch = branches.where((branch) => branch.id == branchId);
+    final stats = branch.isEmpty ? levels[level - 1] : branch.first.level;
+    return stats.sprite ?? sprite;
+  }
 }
 
 /// Las estadísticas completas de un nivel (no las diferencias con el
@@ -43,6 +56,7 @@ class GuardianLevelDef {
     required this.range,
     required this.targets,
     required this.behaviors,
+    this.sprite,
   });
 
   /// Maíz para construir (primer nivel) o para mejorar a este nivel.
@@ -56,6 +70,9 @@ class GuardianLevelDef {
 
   /// Ataques o auras de este nivel, creados por el registro.
   final List<BehaviorSpec> behaviors;
+
+  /// Imagen propia de este nivel o rama (si no, la del guardián).
+  final SpriteDef? sprite;
 }
 
 /// Una rama de la especialización final.

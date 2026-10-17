@@ -57,6 +57,7 @@ class SaveCodec {
       'music': data.settings.music,
       'effects': data.settings.effects,
       'vibration': data.settings.vibration,
+      'damageNumbers': data.settings.damageNumbers,
       'language': data.settings.language.name,
     },
   });
@@ -89,6 +90,9 @@ class SaveCodec {
         music: _bool(settings, 'music'),
         effects: _bool(settings, 'effects'),
         vibration: _bool(settings, 'vibration'),
+        // Agregado en la Fase 8: un guardado anterior no lo tiene y queda
+        // apagado, su valor por defecto (no hace falta migración).
+        damageNumbers: _bool(settings, 'damageNumbers', fallback: false),
         language:
             AppLanguage.values.asNameMap()[settings['language']] ??
             AppLanguage.system,
@@ -136,9 +140,13 @@ class SaveCodec {
     throw SaveFormatException('$key debe ser una lista de textos');
   }
 
-  /// Los ajustes que faltan quedan encendidos (como en `Settings`).
-  static bool _bool(Map<String, Object?> json, String key) {
-    final value = json[key] ?? true;
+  /// Un ajuste que falta toma su valor por defecto ([fallback]).
+  static bool _bool(
+    Map<String, Object?> json,
+    String key, {
+    bool fallback = true,
+  }) {
+    final value = json[key] ?? fallback;
     if (value is bool) return value;
     throw SaveFormatException('$key debe ser true o false');
   }

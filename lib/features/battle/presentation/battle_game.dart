@@ -1,15 +1,18 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame_tiled/flame_tiled.dart';
+import 'package:flame/particles.dart';
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/sim_time.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
+import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
+import 'package:guardianes_chacra/features/battle/presentation/components/damage_number_component.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/guardian_component.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/interpolated.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/pest_component.dart';
@@ -21,9 +24,7 @@ import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.da
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
-
-/// Carga el dibujo del mapa de un nivel (ver `BattleGame.loadMap`).
-typedef LoadMap = Future<Component> Function(LevelDef level);
+import 'package:guardianes_chacra/features/content/domain/sprite_def.dart';
 
 /// La partida en pantalla. Hace tres cosas y ninguna regla:
 ///
@@ -35,11 +36,18 @@ typedef LoadMap = Future<Component> Function(LevelDef level);
 /// 3. **Toques**: avisa qué se tocó ([onSlotTapped], [onGuardianTapped],
 ///    [onEmptyTapped]); la pantalla decide qué menú abrir y envía los
 ///    comandos a la simulación.
+///
+/// Además del dibujo, da la sensación de impacto ("game feel"): destello
+/// al recibir daño, números de daño (si están activados), partículas al
+/// derrotar una plaga y una sacudida de cámara cuando aparece el jefe.
 class BattleGame extends FlameGame {
   new({
     required this.simulation,
     required this.level,
-    this.loadMap = loadTiledMap,
+    this.battleAssets = const BattleAssets(),
+    this.sprites = const [],
+    this.showDamageNumbers = false,
+    this.reduceMotion = false,
     this.labelFor,
     this.onSlotTapped,
     this.onGuardianTapped,
@@ -59,18 +67,18 @@ class BattleGame extends FlameGame {
   final Simulation simulation;
   final LevelDef level;
 
-  /// Carga el dibujo del mapa. Los tests pasan uno ya cargado: decodificar
-  /// la imagen del tileset no funciona con el reloj falso de los tests.
-  final LoadMap loadMap;
+  /// Carga el mapa y las imágenes. Los tests pasan unos ya cargados:
+  /// decodificar imágenes no funciona con el reloj falso de los tests.
+  final BattleAssets battleAssets;
 
-  /// El mapa de Tiled del nivel. El tileset (.tsx y .png) está junto al
-  /// mapa en assets/tiles/, igual que en Tiled; por defecto Flame buscaría
-  /// la imagen en assets/images/.
-  static Future<Component> loadTiledMap(LevelDef level) => TiledComponent.load(
-    level.mapFile,
-    Vector2.all(tileSize),
-    images: Images(prefix: 'assets/tiles/'),
-  );
+  /// Los sprites que pueden aparecer en la partida (se cargan al empezar).
+  final Iterable<SpriteDef> sprites;
+
+  /// Muestra números con el daño que recibe cada plaga (Ajustes).
+  bool showDamageNumbers;
+
+  /// El teléfono pide menos animaciones (accesibilidad): sin sacudidas.
+  final bool reduceMotion;
 
   /// Texto que se dibuja sobre cada guardián (su inicial en el idioma del
   /// jugador). Si falta, se usa la inicial de su id.
@@ -98,6 +106,23 @@ class BattleGame extends FlameGame {
     factory: PulseComponent.new,
     maxSize: 60,
   );
+  final ComponentPool<DamageNumberComponent> damageNumberPool = ComponentPool(
+    factory: DamageNumberComponent.new,
+    maxSize: maxDamageNumbers,
+  );
+
+  /// Tope de números de daño a la vez y de estallidos de partículas: con un
+  /// enjambre, más no se leería y costaría rendimiento.
+  static const maxDamageNumbers = 24;
+  static const maxBursts = 10;
+
+  /// Cada cuánto se muestra el daño acumulado de cada plaga: así el daño
+  /// por quemadura, que llega en cada tick, se ve como un solo número.
+  static const damageNumberInterval = 0.3;
+
+  /// La sacudida de cámara al aparecer el jefe.
+  static const shakeSeconds = 0.5;
+  static const shakeAmplitude = 10.0;
 
   final Map<int, PestComponent> _pests = {};
   final Map<int, GuardianComponent> _guardians = {};
@@ -110,12 +135,29 @@ class BattleGame extends FlameGame {
   /// Lo último que se avisó de la cuenta regresiva (ver [update]).
   ({int? seconds, int bonus})? _countdown;
 
+  Map<String, Image> _images = const {};
+  final Map<SpriteDef, SpriteAnimation?> _animations = {};
+
+  /// Daño recibido por cada plaga desde el último número mostrado.
+  final Map<int, double> _pendingDamage = {};
+  double _sinceDamageNumbers = 0;
+  int _damageNumbers = 0;
+
+  final math.Random _random = math.Random(7);
+  final Vector2 _cameraCenter = Vector2.zero();
+  double _shake = 0;
+
+  bool get isShaking => _shake > 0;
+
   @override
   Color backgroundColor() => BattleColors.letterbox;
 
   @override
   Future<void> onLoad() async {
-    final map = await loadMap(level);
+    final map = await battleAssets.loadMap(level);
+    _images = await battleAssets.loadImages({
+      for (final sprite in sprites) sprite.image,
+    });
     final mapSize = mapSizeOf(level);
     await world.addAll([
       map,
@@ -129,9 +171,10 @@ class BattleGame extends FlameGame {
       _range,
     ]);
 
+    _cameraCenter.setValues(mapSize.width / 2, mapSize.height / 2);
     camera.viewfinder
       ..anchor = Anchor.center
-      ..position = Vector2(mapSize.width / 2, mapSize.height / 2);
+      ..position = _cameraCenter.clone();
     // `size` es el tamaño del visor de la cámara, que en la web todavía
     // puede ser 0 aquí; el del lienzo ya es el real.
     if (hasLayout) _fitCamera(canvasSize);
@@ -183,10 +226,34 @@ class BattleGame extends FlameGame {
       _changed = true;
     }
 
+    _showDamageNumbers(dt);
+    _updateShake(dt);
+
     if (_changed) {
       _changed = false;
       onChanged?.call();
     }
+  }
+
+  /// La animación de [sprite] con su imagen ya cargada, o `null` (no tiene
+  /// sprite o la imagen no se pudo cargar: se dibuja la forma).
+  SpriteAnimation? animationFor(SpriteDef? sprite) {
+    if (sprite == null) return null;
+    return _animations.putIfAbsent(sprite, () {
+      final image = _images[sprite.image];
+      if (image == null) return null;
+      return SpriteAnimation.fromFrameData(
+        image,
+        SpriteAnimationData.sequenced(
+          amount: sprite.frames,
+          stepTime: 1 / sprite.fps,
+          textureSize: Vector2(
+            image.width / sprite.frames,
+            image.height.toDouble(),
+          ),
+        ),
+      );
+    });
   }
 
   // --- Selección (la pantalla la controla).
@@ -216,13 +283,28 @@ class BattleGame extends FlameGame {
       case PestSpawned(:final pestId):
         final view = simulation.pests.firstWhere((pest) => pest.id == pestId);
         world.add(
-          _pests[pestId] = PestComponent(view: view, tileSize: tileSize),
+          _pests[pestId] = PestComponent(
+            view: view,
+            tileSize: tileSize,
+            animation: animationFor(view.def.sprite),
+          ),
         );
+        if (view.def.boss && !reduceMotion) _shake = shakeSeconds;
       case CollcaDamaged(:final pestId):
         _pests.remove(pestId)?.removeFromParent();
         _changed = true;
       case PestDefeated(:final pestId):
-        _pests.remove(pestId)?.removeFromParent();
+        final pest = _pests.remove(pestId);
+        if (pest != null) {
+          pest.removeFromParent();
+          _burst(pest);
+        }
+        _pendingDamage.remove(pestId);
+      case PestDamaged(:final pestId, :final amount):
+        _pests[pestId]?.flash();
+        if (showDamageNumbers) {
+          _pendingDamage[pestId] = (_pendingDamage[pestId] ?? 0) + amount;
+        }
       case GuardianBuilt(:final guardianId):
         final view = simulation.guardians.firstWhere(
           (guardian) => guardian.id == guardianId,
@@ -232,6 +314,7 @@ class BattleGame extends FlameGame {
             view: view,
             tileSize: tileSize,
             label: labelFor?.call(view.def.id) ?? view.def.id[0].toUpperCase(),
+            animationFor: animationFor,
           ),
         );
         _changed = true;
@@ -279,9 +362,69 @@ class BattleGame extends FlameGame {
           LevelLost() ||
           TargetingChanged():
         _changed = true;
-      case WaveCompleted() || PestDamaged():
+      case WaveCompleted():
         break;
     }
+  }
+
+  /// Muestra, cada [damageNumberInterval], el daño acumulado de cada plaga.
+  void _showDamageNumbers(double dt) {
+    _sinceDamageNumbers += dt;
+    if (_sinceDamageNumbers < damageNumberInterval) return;
+    _sinceDamageNumbers = 0;
+    for (final MapEntry(key: pestId, value: damage) in _pendingDamage.entries) {
+      final pest = _pests[pestId];
+      if (pest == null || damage < 0.5) continue;
+      if (_damageNumbers >= maxDamageNumbers) break;
+      _damageNumbers++;
+      final number = damageNumberPool.acquire()
+        ..start(
+          text: '${damage.round()}',
+          at: pest.position - Vector2(0, pest.size.y),
+        );
+      unawaited(number.removed.then((_) => _damageNumbers--));
+      world.add(number);
+    }
+    _pendingDamage.clear();
+  }
+
+  /// Unas partículas del color de la plaga derrotada.
+  void _burst(PestComponent pest) {
+    if (world.children.whereType<ParticleSystemComponent>().length >=
+        maxBursts) {
+      return;
+    }
+    final paint = Paint()
+      ..color = colorFor(pest.view.def.id, pest.view.def.color);
+    world.add(
+      ParticleSystemComponent(
+        position: pest.position.clone(),
+        priority: 30,
+        particle: Particle.generate(
+          count: pest.view.def.boss ? 24 : 10,
+          lifespan: 0.45,
+          generator: (_) {
+            final angle = _random.nextDouble() * 2 * math.pi;
+            final speed = 40 + _random.nextDouble() * 80;
+            return AcceleratedParticle(
+              speed: Vector2(math.cos(angle), math.sin(angle)) * speed,
+              acceleration: Vector2(0, 120),
+              child: CircleParticle(radius: 3, paint: paint),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Sacude la cámara mientras dure [_shake], cada vez menos.
+  void _updateShake(double dt) {
+    if (_shake <= 0) return;
+    _shake = math.max(0, _shake - dt);
+    final strength = shakeAmplitude * _shake / shakeSeconds;
+    final t = _shake * 60;
+    camera.viewfinder.position = _cameraCenter.clone()
+      ..add(Vector2(math.sin(t * 1.7), math.cos(t * 1.3)) * strength);
   }
 
   void _pulse({

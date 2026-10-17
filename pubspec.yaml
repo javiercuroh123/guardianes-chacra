@@ -9,6 +9,7 @@ environment:
 dependencies:
   flame: ^1.38.2
   # Dibuja los mapas de Tiled. Fija `tiled` en ^0.11 (aunque ya existe la 0.12).
+  flame_audio: ^2.12.2
   flame_tiled: ^3.1.2
   flutter:
     sdk: flutter
@@ -47,3 +48,10 @@ flutter:
     - assets/content/i18n/
     # Mapas de Tiled y su tileset (flame_tiled los busca en assets/tiles/).
     - assets/tiles/
+    # Música y efectos (flame_audio los busca en assets/audio/). Una carpeta
+    # nueva dentro de assets/audio/ hay que agregarla aquí.
+    - assets/audio/music/
+    - assets/audio/sfx/
+    # Sprites de plagas y guardianes (Flame los busca en assets/images/). Al
+    # agregar la primera imagen de guardianes, sumar assets/images/guardians/.
+    - assets/images/pests/

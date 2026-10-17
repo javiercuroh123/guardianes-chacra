@@ -1,5 +1,6 @@
 {
   "unlock": { "afterLevel": "andenes", "totalStars": 4 },
+  "music": "music/batalla.wav",
   "map": "orilla_del_lago.tmx",
   "startingCorn": 300,
   "startingPotatoes": 20,

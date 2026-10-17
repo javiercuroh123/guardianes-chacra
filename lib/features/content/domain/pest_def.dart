@@ -1,4 +1,5 @@
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
+import 'package:guardianes_chacra/features/content/domain/sprite_def.dart';
 import 'package:meta/meta.dart';
 
 /// Tipos de daño. Cada plaga puede resistirlos o ser débil a ellos.
@@ -27,6 +28,7 @@ class PestDef {
     this.abilities = const [],
     this.boss = false,
     this.color,
+    this.sprite,
   });
 
   final String id;
@@ -62,4 +64,7 @@ class PestDef {
   /// Color de reemplazo para dibujarla (ARGB) mientras no tenga imagen.
   /// Si falta, la vista usa uno derivado de su id.
   final int? color;
+
+  /// Imagen (animada) de la plaga; sin ella, se dibuja su forma.
+  final SpriteDef? sprite;
 }

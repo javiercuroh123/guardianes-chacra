@@ -1,4 +1,5 @@
 {
+  "sprite": { "image": "pests/gorgojo.png", "frames": 4, "fps": 8 },
   "color": "#4E342E",
   "maxHealth": 30,
   "speed": 1.0,

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
 import 'package:guardianes_chacra/features/content/data/content_loader.dart';
@@ -127,6 +130,60 @@ void main() {
           reason: '${level.id} / $guardianId',
         );
       }
+    }
+  });
+
+  test('cada sonido nombrado en los datos existe y está declarado', () {
+    final files = {
+      ?content.audio.menuMusic,
+      ...content.audio.sfx.values,
+      for (final level in content.levels) ?level.music,
+    };
+    // Todos los efectos tienen su archivo (uno que falta quedaría mudo).
+    expect(content.audio.sfx.keys, containsAll(Sfx.values));
+
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    for (final file in files) {
+      expect(File('assets/audio/$file').existsSync(), isTrue, reason: file);
+      final folder = file.substring(0, file.lastIndexOf('/') + 1);
+      expect(
+        pubspec,
+        contains('- assets/audio/$folder'),
+        reason: 'falta assets/audio/$folder en pubspec.yaml',
+      );
+    }
+  });
+
+  test('cada sprite existe, está declarado y se divide en sus cuadros', () {
+    final sprites = [
+      for (final pest in content.pests.values) ?pest.sprite,
+      for (final guardian in content.guardians.values) ...[
+        ?guardian.sprite,
+        for (final level in guardian.levels) ?level.sprite,
+        for (final branch in guardian.branches) ?branch.level.sprite,
+      ],
+    ];
+    expect(sprites, isNotEmpty, reason: 'el gorgojo tiene sprite de ejemplo');
+
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    for (final sprite in sprites) {
+      final file = File('assets/images/${sprite.image}');
+      expect(file.existsSync(), isTrue, reason: sprite.image);
+      final folder = sprite.image.substring(
+        0,
+        sprite.image.lastIndexOf('/') + 1,
+      );
+      expect(pubspec, contains('- assets/images/$folder'), reason: folder);
+
+      // Ancho y alto del PNG (cabecera IHDR): cuadros cuadrados y enteros.
+      final header = file.readAsBytesSync().sublist(16, 24);
+      int read(int at) =>
+          header[at] << 24 |
+          header[at + 1] << 16 |
+          header[at + 2] << 8 |
+          header[at + 3];
+      final (width, height) = (read(0), read(4));
+      expect(width, sprite.frames * height, reason: sprite.image);
     }
   });
 }

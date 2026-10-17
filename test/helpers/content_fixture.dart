@@ -33,6 +33,11 @@ class ContentFixture {
     'threeStarsFraction': 0.9,
   };
 
+  Map<String, Object?> audio = {
+    'menuMusic': 'music/menu.wav',
+    'sfx': {'shot': 'sfx/shot.wav'},
+  };
+
   Map<String, Map<String, Object?>> pests = {'gorgojo': gorgojoJson()};
   Map<String, Map<String, Object?>> guardians = {'hondero': honderoJson()};
   Map<String, Map<String, Object?>> levels = {'prueba': levelJson()};
@@ -72,6 +77,7 @@ class ContentFixture {
     {
       'assets/content/index.json': jsonEncode(index),
       'assets/content/rules.json': jsonEncode(rules),
+      'assets/content/audio.json': jsonEncode(audio),
       for (final MapEntry(:key, :value) in pests.entries)
         'assets/content/pests/$key.json': jsonEncode(value),
       for (final MapEntry(:key, :value) in guardians.entries)

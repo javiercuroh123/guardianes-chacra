@@ -1,3 +1,4 @@
+import 'package:guardianes_chacra/features/content/domain/audio_def.dart';
 import 'package:guardianes_chacra/features/content/domain/battle_rules.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
@@ -13,6 +14,7 @@ class GameContent {
     required Map<String, GuardianDef> guardians,
     required List<LevelDef> levels,
     required this.texts,
+    this.audio = const AudioDef(),
   }) : pests = Map.unmodifiable(pests),
        guardians = Map.unmodifiable(guardians),
        levels = List.unmodifiable(levels);
@@ -22,4 +24,5 @@ class GameContent {
   final Map<String, GuardianDef> guardians;
   final List<LevelDef> levels;
   final ContentTexts texts;
+  final AudioDef audio;
 }
