@@ -2,6 +2,7 @@ import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/features/content/data/asset_source.dart';
 import 'package:guardianes_chacra/features/content/data/json_reader.dart';
 import 'package:guardianes_chacra/features/content/data/tiled_map_reader.dart';
+import 'package:guardianes_chacra/features/content/domain/ads_def.dart';
 import 'package:guardianes_chacra/features/content/domain/audio_def.dart';
 import 'package:guardianes_chacra/features/content/domain/battle_rules.dart';
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
@@ -36,6 +37,7 @@ class ContentLoader {
     final languages = _ids(index, 'languages');
     final rules = _rules(await _json('rules.json'));
     final audio = _audio(await _json('audio.json'));
+    final ads = _ads(await _json('ads.json'));
 
     // Los ids de los niveles se conocen antes de leerlos: las reglas de
     // desbloqueo de guardianes y niveles los mencionan.
@@ -69,6 +71,7 @@ class ContentLoader {
       levels: levels,
       texts: texts,
       audio: audio,
+      ads: ads,
     );
   }
 
@@ -113,6 +116,14 @@ class ContentLoader {
       threeStarsFraction: threeStars,
     );
   }
+
+  // --- ads.json
+
+  AdsDef _ads(JsonNode node) => AdsDef(
+    rewardedStartCorn: node.integer('rewardedStartCorn', min: 0),
+    rewardedRevivePotatoes: node.integer('rewardedRevivePotatoes', min: 0),
+    interstitialEveryLevels: node.integer('interstitialEveryLevels', min: 0),
+  );
 
   // --- pests/<id>.json
 

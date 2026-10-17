@@ -52,6 +52,11 @@ app.*.map.json
 *.keystore
 key.properties
 
+# IDs reales de AdMob (ver docs/MONETIZACION.md): los modelos *.example sí
+# se suben
+/admob.json
+/android/admob.properties
+
 # Configuración local de Claude Code
 .claude/
 

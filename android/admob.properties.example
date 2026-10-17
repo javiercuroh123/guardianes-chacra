@@ -1,0 +1,3 @@
+# Copia este archivo como android/admob.properties (no se sube a git) y pon
+# el App ID de tu app en AdMob. Ver docs/MONETIZACION.md.
+appId=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY

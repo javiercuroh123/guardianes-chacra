@@ -392,6 +392,7 @@ class BattleGame extends FlameGame {
           WaveStarted() ||
           LevelWon() ||
           LevelLost() ||
+          LevelRevived() ||
           TargetingChanged():
         _changed = true;
       case WaveCompleted():

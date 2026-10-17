@@ -54,7 +54,9 @@ class Simulation {
     BehaviorRegistry? registry,
     EventBus<SimEvent>? events,
     SimulationCheats? cheats,
-  }) : events = events ?? EventBus<SimEvent>(),
+    int extraCorn = 0,
+  }) : assert(extraCorn >= 0, 'extraCorn no puede ser negativo'),
+       events = events ?? EventBus<SimEvent>(),
        cheats = cheats ?? SimulationCheats(),
        random = SeededRandom(seed),
        _level = level,
@@ -66,7 +68,7 @@ class Simulation {
          for (final path in level.map.paths) path.id: PathTrack(path.points),
        },
        _spawner = WaveSpawner(level.waves),
-       _corn = level.startingCorn,
+       _corn = level.startingCorn + extraCorn,
        _potatoes = level.startingPotatoes,
        _aliveByWave = List.filled(level.waves.length, 0),
        _completedWaves = List.filled(level.waves.length, false) {
@@ -114,6 +116,7 @@ class Simulation {
   int _nextGuardianId = 1;
   int _nextProjectileId = 1;
   BattleStatus _status = BattleStatus.playing;
+  bool _revived = false;
 
   /// Plagas que faltan por aparecer de la prueba de estrés (ver
   /// [StressTest]).
@@ -123,6 +126,12 @@ class Simulation {
   int get corn => _corn;
   int get potatoes => _potatoes;
   BattleStatus get status => _status;
+
+  /// Si ya se usó [revive] en esta partida.
+  bool get revived => _revived;
+
+  /// Si se puede seguir jugando después de perder: una vez por partida.
+  bool get canRevive => _status == BattleStatus.lost && !_revived;
   List<PestView> get pests => UnmodifiableListView(_pests);
 
   /// Guardianes construidos, en el orden en que se construyeron (también
@@ -156,6 +165,26 @@ class Simulation {
   /// Encola un comando del jugador; se aplica al inicio del siguiente tick.
   void enqueue(PlayerCommand command) => _commands.add(command);
 
+  /// Sigue la partida después de perder, con [potatoes] papas en la collca
+  /// (la recompensa de un anuncio). Solo una vez por partida: devuelve
+  /// `false` si no se puede (ver [canRevive]).
+  ///
+  /// Las plagas en pantalla se van sin dar maíz: las que hicieron perder
+  /// siguen en la puerta de la collca y, si se quedaran, se comerían las
+  /// papas nuevas al instante. Las oleadas siguen como iban.
+  ///
+  /// No es un comando porque los comandos se aplican dentro de un tick, y
+  /// con la partida perdida ya no corren ticks.
+  bool revive(int potatoes) {
+    if (!canRevive || potatoes <= 0) return false;
+    _revived = true;
+    _clearPests();
+    _potatoes = potatoes;
+    _status = BattleStatus.playing;
+    events.publish(LevelRevived(_tick, potatoes: potatoes));
+    return true;
+  }
+
   void step() {
     if (_status != BattleStatus.playing) return;
     _tick++;
@@ -182,6 +211,20 @@ class Simulation {
       _status = BattleStatus.won;
       events.publish(LevelWon(_tick, potatoesLeft: _potatoes));
     }
+  }
+
+  /// Quita las plagas en pantalla sin dar maíz (saltar oleada y revivir).
+  /// Cuentan como fuera de su oleada, así que la oleada puede completarse.
+  void _clearPests() {
+    for (final pest in _pests) {
+      if (!pest.isAlive) continue;
+      pest.removed = true;
+      _aliveByWave[pest.wave]--;
+      events.publish(
+        PestDefeated(_tick, pestId: pest.id, pestType: pest.def.id, reward: 0),
+      );
+    }
+    _pests.removeWhere((pest) => pest.removed);
   }
 
   void _tickEffects() {

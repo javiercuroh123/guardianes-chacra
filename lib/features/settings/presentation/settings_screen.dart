@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/features/settings/domain/settings.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
-/// Música, efectos, vibración e idioma.
+/// Música, efectos, vibración e idioma. Donde la ley lo exige (por ejemplo,
+/// en Europa), también las opciones de privacidad de los anuncios.
 class SettingsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -81,10 +84,41 @@ class SettingsScreen extends ConsumerWidget {
                       controller.language = selection.single,
                 ),
               ),
+              _PrivacyOptions(ads: ref.watch(adsServiceProvider)),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "Opciones de privacidad": solo aparece si el formulario de
+/// consentimiento de Google lo pide para este jugador.
+class _PrivacyOptions extends StatelessWidget {
+  const new({required this.ads});
+
+  final AdsService ads;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ValueListenableBuilder<AdsStatus>(
+      valueListenable: ads.status,
+      builder: (context, status, _) => !status.privacyOptionsRequired
+          ? const SizedBox.shrink()
+          : Column(
+              children: [
+                const Divider(height: 32),
+                ListTile(
+                  key: const ValueKey('settings-privacy'),
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: Text(l10n.settingsPrivacy),
+                  subtitle: Text(l10n.settingsPrivacySubtitle),
+                  onTap: ads.showPrivacyOptions,
+                ),
+              ],
+            ),
     );
   }
 }

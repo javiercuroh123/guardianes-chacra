@@ -99,3 +99,12 @@ Future<void> advance(
   }
   await tester.pump();
 }
+
+/// El juego que está en pantalla, ya montado.
+Future<BattleGame> mountedGame(WidgetTester tester) async {
+  final game = tester
+      .widget<GameWidget<BattleGame>>(find.byType(GameWidget<BattleGame>))
+      .game!;
+  await waitUntilMounted(tester, game);
+  return game;
+}

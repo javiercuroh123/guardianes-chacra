@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// El App ID de AdMob sale de android/admob.properties (fuera de git; ver
+// docs/MONETIZACION.md). Sin ese archivo se usa el de prueba de Google.
+val admobProperties = Properties().apply {
+    val file = rootProject.file("admob.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -27,6 +36,10 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = admobProperties.getProperty(
+            "appId",
+            "ca-app-pub-3940256099942544~3347511713",
+        )
     }
 
     buildTypes {

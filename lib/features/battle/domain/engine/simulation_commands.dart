@@ -44,15 +44,7 @@ extension _Commands on Simulation {
   /// Truco de desarrollo: las plagas en pantalla desaparecen sin dar maíz,
   /// la oleada que aparecía termina y empieza la siguiente.
   void _skipWave() {
-    for (final pest in _pests) {
-      if (!pest.isAlive) continue;
-      pest.removed = true;
-      _aliveByWave[pest.wave]--;
-      events.publish(
-        PestDefeated(_tick, pestId: pest.id, pestType: pest.def.id, reward: 0),
-      );
-    }
-    _pests.removeWhere((pest) => pest.removed);
+    _clearPests();
     _spawner.finishActiveWave();
     final waveNumber = _spawner.startedWaves + 1;
     if (_spawner.callNextWave() != null) {

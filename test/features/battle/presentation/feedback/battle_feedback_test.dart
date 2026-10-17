@@ -110,6 +110,14 @@ void main() {
     expect(audio.sfx, [Sfx.victory]);
   });
 
+  test('al revivir vuelve la música del nivel', () {
+    events
+      ..publish(const LevelLost(100))
+      ..publish(const LevelRevived(100, potatoes: 5));
+
+    expect(audio.music, ['music/valle.wav', null, 'music/valle.wav']);
+  });
+
   test('la collca vibra solo con la vibración encendida', () {
     events.publish(
       const CollcaDamaged(1, pestId: 1, potatoesLost: 1, potatoesLeft: 19),

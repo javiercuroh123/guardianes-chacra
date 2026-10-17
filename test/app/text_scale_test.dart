@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
 import 'package:guardianes_chacra/features/bestiary/presentation/bestiary_screen.dart';
@@ -12,6 +13,7 @@ import 'package:guardianes_chacra/features/progress/presentation/save_providers.
 import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
 
 import '../helpers/battle_game_helpers.dart';
+import '../helpers/fake_ads_service.dart';
 import '../helpers/real_content.dart';
 import '../helpers/test_app.dart';
 
@@ -42,6 +44,8 @@ void main() {
         screen,
         overrides: [
           contentOverride(content()),
+          // Con un anuncio cargado: así aparecen también sus botones.
+          adsServiceProvider.overrideWithValue(FakeAdsService()),
           savedGameProvider.overrideWithValue(SaveData(progress: everything())),
         ],
       ),
@@ -88,7 +92,12 @@ void main() {
           ),
         ),
         'derrota': () => Scaffold(
-          body: DefeatOverlay(onRetry: () {}, onExit: () {}),
+          body: DefeatOverlay(
+            onRetry: () {},
+            onExit: () {},
+            onRevive: () {},
+            revivePotatoes: 5,
+          ),
         ),
       };
 

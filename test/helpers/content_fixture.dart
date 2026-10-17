@@ -38,6 +38,12 @@ class ContentFixture {
     'sfx': {'shot': 'sfx/shot.wav'},
   };
 
+  Map<String, Object?> ads = {
+    'rewardedStartCorn': 50,
+    'rewardedRevivePotatoes': 5,
+    'interstitialEveryLevels': 3,
+  };
+
   Map<String, Map<String, Object?>> pests = {'gorgojo': gorgojoJson()};
   Map<String, Map<String, Object?>> guardians = {'hondero': honderoJson()};
   Map<String, Map<String, Object?>> levels = {'prueba': levelJson()};
@@ -78,6 +84,7 @@ class ContentFixture {
       'assets/content/index.json': jsonEncode(index),
       'assets/content/rules.json': jsonEncode(rules),
       'assets/content/audio.json': jsonEncode(audio),
+      'assets/content/ads.json': jsonEncode(ads),
       for (final MapEntry(:key, :value) in pests.entries)
         'assets/content/pests/$key.json': jsonEncode(value),
       for (final MapEntry(:key, :value) in guardians.entries)

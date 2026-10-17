@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/creature_icons.dart';
@@ -12,6 +14,9 @@ import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
 /// Antes de jugar: el nombre del nivel, cuántas oleadas tiene y las plagas
 /// que vienen (las que el jugador todavía no vio llevan "Nueva").
+///
+/// Si hay un anuncio recompensado cargado, ofrece verlo para empezar con
+/// maíz extra (`rewardedStartCorn` de `ads.json`).
 class LevelPreviewScreen extends ConsumerWidget {
   const new({required this.levelId, this.assets, super.key});
 
@@ -44,6 +49,8 @@ class LevelPreviewScreen extends ConsumerWidget {
       progressProvider.select((progress) => progress.discoveredPests),
     );
     final textTheme = Theme.of(context).textTheme;
+    final ads = ref.watch(adsServiceProvider);
+    final extraCorn = content.ads.rewardedStartCorn;
     String text(String key) => content.texts.text(key, language: language);
 
     return Scaffold(
@@ -54,57 +61,102 @@ class LevelPreviewScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l10n.previewWaves(level.waves.length),
-                style: textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(l10n.previewPests, style: textTheme.titleLarge),
-              const SizedBox(height: 8),
+              // Solo los botones quedan fijos abajo: con letra grande, el
+              // resto se desplaza.
               Expanded(
                 child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final pestId in pestsAppearingIn(level))
-                        _PestChip(
-                          key: ValueKey('preview-pest-$pestId'),
-                          icon: PestIcon(def: content.pests[pestId]!, size: 32),
-                          name: text(ContentTexts.pestName(pestId)),
-                          isNew: !discovered.contains(pestId),
-                          newLabel: l10n.previewNew,
-                        ),
+                      Text(
+                        l10n.previewWaves(level.waves.length),
+                        style: textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(l10n.previewPests, style: textTheme.titleLarge),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          for (final pestId in pestsAppearingIn(level))
+                            _PestChip(
+                              key: ValueKey('preview-pest-$pestId'),
+                              icon: PestIcon(
+                                def: content.pests[pestId]!,
+                                size: 32,
+                              ),
+                              name: text(ContentTexts.pestName(pestId)),
+                              isNew: !discovered.contains(pestId),
+                              newLabel: l10n.previewNew,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    child: Text(l10n.back),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton(
-                    key: const ValueKey('preview-start'),
-                    onPressed: () => Navigator.of(context).pushReplacement(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            BattleScreen(levelId: level.id, assets: assets),
-                      ),
+              ValueListenableBuilder<AdsStatus>(
+                valueListenable: ads.status,
+                builder: (context, status, _) => Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      child: Text(l10n.back),
                     ),
-                    child: Text(l10n.previewStart),
-                  ),
-                ],
+                    if (status.rewardedReady && extraCorn > 0)
+                      OutlinedButton.icon(
+                        key: const ValueKey('preview-rewarded'),
+                        icon: const Icon(Icons.ondemand_video),
+                        onPressed: () => _startWithAd(context, ads, extraCorn),
+                        label: Text(l10n.adStartCorn(extraCorn)),
+                      ),
+                    FilledButton(
+                      key: const ValueKey('preview-start'),
+                      onPressed: () => _start(context),
+                      child: Text(l10n.previewStart),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _start(BuildContext context, {int extraCorn = 0}) =>
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => BattleScreen(
+            levelId: levelId,
+            assets: assets,
+            extraCorn: extraCorn,
+          ),
+        ),
+      );
+
+  /// Muestra el anuncio y, solo si se vio hasta el final, empieza con el
+  /// maíz extra. Cerrado antes, avisa y se queda en la vista previa.
+  Future<void> _startWithAd(
+    BuildContext context,
+    AdsService ads,
+    int extraCorn,
+  ) async {
+    final earned = await ads.showRewarded();
+    if (!context.mounted) return;
+    if (earned) {
+      _start(context, extraCorn: extraCorn);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).adNotCompleted)),
+      );
+    }
   }
 }
 

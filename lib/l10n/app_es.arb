@@ -449,5 +449,35 @@
   "languageEn": "English",
   "@languageEn": {
     "description": "Opción de idioma (siempre en su propio idioma)."
+  },
+  "adStartCorn": "Ver anuncio: +{amount} de maíz",
+  "@adStartCorn": {
+    "description": "Botón de la vista previa: ver un anuncio recompensado para empezar con maíz extra.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "adRevive": "Ver anuncio: seguir con {count} papas",
+  "@adRevive": {
+    "description": "Botón de la derrota: ver un anuncio recompensado para seguir jugando (una vez por partida).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adNotCompleted": "Mira el anuncio completo para recibir la recompensa.",
+  "@adNotCompleted": {
+    "description": "Aviso si se cerró el anuncio recompensado antes de tiempo."
+  },
+  "settingsPrivacy": "Opciones de privacidad",
+  "@settingsPrivacy": {
+    "description": "Ajustes: abre el formulario de consentimiento de anuncios (solo donde la ley lo exige)."
+  },
+  "settingsPrivacySubtitle": "Cambia tu consentimiento para los anuncios",
+  "@settingsPrivacySubtitle": {
+    "description": "Explica la opción de privacidad."
   }
 }

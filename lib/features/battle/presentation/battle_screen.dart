@@ -4,9 +4,12 @@ import 'package:flame/game.dart';
 // `material.dart` también exporta una `Simulation` (la de física de Flutter).
 import 'package:flutter/material.dart' hide Simulation;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/app/analytics.dart';
 import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/dev/dev_panel.dart';
@@ -20,6 +23,7 @@ import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart'
 import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart';
+import 'package:guardianes_chacra/features/battle/presentation/feedback/battle_analytics.dart';
 import 'package:guardianes_chacra/features/battle/presentation/feedback/battle_feedback.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
@@ -53,9 +57,18 @@ import 'package:guardianes_chacra/l10n/app_localizations.dart';
 /// - Los eventos que le importan a la app y no al dibujo (descubrir plagas
 ///   y guardianes, ganar o perder) los escucha esta pantalla.
 class BattleScreen extends ConsumerStatefulWidget {
-  const new({required this.levelId, this.assets, super.key});
+  const new({
+    required this.levelId,
+    this.assets,
+    this.extraCorn = 0,
+    super.key,
+  });
 
   final String levelId;
+
+  /// Maíz extra para la primera partida (la recompensa de un anuncio en la
+  /// vista previa). Al reintentar, ya no se suma.
+  final int extraCorn;
 
   /// Para los tests: el mapa y las imágenes ya cargados (ver
   /// `BattleAssets`).
@@ -74,6 +87,7 @@ class _Session {
     required this.stats,
     required this.guardians,
     required this.cheats,
+    this.watchedRewarded = false,
   });
 
   final LevelDef level;
@@ -91,6 +105,10 @@ class _Session {
   /// Los trucos de desarrollo de esta partida (solo los cambia el panel de
   /// desarrollo, nunca en release).
   final SimulationCheats cheats;
+
+  /// Si en esta partida se vio un anuncio recompensado (para empezar con
+  /// maíz o para revivir): entonces no toca intersticial al salir.
+  bool watchedRewarded;
 }
 
 class _BattleScreenState extends ConsumerState<BattleScreen> {
@@ -105,6 +123,10 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   /// Se lee la primera vez que se usa (al empezar la partida): al cerrar
   /// la pantalla (en `dispose`) ya no se puede leer de Riverpod.
   late final AudioService _audio = ref.read(audioServiceProvider);
+  late final AdsService _ads = ref.read(adsServiceProvider);
+
+  /// El maíz extra que falta usar: solo en la primera partida.
+  late int _pendingExtraCorn = widget.extraCorn;
 
   bool _paused = false;
 
@@ -183,8 +205,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
                       onExit: _exit,
                     ),
                     BattleOverlays.won: (context, _) => _victory(session),
-                    BattleOverlays.lost: (context, _) =>
-                        DefeatOverlay(onRetry: _retry, onExit: _exit),
+                    BattleOverlays.lost: (context, _) => _defeat(session),
                   },
                 ),
               ),
@@ -224,13 +245,34 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       cornHarvested: session.stats.cornHarvested,
       onNext: next == null
           ? null
-          : () => Navigator.of(context).pushReplacement(
-              MaterialPageRoute<void>(
-                builder: (_) => LevelPreviewScreen(levelId: next.id),
+          : () => _leaveResult(
+              session,
+              () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute<void>(
+                  builder: (_) => LevelPreviewScreen(levelId: next.id),
+                ),
               ),
             ),
-      onRetry: _retry,
-      onExit: _exit,
+      onRetry: () => _leaveResult(session, _retry),
+      onExit: () => _leaveResult(session, _exit),
+    );
+  }
+
+  /// La derrota. Si hay un anuncio recompensado cargado y la partida no se
+  /// revivió todavía, ofrece verlo para seguir jugando.
+  Widget _defeat(_Session session) {
+    final potatoes = _content.ads.rewardedRevivePotatoes;
+    return ValueListenableBuilder<AdsStatus>(
+      valueListenable: _ads.status,
+      builder: (context, status, _) => DefeatOverlay(
+        revivePotatoes: potatoes,
+        onRevive:
+            status.rewardedReady && potatoes > 0 && session.simulation.canRevive
+            ? () => _reviveWithAd(session, potatoes)
+            : null,
+        onRetry: () => _leaveResult(session, _retry),
+        onExit: () => _leaveResult(session, _exit),
+      ),
     );
   }
 
@@ -249,8 +291,11 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         if (unlockAll || _progression.canBuild(progress, key)) key: value,
     };
     final cheats = SimulationCheats();
+    final extraCorn = _pendingExtraCorn;
+    _pendingExtraCorn = 0;
     final simulation = Simulation(
       cheats: cheats,
+      extraCorn: extraCorn,
       level: level,
       pests: content.pests,
       guardians: guardians,
@@ -285,6 +330,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       stats: BattleStats(simulation.events),
       guardians: guardians,
       cheats: cheats,
+      watchedRewarded: extraCorn > 0,
     );
     if (devToolsEnabled) {
       game.debugOverlay = ref.read(devOptionsProvider).debugOverlay;
@@ -297,6 +343,13 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       pests: content.pests,
       music: level.music,
       vibrationEnabled: () => ref.read(settingsProvider).vibration,
+    );
+    BattleAnalytics(
+      simulation: simulation,
+      analytics: ref.read(analyticsServiceProvider),
+      levelId: level.id,
+      starsFor: (potatoes) => _starsFor(session, potatoes),
+      extraCorn: extraCorn,
     );
     // El HUD se muestra apenas termina este frame (no se puede cambiar un
     // provider mientras se construye la pantalla).
@@ -315,6 +368,35 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   }
 
   void _exit() => Navigator.of(context).maybePop();
+
+  /// Al salir del resultado (ganar o perder): cuenta la partida y, si le
+  /// toca según `AdPolicy`, muestra antes un intersticial.
+  Future<void> _leaveResult(_Session session, VoidCallback action) async {
+    final due = ref
+        .read(adPolicyProvider)
+        .resultClosed(
+          interstitialEvery: _content.ads.interstitialEveryLevels,
+          watchedRewarded: session.watchedRewarded,
+        );
+    if (due) await _ads.showInterstitial();
+    if (mounted) action();
+  }
+
+  /// Muestra el anuncio recompensado y, si se vio entero, sigue la partida
+  /// con [potatoes] papas.
+  Future<void> _reviveWithAd(_Session session, int potatoes) async {
+    final earned = await _ads.showRewarded();
+    if (!mounted || session != _session) return;
+    if (!earned) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).adNotCompleted)),
+      );
+      return;
+    }
+    // La música del nivel vuelve con el evento `LevelRevived` (ver
+    // `BattleFeedback`).
+    if (session.simulation.revive(potatoes)) session.watchedRewarded = true;
+  }
 
   void _syncHud(_Session session) {
     if (!mounted || session != _session) return;
@@ -354,6 +436,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         session.game.overlays.add(BattleOverlays.won);
       case LevelLost():
         session.game.overlays.add(BattleOverlays.lost);
+      case LevelRevived():
+        session.game.overlays.remove(BattleOverlays.lost);
       case _:
         break;
     }

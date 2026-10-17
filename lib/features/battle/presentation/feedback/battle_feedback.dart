@@ -21,7 +21,7 @@ class BattleFeedback {
     required this.vibrationEnabled,
     String? music,
     Duration Function()? now,
-  }) {
+  }) : _music = music {
     final stopwatch = Stopwatch()..start();
     final clock = now ?? () => stopwatch.elapsed;
     _sounds = SoundLimiter(now: clock);
@@ -40,6 +40,9 @@ class BattleFeedback {
   /// El interruptor de Ajustes, leído en cada vibración.
   final bool Function() vibrationEnabled;
   final Map<String, PestDef> _pests;
+
+  /// La música del nivel: vuelve a sonar si se revive la partida.
+  final String? _music;
   late final SoundLimiter<Sfx> _sounds;
   late final SoundLimiter<Haptic> _haptics;
 
@@ -65,6 +68,8 @@ class BattleFeedback {
         audio
           ..playMusic(null)
           ..playSfx(Sfx.defeat);
+      case LevelRevived():
+        audio.playMusic(_music);
       case _:
         break;
     }

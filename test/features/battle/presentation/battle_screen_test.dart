@@ -1,7 +1,8 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart' hide Simulation;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/app/analytics.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
@@ -17,6 +18,7 @@ import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.da
 import 'package:guardianes_chacra/features/battle/presentation/menus/radial_menu.dart';
 import 'package:guardianes_chacra/features/content/data/content_loader.dart';
 import 'package:guardianes_chacra/features/content/data/file_asset_source.dart';
+import 'package:guardianes_chacra/features/content/domain/ads_def.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
@@ -27,6 +29,8 @@ import 'package:guardianes_chacra/features/progress/presentation/progress_provid
 import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 
 import '../../../helpers/battle_game_helpers.dart';
+import '../../../helpers/fake_ads_service.dart';
+import '../../../helpers/fake_analytics_service.dart';
 import '../../../helpers/fake_audio_service.dart';
 import '../../../helpers/fake_haptics_service.dart';
 import '../../../helpers/test_app.dart';
@@ -47,6 +51,8 @@ void main() {
     Progress progress = const Progress(),
     FakeAudioService? audio,
     FakeHapticsService? haptics,
+    FakeAdsService? ads,
+    FakeAnalyticsService? analytics,
   }) async {
     usePhoneLandscape(tester);
     final assets = await preloadAssets(
@@ -64,6 +70,12 @@ void main() {
           audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
           hapticsServiceProvider.overrideWithValue(
             haptics ?? FakeHapticsService(),
+          ),
+          adsServiceProvider.overrideWithValue(
+            ads ?? FakeAdsService(rewardedReady: false),
+          ),
+          analyticsServiceProvider.overrideWithValue(
+            analytics ?? FakeAnalyticsService(),
           ),
         ],
       ),
@@ -414,6 +426,107 @@ void main() {
     expect(find.text('🥔 20'), findsOneWidget);
   });
 
+  group('anuncios', () {
+    Finder revive() => key('battle-revive');
+    const lostTitle = 'La collca quedó vacía';
+
+    /// El contenido real con otra frecuencia de intersticiales.
+    GameContent everyLevel() => GameContent(
+      rules: content.rules,
+      pests: content.pests,
+      guardians: content.guardians,
+      levels: content.levels,
+      texts: content.texts,
+      audio: content.audio,
+      ads: const AdsDef(
+        rewardedStartCorn: 50,
+        rewardedRevivePotatoes: 5,
+        interstitialEveryLevels: 1,
+      ),
+    );
+
+    testWidgets('al perder, un anuncio deja seguir con 5 papas una vez', (
+      tester,
+    ) async {
+      final ads = FakeAdsService();
+      final game = await pumpScreen(tester, ads: ads);
+
+      // Sin guardianes, las plagas se comen las 20 papas antes de 150 s.
+      await advance(tester, game, seconds: 150);
+      expect(find.text(lostTitle), findsOneWidget);
+
+      await tester.tap(revive());
+      await tester.pump();
+
+      expect(ads.rewardedShown, 1);
+      expect(game.simulation.status, BattleStatus.playing);
+      expect(find.text(lostTitle), findsNothing);
+      expect(find.text('🥔 5'), findsOneWidget);
+
+      // Vuelve a perder: ya no se ofrece.
+      await advance(tester, game, seconds: 150);
+      expect(find.text(lostTitle), findsOneWidget);
+      expect(revive(), findsNothing);
+    });
+
+    testWidgets('sin un anuncio cargado no se ofrece revivir', (tester) async {
+      final analytics = FakeAnalyticsService();
+      final game = await pumpScreen(tester, analytics: analytics);
+
+      await advance(tester, game, seconds: 150);
+
+      expect(find.text(lostTitle), findsOneWidget);
+      expect(revive(), findsNothing);
+      // La analítica anota el nivel y en qué oleada se perdió.
+      expect(analytics.names, ['level_start', 'level_fail']);
+      expect(analytics.last('level_fail')['level'], level.id);
+      expect(
+        analytics.last('level_fail')['wave'],
+        game.simulation.startedWaves,
+      );
+    });
+
+    testWidgets('al salir del resultado aparece el intersticial que toca', (
+      tester,
+    ) async {
+      final ads = FakeAdsService(rewardedReady: false);
+      final game = await pumpScreen(
+        tester,
+        maps: 2,
+        withContent: everyLevel(),
+        ads: ads,
+      );
+      await advance(tester, game, seconds: 150);
+
+      await tester.tap(key('battle-retry'));
+      await tester.pump();
+
+      expect(ads.interstitialsShown, 1);
+      expect(await mountedGame(tester), isNot(same(game)));
+    });
+
+    testWidgets('después de revivir con un anuncio no hay intersticial', (
+      tester,
+    ) async {
+      final ads = FakeAdsService();
+      final game = await pumpScreen(
+        tester,
+        maps: 2,
+        withContent: everyLevel(),
+        ads: ads,
+      );
+      await advance(tester, game, seconds: 150);
+      await tester.tap(revive());
+      await tester.pump();
+      await advance(tester, game, seconds: 150);
+
+      await tester.tap(key('battle-retry'));
+      await tester.pump();
+
+      expect(ads.interstitialsShown, 0);
+    });
+  });
+
   group('herramientas de desarrollo (modo debug)', () {
     Future<BattleGame> openPanel(WidgetTester tester) async {
       final game = await pumpScreen(tester);
@@ -485,13 +598,4 @@ Future<void> setLifecycle(AppLifecycleState state) async {
         const StringCodec().encodeMessage(state.toString()),
         (_) {},
       );
-}
-
-/// El juego que está en pantalla, ya montado.
-Future<BattleGame> mountedGame(WidgetTester tester) async {
-  final game = tester
-      .widget<GameWidget<BattleGame>>(find.byType(GameWidget<BattleGame>))
-      .game!;
-  await waitUntilMounted(tester, game);
-  return game;
 }

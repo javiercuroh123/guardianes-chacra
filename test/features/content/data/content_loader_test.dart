@@ -189,6 +189,25 @@ void main() {
     });
   });
 
+  group('anuncios', () {
+    test('lee las recompensas y la frecuencia', () async {
+      final content = await ContentLoader(ContentFixture().toSource()).load();
+
+      expect(content.ads.rewardedStartCorn, 50);
+      expect(content.ads.rewardedRevivePotatoes, 5);
+      expect(content.ads.interstitialEveryLevels, 3);
+    });
+
+    test('un valor negativo', () async {
+      final fixture = ContentFixture()..ads['rewardedStartCorn'] = -10;
+
+      expect(
+        await errorOf(fixture),
+        'ads.json → rewardedStartCorn: debe ser al menos 0',
+      );
+    });
+  });
+
   group('reglas de desbloqueo', () {
     test('se cumplen con el nivel ganado y las estrellas juntadas', () {
       const rule = UnlockRule(afterLevel: 'uno', totalStars: 4);

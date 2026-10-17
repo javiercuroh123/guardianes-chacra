@@ -150,6 +150,20 @@ final class LevelLost extends SimEvent {
   List<Object?> get _fields => const [];
 }
 
+/// La partida perdida sigue con [potatoes] papas (ver
+/// `Simulation.revive`).
+final class LevelRevived extends SimEvent {
+  const new(super.tick, {required this.potatoes});
+
+  final int potatoes;
+
+  @override
+  String get _name => 'LevelRevived';
+
+  @override
+  List<Object?> get _fields => [potatoes];
+}
+
 /// Se construyó el guardián [guardianId] en el espacio [slotId].
 final class GuardianBuilt extends SimEvent {
   const new(

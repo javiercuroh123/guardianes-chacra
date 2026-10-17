@@ -58,6 +58,15 @@ flutter run --release
 - [ ] Idioma: español / inglés cambia todos los textos, también los del contenido (nombres de plagas y guardianes).
 - [ ] Los ajustes siguen igual después de cerrar y abrir la app.
 
+## Anuncios (con los IDs de prueba; ver `MONETIZACION.md`)
+
+- [ ] Con internet, en la vista previa aparece "Ver anuncio: +50 de maíz" a los pocos segundos; visto entero, la partida empieza con 50 de maíz más.
+- [ ] Cerrar el recompensado antes de tiempo muestra el aviso y no da la recompensa.
+- [ ] Al perder aparece "Ver anuncio: seguir con 5 papas"; la partida sigue con 5 papas, sin las plagas que había y con la música del nivel. Si se pierde otra vez, ya no se ofrece.
+- [ ] Al salir del resultado de la tercera partida (sin recompensados) aparece un intersticial; al cerrarlo, sigue lo que se tocó.
+- [ ] Sin internet: no aparecen botones de anuncios y el juego funciona igual.
+- [ ] Con `UMP_TEST_DEVICE` (como en Europa): aparece el formulario de consentimiento y, en Ajustes, "Opciones de privacidad".
+
 ## Accesibilidad
 
 - [ ] **Letra grande**: Ajustes de Android → Pantalla → Tamaño de fuente al máximo. Los menús crecen hasta el doble sin cortarse; el HUD y los menús de la partida crecen un poco (hasta 1,3) y no tapan el mapa.

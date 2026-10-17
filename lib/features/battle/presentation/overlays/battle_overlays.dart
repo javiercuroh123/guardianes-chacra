@@ -127,10 +127,21 @@ class VictoryOverlay extends StatelessWidget {
 }
 
 class DefeatOverlay extends StatelessWidget {
-  const new({required this.onRetry, required this.onExit, super.key});
+  const new({
+    required this.onRetry,
+    required this.onExit,
+    this.onRevive,
+    this.revivePotatoes = 0,
+    super.key,
+  });
 
   final VoidCallback onRetry;
   final VoidCallback onExit;
+
+  /// Ver un anuncio para seguir con [revivePotatoes] papas. Sin él (no hay
+  /// anuncio cargado o ya se revivió), no hay botón.
+  final VoidCallback? onRevive;
+  final int revivePotatoes;
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +149,13 @@ class DefeatOverlay extends StatelessWidget {
     return _OverlayCard(
       title: l10n.battleLost,
       actions: [
+        if (onRevive case final onRevive?)
+          OutlinedButton.icon(
+            key: const ValueKey('battle-revive'),
+            icon: const Icon(Icons.ondemand_video),
+            onPressed: onRevive,
+            label: Text(l10n.adRevive(revivePotatoes)),
+          ),
         OutlinedButton(
           key: const ValueKey('battle-exit'),
           onPressed: onExit,

@@ -24,6 +24,8 @@ flutter test test/features/content
 assets/content/
 ├─ index.json          idiomas y lista ordenada de guardianes, plagas y niveles
 ├─ rules.json          reglas generales de combate
+├─ audio.json          música de los menús y efectos de sonido
+├─ ads.json            recompensas de los anuncios y cada cuánto aparecen
 ├─ guardians/<id>.json
 ├─ pests/<id>.json
 ├─ levels/<id>.json
@@ -135,6 +137,16 @@ Cada oleada:
 |---|---|---|
 | `menuMusic` | texto | Música de los menús (ruta dentro de `assets/audio/`). |
 | `sfx` | objeto | Efecto → archivo. Efectos: `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat`, `boss`. Uno que falta no suena. |
+
+## ads.json
+
+Valores de los anuncios (Fase 10; cómo funcionan en `docs/MONETIZACION.md`). Un 0 apaga esa parte.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `rewardedStartCorn` | entero ≥ 0 | Maíz extra al empezar un nivel después de ver un anuncio recompensado. |
+| `rewardedRevivePotatoes` | entero ≥ 0 | Papas con las que sigue la partida al revivir después de perder (una vez por partida). |
+| `interstitialEveryLevels` | entero ≥ 0 | Como máximo un anuncio intersticial cada tantas partidas terminadas (ganadas o perdidas). |
 
 ## Desbloqueos
 

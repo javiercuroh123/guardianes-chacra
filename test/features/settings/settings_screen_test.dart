@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/app.dart';
 import 'package:guardianes_chacra/features/settings/domain/settings.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
 
+import '../../helpers/fake_ads_service.dart';
 import '../../helpers/test_app.dart';
 
 void main() {
@@ -51,5 +53,28 @@ void main() {
     await tester.tap(find.text("Phone's language"));
     await tester.pumpAndSettle();
     expect(find.text('Ajustes'), findsOneWidget);
+  });
+
+  testWidgets('las opciones de privacidad aparecen solo si la ley las pide', (
+    tester,
+  ) async {
+    final ads = FakeAdsService(rewardedReady: false);
+    await tester.pumpWidget(
+      testApp(
+        const SettingsScreen(),
+        overrides: [adsServiceProvider.overrideWithValue(ads)],
+      ),
+    );
+    final privacy = find.byKey(const ValueKey('settings-privacy'));
+    expect(privacy, findsNothing);
+
+    ads.status.value = ads.status.value.copyWith(privacyOptionsRequired: true);
+    await tester.pump();
+    await tester.ensureVisible(privacy);
+    await tester.pumpAndSettle();
+    await tester.tap(privacy);
+
+    expect(find.text('Opciones de privacidad'), findsOneWidget);
+    expect(ads.privacyOptionsShown, 1);
   });
 }

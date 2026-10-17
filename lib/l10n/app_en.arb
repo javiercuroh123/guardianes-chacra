@@ -73,5 +73,10 @@
   "settingsLanguage": "Language",
   "languageSystem": "Phone's language",
   "languageEs": "Español",
-  "languageEn": "English"
+  "languageEn": "English",
+  "adStartCorn": "Watch an ad: +{amount} corn",
+  "adRevive": "Watch an ad: keep going with {count} potatoes",
+  "adNotCompleted": "Watch the whole ad to get the reward.",
+  "settingsPrivacy": "Privacy options",
+  "settingsPrivacySubtitle": "Change your consent for ads"
 }
