@@ -1,3 +1,4 @@
+import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
 import 'package:meta/meta.dart';
 
 /// Tipos de daño. Cada plaga puede resistirlos o ser débil a ellos.
@@ -22,6 +23,8 @@ class PestDef {
     required this.tags,
     this.armor = 0,
     this.resistances = const {},
+    this.immunities = const {},
+    this.abilities = const [],
   });
 
   final String id;
@@ -30,7 +33,7 @@ class PestDef {
   /// Casillas por segundo.
   final double speed;
 
-  /// Armadura física. La fórmula de daño llega en la Fase 3.
+  /// Armadura física: se resta del daño físico (ver `damageDealt`).
   final double armor;
 
   /// Multiplicador de daño por tipo (0.5 = resiste la mitad, 2 = débil).
@@ -44,4 +47,10 @@ class PestDef {
   final int potatoDamage;
 
   final Set<PestTag> tags;
+
+  /// Tipos de efecto que no le afectan (por ejemplo, `{'slow'}`).
+  final Set<String> immunities;
+
+  /// Habilidades especiales (dividirse al morir, invocar…).
+  final List<BehaviorSpec> abilities;
 }

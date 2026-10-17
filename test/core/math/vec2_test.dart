@@ -6,6 +6,10 @@ void main() {
     expect(const Vec2(1, 1).distanceTo(const Vec2(4, 5)), 5);
   });
 
+  test('distanceSquaredTo es la distancia al cuadrado', () {
+    expect(const Vec2(1, 1).distanceSquaredTo(const Vec2(4, 5)), 25);
+  });
+
   test('lerp interpola entre dos puntos', () {
     const from = Vec2(2, 10);
     const to = Vec2(6, 2);

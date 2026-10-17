@@ -127,8 +127,21 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Llamar la siguiente oleada (`CallNextWave`) solo vale con cuenta regresiva activa y da `floor(segundos restantes × earlyCallCornPerSecond)`; si no, emite `CommandRejected(noWaveWaiting)`.
 - Las papas nunca bajan de 0. La derrota se evalúa antes que la victoria, en el mismo tick. Con la partida terminada, `step()` no hace nada.
 - La capa visual lee las plagas como `PestView` (solo lectura). La cuenta regresiva y la bonificación se leen del estado (`nextWaveCountdownTicks`, `earlyCallBonus`), no de eventos, porque cambian en cada tick.
-- `SeededRandom` (Mulberry32 en 32 bits) coincide con la implementación canónica de JavaScript; su test fija la secuencia de referencia. En la Fase 2 ninguna regla usa azar todavía.
+- `SeededRandom` (Mulberry32 en 32 bits) coincide con la implementación canónica de JavaScript; su test fija la secuencia de referencia (comprobado con `dart compile js` + `node`, porque `flutter test --platform chrome` no conecta en este equipo). Hasta la Fase 3 ninguna regla usa azar.
 - Los eventos (`sim_events.dart`) tienen igualdad por valor para poder comparar partidas completas en los tests.
+
+### Combate (Fase 3)
+- `GuardianDef.levels`: bloques completos (no diferencias). El primero se construye y los demás son mejoras; `cost` es lo que cuesta construir o mejorar a ese nivel. Después de la última mejora se elige una de `branches` con `SpecializeGuardian` (`UpgradeGuardian` responde `chooseBranch`).
+- `BattleRules` (`sellRefundRate`, `minDamageFraction`) son valores de balance; la simulación los recibe obligatoriamente. Vender devuelve `floor(totalSpent × sellRefundRate)`.
+- Daño (`damageDealt`): × resistencia del tipo × `bonusAgainst` por etiqueta; si es físico, `max(d − armadura, d × minDamageFraction)`. El fuego ignora la armadura.
+- Efectos: uno por tipo por plaga; cada efecto define su acumulación en `mergeInto` (ralentizar: gana el más fuerte, si es igual queda la duración mayor, uno más débil se ignora; quemar: mayor daño/s y duración máxima; aturdir: duración máxima). Un efecto aplicado en el tick T actúa en los ticks T+1…T+N. Inmunidades: `PestDef.immunities` con el `type` del efecto.
+- Auras (`attackSpeedBonusFor`): no se suman, gana la mayor. `Cooldown` empieza listo y descuenta `attackSpeedMultiplier` por tick.
+- Proyectiles teledirigidos: sin área solo dañan a su objetivo si sigue vivo; con `splashRadius` dañan a las plagas atacables (etiquetas del guardián que lo lanzó) cerca del impacto.
+- Composición: `BehaviorRegistry` (estrategias, comportamientos de guardián, efectos y habilidades) + `BehaviorParams` (errores con el formato `tipo: detalle`). Los de serie se registran en `core_behaviors.dart`. Los comportamientos solo hablan con el motor a través de `BattleContext`; `Simulation` lo implementa en un objeto privado para que la capa visual no pueda llamar a `hit` ni a `spawnPest`.
+- Toda plaga nueva (de la oleada, dividida o invocada) y todo proyectil nuevo empiezan a moverse en el tick siguiente. Los trozos y las invocadas cuentan para la oleada de su madre. El orden completo de un tick está documentado en `Simulation`.
+- `Simulation` valida al crearse los comportamientos y la estrategia por defecto de cada guardián, las habilidades de las plagas (y las plagas que crean) y los espacios con id repetido.
+- Los comandos están en `simulation_commands.dart` (`part` + extensión `_Commands`); `step()` la llama con `this._applyCommands()`.
+- En los tests de la simulación, acotar todo `while` con un máximo de ticks (si la partida termina, `step()` no avanza y el bucle no sale) y usar `flutter test --timeout 30s`.
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.

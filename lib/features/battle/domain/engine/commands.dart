@@ -5,8 +5,8 @@ import 'package:meta/meta.dart';
 /// del tick siguiente. Con la semilla y la lista de comandos (con su tick)
 /// se puede reproducir una partida completa.
 ///
-/// Es `sealed`: en la Fase 3 llegan construir, mejorar, vender y cambiar la
-/// estrategia de apuntado, y el compilador avisará dónde falta manejarlos.
+/// Es `sealed`: si se agrega un comando, el compilador avisa dónde falta
+/// manejarlo.
 @immutable
 sealed class PlayerCommand {
   const new();
@@ -25,4 +25,98 @@ final class CallNextWave extends PlayerCommand {
 
   @override
   String toString() => 'CallNextWave';
+}
+
+/// Construye un guardián de tipo [guardianType] en el espacio [slotId].
+final class BuildGuardian extends PlayerCommand {
+  const new({required this.slotId, required this.guardianType});
+
+  final String slotId;
+  final String guardianType;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BuildGuardian &&
+      other.slotId == slotId &&
+      other.guardianType == guardianType;
+
+  @override
+  int get hashCode => Object.hash(slotId, guardianType);
+
+  @override
+  String toString() => 'BuildGuardian($guardianType en $slotId)';
+}
+
+/// Mejora el guardián [guardianId] a su siguiente nivel.
+final class UpgradeGuardian extends PlayerCommand {
+  const new(this.guardianId);
+
+  final int guardianId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is UpgradeGuardian && other.guardianId == guardianId;
+
+  @override
+  int get hashCode => Object.hash(UpgradeGuardian, guardianId);
+
+  @override
+  String toString() => 'UpgradeGuardian(#$guardianId)';
+}
+
+/// Elige la rama [branchId] de la especialización final de [guardianId].
+final class SpecializeGuardian extends PlayerCommand {
+  const new(this.guardianId, {required this.branchId});
+
+  final int guardianId;
+  final String branchId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SpecializeGuardian &&
+      other.guardianId == guardianId &&
+      other.branchId == branchId;
+
+  @override
+  int get hashCode => Object.hash(guardianId, branchId);
+
+  @override
+  String toString() => 'SpecializeGuardian(#$guardianId → $branchId)';
+}
+
+/// Vende el guardián [guardianId] y libera su espacio.
+final class SellGuardian extends PlayerCommand {
+  const new(this.guardianId);
+
+  final int guardianId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SellGuardian && other.guardianId == guardianId;
+
+  @override
+  int get hashCode => Object.hash(SellGuardian, guardianId);
+
+  @override
+  String toString() => 'SellGuardian(#$guardianId)';
+}
+
+/// Cambia la estrategia de apuntado de [guardianId] a [strategy].
+final class SetTargeting extends PlayerCommand {
+  const new(this.guardianId, {required this.strategy});
+
+  final int guardianId;
+  final String strategy;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SetTargeting &&
+      other.guardianId == guardianId &&
+      other.strategy == strategy;
+
+  @override
+  int get hashCode => Object.hash(guardianId, strategy);
+
+  @override
+  String toString() => 'SetTargeting(#$guardianId → $strategy)';
 }

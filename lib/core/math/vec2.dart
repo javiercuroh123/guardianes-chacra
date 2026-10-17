@@ -21,6 +21,14 @@ class Vec2 {
     return math.sqrt(dx * dx + dy * dy);
   }
 
+  /// Para comparar distancias (por ejemplo, "¿está en el alcance?") no hace
+  /// falta la raíz: basta comparar con el alcance al cuadrado.
+  double distanceSquaredTo(Vec2 other) {
+    final dx = other.x - x;
+    final dy = other.y - y;
+    return dx * dx + dy * dy;
+  }
+
   /// Punto a una fracción [t] del camino hacia [to] (0 = aquí, 1 = [to]).
   Vec2 lerp(Vec2 to, double t) => Vec2(x + (to.x - x) * t, y + (to.y - y) * t);
 

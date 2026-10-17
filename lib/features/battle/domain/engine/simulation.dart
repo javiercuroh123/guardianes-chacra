@@ -1,15 +1,28 @@
 import 'dart:collection';
+import 'dart:math' as math;
 
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/math/seeded_random.dart';
+import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/features/battle/domain/behaviors/attacks/guardian_behavior.dart';
+import 'package:guardianes_chacra/features/battle/domain/behaviors/damage.dart';
+import 'package:guardianes_chacra/features/battle/domain/behaviors/effects/status_effect.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/battle_context.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/sim_time.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
+import 'package:guardianes_chacra/features/battle/domain/registry/behavior_registry.dart';
 import 'package:guardianes_chacra/features/battle/domain/waves/wave_spawner.dart';
+import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/path_track.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/pest.dart';
+import 'package:guardianes_chacra/features/battle/domain/world/projectile.dart';
+import 'package:guardianes_chacra/features/content/domain/battle_rules.dart';
+import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+
+part 'simulation_commands.dart';
 
 enum BattleStatus { playing, won, lost }
 
@@ -17,18 +30,35 @@ enum BattleStatus { playing, won, lost }
 /// pantalla: avanza exactamente un tick con cada [step] y publica en
 /// [events] lo que ocurre.
 ///
-/// Orden dentro de un tick: comandos del jugador → movimiento y llegadas a
-/// la collca → derrota → nuevas plagas → oleadas completadas → victoria.
+/// Orden dentro de un tick:
+/// 1. Comandos del jugador.
+/// 2. Efectos de estado (la quemadura hace su daño).
+/// 3. Habilidades de las plagas (invocar).
+/// 4. Movimiento, llegadas a la collca y fin de los efectos que vencen.
+/// 5. Derrota.
+/// 6. Proyectiles en vuelo (impactos).
+/// 7. Auras y ataques de los guardianes, en el orden en que se construyeron.
+/// 8. Plagas derrotadas (maíz y habilidades al morir, como dividirse).
+/// 9. Plagas nuevas: las creadas en este tick y las de la oleada.
+/// 10. Oleadas completadas y victoria.
+///
+/// Toda plaga o proyectil nuevo empieza a moverse en el tick siguiente.
 class Simulation {
   new({
     required LevelDef level,
     required Map<String, PestDef> pests,
+    required this._rules,
     required int seed,
+    Map<String, GuardianDef> guardians = const {},
+    BehaviorRegistry? registry,
     EventBus<SimEvent>? events,
   }) : events = events ?? EventBus<SimEvent>(),
        random = SeededRandom(seed),
        _level = level,
+       _registry = registry ?? BehaviorRegistry.withDefaults(),
        _pestDefs = Map.unmodifiable(pests),
+       _guardianDefs = Map.unmodifiable(guardians),
+       _slots = {for (final slot in level.buildSlots) slot.id: slot},
        _tracks = {
          for (final path in level.paths) path.id: PathTrack(path.points),
        },
@@ -42,26 +72,41 @@ class Simulation {
 
   final EventBus<SimEvent> events;
 
-  /// Azar con semilla para los comportamientos que lo necesiten (Fase 3).
-  /// Con la misma semilla y los mismos comandos, la partida se repite igual.
+  /// Azar con semilla para los comportamientos que lo necesiten. Con la
+  /// misma semilla y los mismos comandos, la partida se repite igual.
   final SeededRandom random;
 
   final LevelDef _level;
+  final BattleRules _rules;
+  final BehaviorRegistry _registry;
   final Map<String, PestDef> _pestDefs;
+  final Map<String, GuardianDef> _guardianDefs;
+  final Map<String, BuildSlotDef> _slots;
   final Map<String, PathTrack> _tracks;
   final WaveSpawner _spawner;
   final List<Pest> _pests = [];
+  final List<Guardian> _guardians = [];
+  final List<Projectile> _projectiles = [];
   final List<PlayerCommand> _commands = [];
+
+  /// Plagas creadas durante el tick (divididas o invocadas). Entran al
+  /// juego en el paso de plagas nuevas.
+  final List<Pest> _newborn = [];
 
   /// Plagas vivas de cada oleada: una oleada se completa cuando ya
   /// aparecieron todas y este número llega a 0.
   final List<int> _aliveByWave;
   final List<bool> _completedWaves;
 
+  /// La única puerta de los comportamientos hacia la simulación.
+  late final BattleContext _context = _SimulationContext(this);
+
   int _tick = 0;
   int _corn;
   int _potatoes;
-  int _nextEntityId = 1;
+  int _nextPestId = 1;
+  int _nextGuardianId = 1;
+  int _nextProjectileId = 1;
   BattleStatus _status = BattleStatus.playing;
 
   int get tick => _tick;
@@ -69,6 +114,13 @@ class Simulation {
   int get potatoes => _potatoes;
   BattleStatus get status => _status;
   List<PestView> get pests => UnmodifiableListView(_pests);
+
+  /// Guardianes construidos, en el orden en que se construyeron (también
+  /// es el orden en que atacan).
+  List<GuardianView> get guardians => UnmodifiableListView(_guardians);
+
+  List<ProjectileView> get projectiles => UnmodifiableListView(_projectiles);
+
   int get totalWaves => _spawner.totalWaves;
   int get startedWaves => _spawner.startedWaves;
 
@@ -84,6 +136,10 @@ class Simulation {
     return (bonus + 1e-9).floor();
   }
 
+  /// Maíz que devolvería vender [guardian] ahora (redondeado hacia abajo).
+  int sellValueOf(GuardianView guardian) =>
+      (guardian.totalSpent * _rules.sellRefundRate + 1e-9).floor();
+
   /// Encola un comando del jugador; se aplica al inicio del siguiente tick.
   void enqueue(PlayerCommand command) => _commands.add(command);
 
@@ -91,13 +147,22 @@ class Simulation {
     if (_status != BattleStatus.playing) return;
     _tick++;
 
-    _applyCommands();
+    // `this.` hace falta: los comandos viven en una extensión (en
+    // simulation_commands.dart) y Dart no busca extensiones sin él.
+    // ignore: unnecessary_this
+    this._applyCommands();
+    _tickEffects();
+    _tickAbilities();
     _movePests();
     if (_potatoes == 0) {
       _status = BattleStatus.lost;
       events.publish(LevelLost(_tick));
       return;
     }
+    _moveProjectiles();
+    _applyAuras();
+    _guardiansAct();
+    _resolveDeaths();
     _spawnPests();
     _completeWaves();
     if (_completedWaves.every((completed) => completed)) {
@@ -106,52 +171,44 @@ class Simulation {
     }
   }
 
-  void _applyCommands() {
-    final commands = List.of(_commands);
-    _commands.clear();
-    for (final command in commands) {
-      switch (command) {
-        case CallNextWave():
-          _callNextWave(command);
-      }
+  void _tickEffects() {
+    for (final pest in _pests) {
+      if (pest.isAlive) pest.tickEffects(_context);
     }
   }
 
-  void _callNextWave(CallNextWave command) {
-    final bonus = earlyCallBonus;
-    final waveNumber = _spawner.startedWaves + 1;
-    if (_spawner.callNextWave() == null) {
-      events.publish(
-        CommandRejected(
-          _tick,
-          command: command,
-          reason: RejectionReason.noWaveWaiting,
-        ),
-      );
-      return;
+  void _tickAbilities() {
+    for (final pest in _pests) {
+      if (!pest.isAlive) continue;
+      for (final ability in pest.abilities) {
+        ability.onTick(pest, _context);
+      }
     }
-    events.publish(
-      WaveStarted(_tick, waveNumber: waveNumber, calledEarly: true),
-    );
-    _earnCorn(bonus);
   }
 
   void _movePests() {
     // Compacta la lista en el mismo recorrido: las que llegan a la collca
-    // se quitan sin crear una lista nueva en cada tick.
+    // se quitan sin crear una lista nueva en cada tick. Las derrotadas en
+    // este tick (por ejemplo, por la quemadura) no se mueven; se retiran
+    // en `_resolveDeaths`.
     var kept = 0;
     for (final pest in _pests) {
-      pest.advance();
-      if (pest.reachedCollca) {
-        _reachCollca(pest);
-      } else {
-        _pests[kept++] = pest;
+      if (pest.isAlive) {
+        pest
+          ..advance()
+          ..expireEffects();
+        if (pest.reachedCollca) {
+          _reachCollca(pest);
+          continue;
+        }
       }
+      _pests[kept++] = pest;
     }
     _pests.length = kept;
   }
 
   void _reachCollca(Pest pest) {
+    pest.removed = true;
     final lost = pest.def.potatoDamage.clamp(0, _potatoes);
     _potatoes -= lost;
     _aliveByWave[pest.wave]--;
@@ -165,7 +222,104 @@ class Simulation {
     );
   }
 
+  void _moveProjectiles() {
+    var kept = 0;
+    for (final projectile in _projectiles) {
+      if (projectile.advance()) {
+        _impact(projectile);
+      } else {
+        _projectiles[kept++] = projectile;
+      }
+    }
+    _projectiles.length = kept;
+  }
+
+  /// Un proyectil sin área golpea solo a su objetivo (si sigue vivo); uno
+  /// con área golpea a todas las plagas atacables cerca del impacto.
+  void _impact(Projectile projectile) {
+    events.publish(
+      ProjectileImpacted(
+        _tick,
+        projectileId: projectile.id,
+        position: projectile.position,
+      ),
+    );
+    final shot = projectile.shot;
+    final victims = shot.splashRadius > 0
+        ? _attackable(
+            projectile.targets,
+            center: projectile.position,
+            radius: shot.splashRadius,
+          )
+        : [if (projectile.target.isAlive) projectile.target];
+    for (final pest in victims) {
+      _hit(pest, shot.hit);
+      for (final effect in shot.onHit) {
+        _applyEffect(pest, effect);
+      }
+    }
+  }
+
+  /// Cada guardián recibe la mayor bonificación de las auras que lo
+  /// alcanzan: no se suman.
+  void _applyAuras() {
+    for (final guardian in _guardians) {
+      var bonus = 0.0;
+      for (final source in _guardians) {
+        for (final behavior in source.behaviors) {
+          bonus = math.max(
+            bonus,
+            behavior.attackSpeedBonusFor(source, guardian),
+          );
+        }
+      }
+      guardian.attackSpeedMultiplier = 1 + bonus;
+    }
+  }
+
+  void _guardiansAct() {
+    for (final guardian in _guardians) {
+      for (final behavior in guardian.behaviors) {
+        behavior.act(guardian, _context);
+      }
+    }
+  }
+
+  void _resolveDeaths() {
+    final defeated = <Pest>[];
+    var kept = 0;
+    for (final pest in _pests) {
+      if (pest.health <= 0) {
+        defeated.add(pest);
+      } else {
+        _pests[kept++] = pest;
+      }
+    }
+    _pests.length = kept;
+
+    for (final pest in defeated) {
+      pest.removed = true;
+      _aliveByWave[pest.wave]--;
+      events.publish(
+        PestDefeated(
+          _tick,
+          pestId: pest.id,
+          pestType: pest.def.id,
+          reward: pest.def.cornReward,
+        ),
+      );
+      _earnCorn(pest.def.cornReward);
+      for (final ability in pest.abilities) {
+        ability.onDeath(pest, _context);
+      }
+    }
+  }
+
   void _spawnPests() {
+    _newborn
+      ..forEach(_addPest)
+      ..clear();
+
     final update = _spawner.tick();
     if (update.startedWave case final wave?) {
       events.publish(
@@ -173,23 +327,46 @@ class Simulation {
       );
     }
     for (final order in update.spawns) {
-      final pest = Pest(
-        id: _nextEntityId++,
-        def: _pestDefs[order.pestId]!,
-        wave: order.wave,
-        track: _tracks[order.pathId]!,
-      );
-      _pests.add(pest);
       _aliveByWave[order.wave]++;
-      events.publish(
-        PestSpawned(
-          _tick,
-          pestId: pest.id,
-          pestType: order.pestId,
+      _addPest(
+        _createPest(
+          _pestDefs[order.pestId]!,
+          wave: order.wave,
           pathId: order.pathId,
+          track: _tracks[order.pathId]!,
         ),
       );
     }
+  }
+
+  Pest _createPest(
+    PestDef def, {
+    required int wave,
+    required String pathId,
+    required PathTrack track,
+    double distance = 0,
+  }) => Pest(
+    id: _nextPestId++,
+    def: def,
+    wave: wave,
+    pathId: pathId,
+    track: track,
+    distance: distance,
+    abilities: [
+      for (final spec in def.abilities) _registry.createAbility(spec),
+    ],
+  );
+
+  void _addPest(Pest pest) {
+    _pests.add(pest);
+    events.publish(
+      PestSpawned(
+        _tick,
+        pestId: pest.id,
+        pestType: pest.def.id,
+        pathId: pest.pathId,
+      ),
+    );
   }
 
   void _completeWaves() {
@@ -208,16 +385,125 @@ class Simulation {
     }
   }
 
+  // --- Mecánicas que usan los comportamientos (vía `_SimulationContext`).
+
+  /// Plagas vivas con alguna etiqueta de [tags] a [radius] o menos de
+  /// [center].
+  List<Pest> _attackable(
+    Set<PestTag> tags, {
+    required Vec2 center,
+    required double radius,
+  }) {
+    final maxDistanceSquared = radius * radius + 1e-9;
+    return [
+      for (final pest in _pests)
+        if (pest.isAlive &&
+            pest.def.tags.any(tags.contains) &&
+            center.distanceSquaredTo(pest.position) <= maxDistanceSquared)
+          pest,
+    ];
+  }
+
+  void _hit(Pest pest, Hit hit) {
+    if (!pest.isAlive) return;
+    final amount = damageDealt(hit, pest.def, _rules);
+    pest.health -= amount;
+    events.publish(
+      PestDamaged(
+        _tick,
+        pestId: pest.id,
+        amount: amount,
+        damageType: hit.type,
+      ),
+    );
+  }
+
+  void _applyEffect(Pest pest, StatusEffect effect) {
+    if (pest.isAlive) pest.applyEffect(effect);
+  }
+
+  void _launchProjectile(Guardian from, Pest target, ProjectileShot shot) {
+    final projectile = Projectile(
+      id: _nextProjectileId++,
+      guardianId: from.id,
+      position: from.position,
+      target: target,
+      shot: shot,
+      targets: from.targets,
+    );
+    _projectiles.add(projectile);
+    events.publish(
+      GuardianFired(
+        _tick,
+        guardianId: from.id,
+        pestId: target.id,
+        projectileId: projectile.id,
+      ),
+    );
+  }
+
+  void _spawnFrom(Pest parent, String pestId, double distance) {
+    _aliveByWave[parent.wave]++;
+    _newborn.add(
+      _createPest(
+        _pestDefs[pestId]!,
+        wave: parent.wave,
+        pathId: parent.pathId,
+        track: parent.track,
+        distance: distance,
+      ),
+    );
+  }
+
   void _earnCorn(int amount) {
     if (amount == 0) return;
     _corn += amount;
     events.publish(CornChanged(_tick, delta: amount, total: _corn));
   }
 
-  /// Falla al crear la partida (y no a mitad de ella) si una oleada usa una
-  /// plaga o un camino que no existen. La Fase 4 valida los JSON con
-  /// mensajes más detallados; esto protege al motor.
+  void _spendCorn(int amount) {
+    if (amount == 0) return;
+    _corn -= amount;
+    events.publish(CornChanged(_tick, delta: -amount, total: _corn));
+  }
+
+  // --- Validación de los datos al crear la partida.
+
+  /// Falla al crear la partida (y no a mitad de ella) si los datos hacen
+  /// referencia a algo que no existe o a un comportamiento mal definido.
+  /// La Fase 4 valida los JSON con mensajes por archivo; esto protege al
+  /// motor.
   void _validate() {
+    if (_slots.length != _level.buildSlots.length) {
+      throw ArgumentError('Hay espacios de construcción con el mismo id.');
+    }
+    for (final def in _guardianDefs.values) {
+      if (def.levels.isEmpty) {
+        throw ArgumentError('El guardián "${def.id}" no tiene niveles.');
+      }
+      _withContext('El guardián "${def.id}"', () {
+        _registry.targeting(def.defaultTargeting);
+        [
+          ...def.levels,
+          for (final branch in def.branches) branch.level,
+        ].forEach(_createBehaviors);
+      });
+    }
+    for (final def in _pestDefs.values) {
+      for (final spec in def.abilities) {
+        final ability = _withContext(
+          'La plaga "${def.id}"',
+          () => _registry.createAbility(spec),
+        );
+        for (final pestId in ability.spawnsPests) {
+          if (!_pestDefs.containsKey(pestId)) {
+            throw ArgumentError(
+              'La plaga "${def.id}" crea la plaga "$pestId", que no existe.',
+            );
+          }
+        }
+      }
+    }
     for (final (index, wave) in _level.waves.indexed) {
       for (final group in wave.groups) {
         if (!_pestDefs.containsKey(group.pestId)) {
@@ -235,4 +521,63 @@ class Simulation {
       }
     }
   }
+
+  List<GuardianBehavior> _createBehaviors(GuardianLevelDef level) => [
+    for (final spec in level.behaviors) _registry.createGuardianBehavior(spec),
+  ];
+
+  /// Antepone [context] al mensaje de un error de datos de comportamiento.
+  static T _withContext<T>(String context, T Function() action) {
+    try {
+      return action();
+    } on BehaviorDataError catch (error) {
+      throw BehaviorDataError('$context: ${error.message}');
+    }
+  }
+}
+
+/// Lo que ven los comportamientos de la simulación. Es un objeto aparte
+/// para que la capa visual, que solo recibe la [Simulation], no pueda
+/// llamar a `hit` ni a `spawnPest`.
+class _SimulationContext implements BattleContext {
+  new(this._simulation);
+
+  final Simulation _simulation;
+
+  @override
+  int get tick => _simulation._tick;
+
+  @override
+  SeededRandom get random => _simulation.random;
+
+  @override
+  List<Pest> targetsFor(Guardian guardian) => _simulation._attackable(
+    guardian.targets,
+    center: guardian.position,
+    radius: guardian.range,
+  );
+
+  @override
+  void launchProjectile({
+    required Guardian from,
+    required Pest target,
+    required ProjectileShot shot,
+  }) => _simulation._launchProjectile(from, target, shot);
+
+  @override
+  void hit(Pest pest, Hit hit) => _simulation._hit(pest, hit);
+
+  @override
+  void applyEffect(Pest pest, StatusEffect effect) =>
+      _simulation._applyEffect(pest, effect);
+
+  @override
+  void spawnPest(
+    String pestId, {
+    required Pest from,
+    required double distance,
+  }) => _simulation._spawnFrom(from, pestId, distance);
+
+  @override
+  void publish(SimEvent event) => _simulation.events.publish(event);
 }

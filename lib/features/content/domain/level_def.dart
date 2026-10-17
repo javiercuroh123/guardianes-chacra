@@ -11,6 +11,7 @@ class LevelDef {
     required this.earlyCallCornPerSecond,
     required this.paths,
     required this.waves,
+    this.buildSlots = const [],
   });
 
   final int startingCorn;
@@ -22,6 +23,20 @@ class LevelDef {
 
   final List<PathDef> paths;
   final List<WaveDef> waves;
+
+  /// Espacios fijos donde se puede construir un guardián.
+  final List<BuildSlotDef> buildSlots;
+}
+
+/// Un espacio de construcción del mapa.
+@immutable
+class BuildSlotDef {
+  const new({required this.id, required this.position});
+
+  final String id;
+
+  /// En casillas del mapa.
+  final Vec2 position;
 }
 
 /// Camino que siguen las plagas, de la entrada a la collca.

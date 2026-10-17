@@ -11,7 +11,7 @@ import '../../../../helpers/battle_fixtures.dart';
 // en el tick 30; la plaga empieza a moverse en el tick 31.
 
 Simulation _simulation(LevelDef level, {int seed = 1}) =>
-    Simulation(level: level, pests: pestCatalog, seed: seed);
+    Simulation(level: level, pests: pestCatalog, rules: testRules, seed: seed);
 
 List<SimEvent> _record(Simulation simulation) {
   final events = <SimEvent>[];

@@ -1,4 +1,6 @@
+import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
+import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
 import 'package:meta/meta.dart';
 
 /// Algo que ocurrió en la simulación. Se publica en el bus de eventos en el
@@ -148,10 +150,205 @@ final class LevelLost extends SimEvent {
   List<Object?> get _fields => const [];
 }
 
+/// Se construyó el guardián [guardianId] en el espacio [slotId].
+final class GuardianBuilt extends SimEvent {
+  const new(
+    super.tick, {
+    required this.guardianId,
+    required this.guardianType,
+    required this.slotId,
+  });
+
+  final int guardianId;
+  final String guardianType;
+  final String slotId;
+
+  @override
+  String get _name => 'GuardianBuilt';
+
+  @override
+  List<Object?> get _fields => [guardianId, guardianType, slotId];
+}
+
+/// El guardián [guardianId] subió al nivel [level] (contando desde 1).
+final class GuardianUpgraded extends SimEvent {
+  const new(super.tick, {required this.guardianId, required this.level});
+
+  final int guardianId;
+  final int level;
+
+  @override
+  String get _name => 'GuardianUpgraded';
+
+  @override
+  List<Object?> get _fields => [guardianId, level];
+}
+
+/// El guardián [guardianId] eligió la rama [branchId].
+final class GuardianSpecialized extends SimEvent {
+  const new(super.tick, {required this.guardianId, required this.branchId});
+
+  final int guardianId;
+  final String branchId;
+
+  @override
+  String get _name => 'GuardianSpecialized';
+
+  @override
+  List<Object?> get _fields => [guardianId, branchId];
+}
+
+/// Se vendió el guardián [guardianId] por [refund] de maíz.
+final class GuardianSold extends SimEvent {
+  const new(super.tick, {required this.guardianId, required this.refund});
+
+  final int guardianId;
+  final int refund;
+
+  @override
+  String get _name => 'GuardianSold';
+
+  @override
+  List<Object?> get _fields => [guardianId, refund];
+}
+
+/// El guardián [guardianId] ahora apunta con la estrategia [strategy].
+final class TargetingChanged extends SimEvent {
+  const new(super.tick, {required this.guardianId, required this.strategy});
+
+  final int guardianId;
+  final String strategy;
+
+  @override
+  String get _name => 'TargetingChanged';
+
+  @override
+  List<Object?> get _fields => [guardianId, strategy];
+}
+
+/// El guardián [guardianId] lanzó el proyectil [projectileId] hacia la
+/// plaga [pestId] (la capa visual lo gira hacia ella).
+final class GuardianFired extends SimEvent {
+  const new(
+    super.tick, {
+    required this.guardianId,
+    required this.pestId,
+    required this.projectileId,
+  });
+
+  final int guardianId;
+  final int pestId;
+  final int projectileId;
+
+  @override
+  String get _name => 'GuardianFired';
+
+  @override
+  List<Object?> get _fields => [guardianId, pestId, projectileId];
+}
+
+/// El guardián [guardianId] lanzó un ataque en área a su alrededor.
+final class AreaPulsed extends SimEvent {
+  const new(super.tick, {required this.guardianId});
+
+  final int guardianId;
+
+  @override
+  String get _name => 'AreaPulsed';
+
+  @override
+  List<Object?> get _fields => [guardianId];
+}
+
+/// El proyectil [projectileId] impactó en [position] y desapareció.
+final class ProjectileImpacted extends SimEvent {
+  const new(super.tick, {required this.projectileId, required this.position});
+
+  final int projectileId;
+  final Vec2 position;
+
+  @override
+  String get _name => 'ProjectileImpacted';
+
+  @override
+  List<Object?> get _fields => [projectileId, position];
+}
+
+/// La plaga [pestId] recibió [amount] de daño de tipo [damageType] (ya
+/// descontadas su armadura y sus resistencias).
+final class PestDamaged extends SimEvent {
+  const new(
+    super.tick, {
+    required this.pestId,
+    required this.amount,
+    required this.damageType,
+  });
+
+  final int pestId;
+  final double amount;
+  final DamageType damageType;
+
+  @override
+  String get _name => 'PestDamaged';
+
+  @override
+  List<Object?> get _fields => [pestId, amount, damageType];
+}
+
+/// La plaga [pestId] fue derrotada y el jugador ganó [reward] de maíz.
+final class PestDefeated extends SimEvent {
+  const new(
+    super.tick, {
+    required this.pestId,
+    required this.pestType,
+    required this.reward,
+  });
+
+  final int pestId;
+  final String pestType;
+  final int reward;
+
+  @override
+  String get _name => 'PestDefeated';
+
+  @override
+  List<Object?> get _fields => [pestId, pestType, reward];
+}
+
 /// Por qué no se pudo aplicar un comando.
 enum RejectionReason {
   /// Se pidió la siguiente oleada, pero no hay ninguna en cuenta regresiva.
   noWaveWaiting,
+
+  /// No alcanza el maíz.
+  notEnoughCorn,
+
+  /// El espacio de construcción no existe en el nivel.
+  unknownSlot,
+
+  /// Ya hay un guardián en ese espacio.
+  slotOccupied,
+
+  /// No existe ese tipo de guardián.
+  unknownGuardianType,
+
+  /// No hay ningún guardián con ese id (quizás se vendió).
+  guardianNotFound,
+
+  /// Ya pasó todas las mejoras: falta elegir una rama.
+  chooseBranch,
+
+  /// Ya no tiene más mejoras.
+  maxLevel,
+
+  /// Todavía no llegó a la última mejora, o ya eligió una rama.
+  cannotSpecialize,
+
+  /// Esa rama no existe para este guardián.
+  unknownBranch,
+
+  /// No existe esa estrategia de apuntado.
+  unknownTargeting,
 }
 
 /// El comando [command] no se aplicó por [reason]. La interfaz puede
