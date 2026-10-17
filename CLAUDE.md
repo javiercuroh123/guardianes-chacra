@@ -37,7 +37,7 @@ Bestiario: enciclopedia donde se desbloquea la ficha de cada plaga y guardián a
 
 ## Mi entorno
 - Windows 10, VS Code, Flutter 3.47.2 (Dart 3.13.2). Dame los comandos de terminal para Windows (PowerShell).
-- Pruebo en Chrome mientras configuro Android (todavía no hay emulador ni celular; las licencias del Android SDK están sin aceptar). El rendimiento (60 FPS con 100+ plagas) solo se valida en un Android real de gama media.
+- Pruebo en un celular Android físico conectado por USB: Redmi Note 14 Pro (MediaTek Helio G100, 8 GB, Android 16, 2400×1080 = 853×384 dp en horizontal), id `9d6tcq9tz5jfdmrk`. También en Chrome. El rendimiento (60 FPS con 100+ plagas) se valida en ese celular.
 - applicationId: `com.javiercuroh.guardianeschacra` (permanente una vez publicado).
 - Soy estudiante de Ingeniería de Software con IA. Ya hice apps en Flutter con Firebase y Supabase, y un juego puzzle con Flame (Sabor Fusión, en `../sabor_fusion`); estoy aprendiendo Flame.
 
@@ -117,6 +117,18 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Flame + Riverpod sin `flame_riverpod`, como en Sabor Fusión: la pantalla de la partida conecta el juego con los providers; Flame no conoce Riverpod ni las reglas.
 - Lints: `very_good_analysis` (sin `public_member_api_docs` ni `discarded_futures`). TODOs con el formato `// TODO(fase-N): ...`.
 - En Windows, no editar archivos con `Get-Content`/`Set-Content` de PowerShell 5.1: los lee como ANSI y rompe los acentos UTF-8.
+- Sintaxis de Dart 3.13 que exige el lint: `const new(...)`, `const new _(...)`, `factory nombre(...)`, `this._campo` en parámetros con nombre (el que llama usa `campo:`) y, en los enums, `new(...)` sin `const`.
+
+### Simulación (Fase 2)
+- 30 ticks por segundo (`sim_time.dart`). El tiempo se cuenta en ticks enteros; los segundos de los datos se convierten una vez con `secondsToTicks` (redondeo).
+- Unidad del mundo = 1 casilla del mapa: velocidades en casillas/s y alcances en casillas.
+- Orden de un tick en `Simulation.step()`: comandos → movimiento y llegadas a la collca → derrota → nuevas plagas → oleadas completadas → victoria. Una plaga que aparece en el tick N empieza a moverse en el N+1.
+- Oleadas (`WaveSpawner`): la cuenta regresiva de la primera empieza con el nivel; la de las demás, cuando la anterior terminó de aparecer (no se superponen al aparecer). `delay` e `interval` de cada grupo se cuentan desde el inicio de la oleada. Una oleada se completa cuando aparecieron todas sus plagas y no queda ninguna viva; ahí se paga `reward`.
+- Llamar la siguiente oleada (`CallNextWave`) solo vale con cuenta regresiva activa y da `floor(segundos restantes × earlyCallCornPerSecond)`; si no, emite `CommandRejected(noWaveWaiting)`.
+- Las papas nunca bajan de 0. La derrota se evalúa antes que la victoria, en el mismo tick. Con la partida terminada, `step()` no hace nada.
+- La capa visual lee las plagas como `PestView` (solo lectura). La cuenta regresiva y la bonificación se leen del estado (`nextWaveCountdownTicks`, `earlyCallBonus`), no de eventos, porque cambian en cada tick.
+- `SeededRandom` (Mulberry32 en 32 bits) coincide con la implementación canónica de JavaScript; su test fija la secuencia de referencia. En la Fase 2 ninguna regla usa azar todavía.
+- Los eventos (`sim_events.dart`) tienen igualdad por valor para poder comparar partidas completas en los tests.
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.
