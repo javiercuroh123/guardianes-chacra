@@ -55,7 +55,27 @@ void main() {
     );
   });
 
+  test('lee el color opcional de guardianes y plagas', () async {
+    final fixture = ContentFixture()
+      ..guardians['hondero'] = {...honderoJson(), 'color': '#A0522D'};
+    final content = await ContentLoader(fixture.toSource()).load();
+
+    expect(content.guardians['hondero']!.color, 0xFFA0522D);
+    // Sin "color", la vista usa uno derivado del id.
+    expect(content.pests['gorgojo']!.color, isNull);
+  });
+
   group('errores claros', () {
+    test('un color mal escrito', () async {
+      final fixture = ContentFixture()
+        ..pests['gorgojo'] = {...gorgojoJson(), 'color': 'rojo'};
+
+      expect(
+        await errorOf(fixture),
+        'pests/gorgojo.json → color: debe ser un color #RRGGBB',
+      );
+    });
+
     test('una oleada con una plaga que no existe', () async {
       final fixture = ContentFixture()
         ..levels['prueba'] = levelJson(pest: 'gorgoja');

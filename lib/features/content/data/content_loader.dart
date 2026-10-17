@@ -112,7 +112,21 @@ class ContentLoader {
       },
       abilities: [for (final spec in node.listOr('abilities')) _spec(spec)],
       boss: node.boolOr('boss', fallback: false),
+      color: _color(node),
     );
+  }
+
+  static final _colorPattern = RegExp(r'^#[0-9A-Fa-f]{6}$');
+
+  /// `"color": "#RRGGBB"` (opcional) → ARGB opaco.
+  int? _color(JsonNode def) {
+    if (!def.has('color')) return null;
+    final node = def['color'];
+    final text = node.asString();
+    if (!_colorPattern.hasMatch(text)) {
+      throw node.error('debe ser un color #RRGGBB');
+    }
+    return 0xFF000000 | int.parse(text.substring(1), radix: 16);
   }
 
   Map<DamageType, double> _resistances(JsonNode pest) {
@@ -171,6 +185,7 @@ class ContentLoader {
       defaultTargeting: node.has('defaultTargeting')
           ? node.string('defaultTargeting')
           : 'first',
+      color: _color(node),
       levels: [for (final level in levels) _guardianLevel(level)],
       branches: [
         for (final branch in branches)

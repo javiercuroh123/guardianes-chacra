@@ -1,7 +1,8 @@
 {
-  "maxHealth": 90,
+  "color": "#263238",
+  "maxHealth": 80,
   "speed": 0.7,
-  "armor": 6,
+  "armor": 5,
   "resistances": { "fire": 1.5 },
   "cornReward": 10,
   "potatoDamage": 2,

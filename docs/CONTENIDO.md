@@ -59,6 +59,7 @@ assets/tiles/          mapas de Tiled (ver docs/TILED.md)
 | `immunities` | lista | no | Tipos de efecto que no le afectan, por ejemplo `["slow"]`. |
 | `abilities` | lista | no | Habilidades (ver abajo). |
 | `boss` | true/false | no (false) | La última oleada de cada nivel debe traer un jefe. |
+| `color` | `"#RRGGBB"` | no | Color de reemplazo para dibujarla hasta que tenga imagen (Fase 8). Sin él, se usa uno derivado del id. |
 
 Fórmula de daño: `daño × resistencia del tipo × bonus contra sus etiquetas`; si es físico, `max(daño − armadura, daño × minDamageFraction)`. El fuego ignora la armadura.
 
@@ -74,6 +75,7 @@ Fórmula de daño: `daño × resistencia del tipo × bonus contra sus etiquetas`
 | Campo | Tipo | Notas |
 |---|---|---|
 | `defaultTargeting` | texto | Estrategia inicial: `first`, `last`, `strongest` o `closest` (el jugador la cambia). Por defecto `first`. |
+| `color` | `"#RRGGBB"` | Opcional. Color de reemplazo hasta que tenga imagen; debe ser oscuro (contraste ≥ 3:1 con blanco) porque su inicial se dibuja en blanco. |
 | `levels` | lista (≥ 1) | El primero se construye; los siguientes son las mejoras, en orden. |
 | `branches` | lista (0 o ≥ 2) | La especialización final: después de la última mejora se elige una. Cada rama tiene además un `id`. |
 
@@ -149,11 +151,22 @@ Son valores de partida razonables para afinar con el simulador de balance (Fase 
 - **Hondero nivel 1** (60 de maíz): 8 de daño cada 0,8 s = 10 de daño/s, alcance 3. Cubre ~6 casillas del camino → ~6 s de disparo por plaga → derrota a unos 2 gorgojos por pasada. El resto de los costos se escala por "daño por maíz" y por lo que aporta cada efecto.
 - **Mejoras**: cada nivel sube el daño/s más que el costo, para que mejorar sea mejor que construir otro igual. Las ramas son caras y marcan un rol: más daño por golpe o más golpes.
 - **Contrapesos** (cada plaga tiene un guardián que la resuelve):
-  - Escarabajo (armadura 6, fuego ×1,5): el Hondero normal le hace 2 por piedra; lo resuelven la Tullpa o la Piedra pesada.
+  - Escarabajo (80 de vida, armadura 5, fuego ×1,5): el Hondero de nivel 1 le hace 3 por piedra; lo resuelven la Tullpa o la Piedra pesada.
   - Polilla (rápida, voladora): Hondero y Cóndor (×2,5 contra voladores). La Tullpa no la alcanza.
   - Langosta (enjambres de poca vida): daño en área (Tullpa, Llama).
   - Espíritu de la Helada (físico ×0,5, inmune a ralentizar, fuego ×1,5): la Tullpa.
   - Granizo (se parte en 3): área y fuego para los trozos.
-  - Rey Gorgojo (900 de vida, armadura 4, invoca gorgojos): necesita de todo; se come 10 de las 20 papas si llega.
+  - Rey Gorgojo (600 de vida, armadura 2, invoca 2 gorgojos cada 10 s): necesita de todo; se come 8 de las 20 papas si llega.
 - **Economía**: maíz inicial para 3 o 4 guardianes; las recompensas por plaga y por oleada alcanzan para un guardián o una mejora cada 1 o 2 oleadas. Llamar una oleada antes da 1,5 de maíz por segundo saltado.
 - **Niveles**: Chacra del Valle (10 oleadas, 1 camino) presenta las plagas de a poco; Andenes (12 oleadas, 2 caminos) agrega el Granizo y el Espíritu de la Helada; Orilla del Lago (15 oleadas) tiene más voladores.
+
+### Comprobación del nivel 1 (Fase 5)
+
+`test/features/content/level_balance_test.dart` juega la Chacra del Valle sin gráficos con planes fijos de construcción. Con los valores iniciales, el Rey Gorgojo (900 de vida, armadura 4) y el Escarabajo (armadura 6) hacían que incluso una defensa completa ganara con 1 papa, así que se bajaron a los valores de arriba y se subió la recompensa de las oleadas 7 a 9. Resultado actual:
+
+| Defensa | Resultado |
+|---|---|
+| Solo 3 Honderos | Pierde en la oleada 10 |
+| 3 Honderos + Tullpa + 2 mejoras | Pierde en la oleada 10 |
+| La mitad del plan de prueba | Gana con 9 papas |
+| Invertir todo el maíz | Gana con 20 papas |

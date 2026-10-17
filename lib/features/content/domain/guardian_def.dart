@@ -14,6 +14,7 @@ class GuardianDef {
     required this.levels,
     this.branches = const [],
     this.defaultTargeting = 'first',
+    this.color,
   });
 
   final String id;
@@ -22,6 +23,10 @@ class GuardianDef {
 
   /// Estrategia de apuntado con la que se construye (el jugador la cambia).
   final String defaultTargeting;
+
+  /// Color de reemplazo para dibujarlo (ARGB) mientras no tenga imagen.
+  /// Si falta, la vista usa uno derivado de su id.
+  final int? color;
 }
 
 /// Las estadísticas completas de un nivel (no las diferencias con el

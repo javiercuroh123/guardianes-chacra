@@ -34,6 +34,9 @@ abstract interface class ProjectileView {
   int get id;
   int get guardianId;
   Vec2 get position;
+
+  /// Radio del área del impacto en casillas (0 = sin área).
+  double get splashRadius;
 }
 
 /// Proyectil teledirigido: persigue a su objetivo y, si el objetivo muere
@@ -66,6 +69,9 @@ class Projectile implements ProjectileView {
 
   /// Etiquetas que puede golpear (las del guardián que lo lanzó).
   final Set<PestTag> targets;
+
+  @override
+  double get splashRadius => shot.splashRadius;
 
   /// Hacia dónde va: la posición actual del objetivo mientras vive.
   Vec2 _aim;

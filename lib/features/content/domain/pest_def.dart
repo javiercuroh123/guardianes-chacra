@@ -26,6 +26,7 @@ class PestDef {
     this.immunities = const {},
     this.abilities = const [],
     this.boss = false,
+    this.color,
   });
 
   final String id;
@@ -57,4 +58,8 @@ class PestDef {
 
   /// Es un jefe: la última oleada de cada nivel trae uno.
   final bool boss;
+
+  /// Color de reemplazo para dibujarla (ARGB) mientras no tenga imagen.
+  /// Si falta, la vista usa uno derivado de su id.
+  final int? color;
 }

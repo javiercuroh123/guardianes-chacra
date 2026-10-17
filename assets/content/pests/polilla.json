@@ -1,4 +1,5 @@
 {
+  "color": "#9575CD",
   "maxHealth": 16,
   "speed": 2.0,
   "cornReward": 3,

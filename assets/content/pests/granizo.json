@@ -1,4 +1,5 @@
 {
+  "color": "#ECEFF1",
   "maxHealth": 45,
   "speed": 1.0,
   "armor": 2,

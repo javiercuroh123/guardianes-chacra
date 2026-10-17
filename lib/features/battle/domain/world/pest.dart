@@ -19,6 +19,10 @@ abstract interface class PestView {
 
   /// Tipos de efecto activos ("slow", "burn"…), para dibujarlos.
   Iterable<String> get activeEffects;
+
+  /// Si tiene activo el efecto [type]. A diferencia de [activeEffects], no
+  /// crea objetos: sirve para consultarlo en cada frame.
+  bool hasEffect(String type);
 }
 
 /// Una plaga en juego. Solo la simulación y los comportamientos la
@@ -85,6 +89,9 @@ class Pest implements PestView {
   }
 
   ActiveEffect? effect(String type) => _effects[type];
+
+  @override
+  bool hasEffect(String type) => _effects.containsKey(type);
 
   /// Aplica [effect] con su regla de acumulación. Devuelve `false` si la
   /// plaga es inmune.

@@ -1,4 +1,5 @@
 {
+  "color": "#B0BEC5",
   "maxHealth": 10,
   "speed": 1.4,
   "resistances": { "fire": 1.25 },

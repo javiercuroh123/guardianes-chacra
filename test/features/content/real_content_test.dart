@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
@@ -64,6 +65,24 @@ void main() {
         lastWavePests.any((pest) => pest.boss),
         isTrue,
         reason: level.id,
+      );
+    }
+  });
+
+  test('cada guardián tiene su color, distinto y legible con texto blanco', () {
+    final colors = [
+      for (final guardian in content.guardians.values) guardian.color,
+    ];
+
+    expect(colors, everyElement(isNotNull));
+    expect(colors.toSet(), hasLength(colors.length));
+    for (final guardian in content.guardians.values) {
+      // Su inicial se dibuja en blanco encima: contraste mínimo 3:1.
+      final luminance = Color(guardian.color!).computeLuminance();
+      expect(
+        1.05 / (luminance + 0.05),
+        greaterThanOrEqualTo(3),
+        reason: guardian.id,
       );
     }
   });

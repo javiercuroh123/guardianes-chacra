@@ -73,6 +73,17 @@ void main() {
     });
   });
 
+  test('hasEffect dice si la plaga tiene un efecto activo', () {
+    final pest = _pest()
+      ..applyEffect(const SlowEffect(factor: 0.5, durationTicks: 1));
+
+    expect(pest.hasEffect('slow'), isTrue);
+    expect(pest.hasEffect('burn'), isFalse);
+
+    pest.expireEffects();
+    expect(pest.hasEffect('slow'), isFalse);
+  });
+
   test('un efecto dura exactamente su duración en ticks', () {
     final pest = _pest()
       ..applyEffect(const SlowEffect(factor: 0.5, durationTicks: 3))

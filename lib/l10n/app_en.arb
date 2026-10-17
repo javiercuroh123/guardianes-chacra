@@ -1,5 +1,25 @@
 {
   "@@locale": "en",
   "appTitle": "Guardians of the Chacra",
-  "tagline": "Defend the collca's harvest!"
+  "tagline": "Defend the collca's harvest!",
+  "titlePlay": "Play",
+  "contentLoadError": "The game content could not be loaded:\n{message}",
+  "hudCorn": "Corn: {amount}",
+  "hudPotatoes": "Potatoes in the collca: {amount}",
+  "hudWave": "Wave {current}/{total}",
+  "battleWon": "The harvest is safe!",
+  "battleLost": "The collca is empty",
+  "battleRetry": "Retry",
+  "battleExit": "Exit",
+  "menuBuild": "Build {name}: {cost} corn",
+  "menuUpgrade": "Upgrade",
+  "menuSell": "Sell",
+  "menuTargeting": "Target",
+  "menuConfirmHint": "Tap again to confirm",
+  "targetingFirst": "First",
+  "targetingLast": "Last",
+  "targetingStrongest": "Strongest",
+  "targetingClosest": "Closest",
+  "rejectNotEnoughCorn": "Not enough corn",
+  "rejectGeneric": "You can't do that right now"
 }

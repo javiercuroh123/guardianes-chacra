@@ -155,6 +155,19 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Textos del contenido: claves de `ContentTexts` (`pest.<id>.name`, `guardian.<id>.branch.<rama>.description`…). `es.json` es el idioma base y lleva las notas `"@clave": {"revisar": ...}` de los datos reales.
 - `tool/generate_placeholder_maps.py` y `tool/generate_placeholder_tileset.py` (Python sin dependencias) crearon los mapas y el tileset de prueba; el de mapas no sobrescribe sin `--force`, porque una vez editado en Tiled el `.tmx` es el original.
 - Ojo con los lints: la palabra "Todo" al inicio de un comentario dispara `flutter_style_todos`.
+- `"color": "#RRGGBB"` (opcional) en guardianes y plagas: color de reemplazo hasta los sprites de la Fase 8. Sin él, `colorForId` deriva uno del id (FNV-1a, no `String.hashCode`). Los guardianes llevan colores oscuros (contraste ≥ 3:1 con su inicial blanca; lo comprueba el test del contenido real).
+
+### La partida en pantalla (Fase 5)
+- `BattleGame` (Flame) solo hace de reloj, dibujo y toques: `FixedStepClock` → `simulation.step()`; los eventos crean y quitan componentes; los toques se avisan con `onSlotTapped`/`onGuardianTapped`/`onEmptyTapped`. `onChanged` avisa como mucho una vez por frame que cambió el HUD o un guardián.
+- Interpolación (mixin `Interpolated`): `rememberPrevious()` justo antes del último paso del frame y `readCurrent()` después; se dibuja un tick atrasado. Mundo = 64 px por casilla (`BattleGame.tileSize`).
+- Cámara: `MapFit` (zoom y origen) encaja el mapa completo; se aplica en cada `onGameResize` (también antes de cargar) y en `onLoad` con `canvasSize`. En la web `size` todavía vale 0 durante `onLoad` (zoom 0 = mapa invisible).
+- Pools: el `ComponentPool` de Flame (`acquire()` + `world.add`; `removeFromParent()` lo devuelve solo) para proyectiles y anillos (`PulseComponent`).
+- Menús: widgets de Flutter (`RadialMenu`/`RadialButton`) sobre el `GameWidget`, ubicados con `MapFit.toScreen`. Primer toque = vista previa (alcance + "Toca otra vez para confirmar"), segundo = comando. Claves: `build-<id>`, `menu-upgrade`, `menu-branch-<id>`, `menu-sell`, `menu-targeting`. Al terminar la partida se limpia la selección.
+- HUD mínimo (`battleHudProvider`, Riverpod) y aviso de fin con Reintentar/Salir: provisionales hasta la Fase 6, igual que el botón "Jugar" del título (abre el primer nivel).
+- `material.dart` exporta otra `Simulation` (física): importarlo con `hide Simulation` donde se use la nuestra.
+- Tests con Flame: el mapa se carga fuera del reloj falso (`preloadMap` usa `runAsync`; decodificar el tileset no funciona con el reloj falso) y se pasa con `loadMap`; un componente no puede estar en dos juegos (precargar uno por partida). `advance()` llama a `game.update` directamente. Tocar el mapa con `tapMap` (espera 50 ms: el detector de toques de Flame deja un temporizador de 40 ms). Nunca `pumpAndSettle`.
+- Balance: `test/helpers/scripted_defense.dart` juega un nivel sin gráficos con un plan fijo; `level_balance_test.dart` exige que el nivel 1 se gane con una defensa razonable y se pierda con una mínima. En la Fase 5 se bajaron el Rey Gorgojo (600 de vida, armadura 2, 8 papas) y el Escarabajo (80, armadura 5) y se subieron las recompensas de las oleadas 7 a 9 del nivel 1 (detalle en `docs/CONTENIDO.md`).
+- En el Redmi, el `SafeArea` deja ~39 dp a la izquierda (la cámara frontal): el mapa ocupa el resto (zoom ≈ 0,49).
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.

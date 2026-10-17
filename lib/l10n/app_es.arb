@@ -7,5 +7,68 @@
   "tagline": "¡Defiende la cosecha de la collca!",
   "@tagline": {
     "description": "Lema que aparece bajo el título del juego."
-  }
+  },
+  "titlePlay": "Jugar",
+  "@titlePlay": {
+    "description": "Botón de la pantalla de título que abre el primer nivel (provisional hasta la selección de nivel)."
+  },
+  "contentLoadError": "No se pudo cargar el contenido del juego:\n{message}",
+  "@contentLoadError": {
+    "description": "Error al leer los archivos de contenido.",
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "hudCorn": "Maíz: {amount}",
+  "@hudCorn": {
+    "description": "Lectura de pantalla del maíz disponible.",
+    "placeholders": { "amount": { "type": "int" } }
+  },
+  "hudPotatoes": "Papas en la collca: {amount}",
+  "@hudPotatoes": {
+    "description": "Lectura de pantalla de las vidas.",
+    "placeholders": { "amount": { "type": "int" } }
+  },
+  "hudWave": "Oleada {current}/{total}",
+  "@hudWave": {
+    "description": "Oleada actual y total.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "battleWon": "¡La cosecha está a salvo!",
+  "@battleWon": { "description": "Aviso de victoria al terminar el nivel." },
+  "battleLost": "La collca quedó vacía",
+  "@battleLost": { "description": "Aviso de derrota: las plagas se comieron todas las papas." },
+  "battleRetry": "Reintentar",
+  "@battleRetry": { "description": "Vuelve a empezar el nivel." },
+  "battleExit": "Salir",
+  "@battleExit": { "description": "Sale de la partida." },
+  "menuBuild": "Construir {name}: {cost} de maíz",
+  "@menuBuild": {
+    "description": "Lectura de pantalla de una opción del menú de construcción.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "cost": { "type": "int" }
+    }
+  },
+  "menuUpgrade": "Mejorar",
+  "@menuUpgrade": { "description": "Opción del menú de un guardián." },
+  "menuSell": "Vender",
+  "@menuSell": { "description": "Opción del menú de un guardián." },
+  "menuTargeting": "Apuntar",
+  "@menuTargeting": { "description": "Opción del menú de un guardián que cambia a qué plaga apunta." },
+  "menuConfirmHint": "Toca otra vez para confirmar",
+  "@menuConfirmHint": { "description": "Aparece tras el primer toque en una opción del menú." },
+  "targetingFirst": "Primera",
+  "@targetingFirst": { "description": "Estrategia: la plaga que más avanzó." },
+  "targetingLast": "Última",
+  "@targetingLast": { "description": "Estrategia: la plaga que menos avanzó." },
+  "targetingStrongest": "Más fuerte",
+  "@targetingStrongest": { "description": "Estrategia: la plaga con más vida." },
+  "targetingClosest": "Más cercana",
+  "@targetingClosest": { "description": "Estrategia: la plaga más cerca del guardián." },
+  "rejectNotEnoughCorn": "No alcanza el maíz",
+  "@rejectNotEnoughCorn": { "description": "Aviso cuando una acción cuesta más maíz del que hay." },
+  "rejectGeneric": "Ahora no se puede hacer eso",
+  "@rejectGeneric": { "description": "Aviso para cualquier otra acción rechazada." }
 }
