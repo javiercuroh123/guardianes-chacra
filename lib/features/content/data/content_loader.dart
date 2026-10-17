@@ -86,10 +86,21 @@ class ContentLoader {
 
   // --- rules.json
 
-  BattleRules _rules(JsonNode node) => BattleRules(
-    sellRefundRate: node.number('sellRefundRate', min: 0, max: 1),
-    minDamageFraction: node.number('minDamageFraction', min: 0, max: 1),
-  );
+  BattleRules _rules(JsonNode node) {
+    final twoStars = node.number('twoStarsFraction', min: 0, max: 1);
+    final threeStars = node.number('threeStarsFraction', min: 0, max: 1);
+    if (threeStars < twoStars) {
+      throw node['threeStarsFraction'].error(
+        'debe ser mayor o igual que twoStarsFraction',
+      );
+    }
+    return BattleRules(
+      sellRefundRate: node.number('sellRefundRate', min: 0, max: 1),
+      minDamageFraction: node.number('minDamageFraction', min: 0, max: 1),
+      twoStarsFraction: twoStars,
+      threeStarsFraction: threeStars,
+    );
+  }
 
   // --- pests/<id>.json
 

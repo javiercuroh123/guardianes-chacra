@@ -7,6 +7,7 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/sim_time.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/guardian_component.dart';
@@ -20,6 +21,9 @@ import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.da
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
+
+/// Carga el dibujo del mapa de un nivel (ver `BattleGame.loadMap`).
+typedef LoadMap = Future<Component> Function(LevelDef level);
 
 /// La partida en pantalla. Hace tres cosas y ninguna regla:
 ///
@@ -57,7 +61,7 @@ class BattleGame extends FlameGame {
 
   /// Carga el dibujo del mapa. Los tests pasan uno ya cargado: decodificar
   /// la imagen del tileset no funciona con el reloj falso de los tests.
-  final Future<Component> Function(LevelDef level) loadMap;
+  final LoadMap loadMap;
 
   /// El mapa de Tiled del nivel. El tileset (.tsx y .png) está junto al
   /// mapa en assets/tiles/, igual que en Tiled; por defecto Flame buscaría
@@ -76,8 +80,9 @@ class BattleGame extends FlameGame {
   final void Function(int guardianId)? onGuardianTapped;
   final void Function()? onEmptyTapped;
 
-  /// Cambió algo que muestran el HUD o los menús (maíz, papas, oleada, el
-  /// final o un guardián). Se avisa como mucho una vez por frame.
+  /// Cambió algo que muestran el HUD o los menús (maíz, papas, oleada, la
+  /// cuenta regresiva, el final o un guardián). Se avisa como mucho una vez
+  /// por frame.
   final void Function()? onChanged;
 
   /// La simulación rechazó un comando (por ejemplo, por falta de maíz).
@@ -101,6 +106,9 @@ class BattleGame extends FlameGame {
   final RangeComponent _range = RangeComponent();
   EventSubscription? _subscription;
   bool _changed = false;
+
+  /// Lo último que se avisó de la cuenta regresiva (ver [update]).
+  ({int? seconds, int bonus})? _countdown;
 
   @override
   Color backgroundColor() => BattleColors.letterbox;
@@ -162,6 +170,18 @@ class BattleGame extends FlameGame {
     }
 
     super.update(dt);
+
+    // La cuenta regresiva avanza sin eventos: se avisa cuando cambia lo que
+    // muestra el HUD (los segundos o el bono), no en cada tick.
+    final ticks = simulation.nextWaveCountdownTicks;
+    final countdown = (
+      seconds: ticks == null ? null : ticksToWholeSeconds(ticks),
+      bonus: simulation.earlyCallBonus,
+    );
+    if (countdown != _countdown) {
+      _countdown = countdown;
+      _changed = true;
+    }
 
     if (_changed) {
       _changed = false;

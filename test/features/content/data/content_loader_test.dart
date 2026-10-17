@@ -21,6 +21,8 @@ void main() {
     final content = await ContentLoader(ContentFixture().toSource()).load();
 
     expect(content.rules.sellRefundRate, 0.7);
+    expect(content.rules.twoStarsFraction, 0.5);
+    expect(content.rules.threeStarsFraction, 0.9);
 
     final gorgojo = content.pests['gorgojo']!;
     expect(gorgojo.maxHealth, 30);
@@ -66,6 +68,22 @@ void main() {
   });
 
   group('errores claros', () {
+    test('tres estrellas no pueden pedir menos que dos', () async {
+      final fixture = ContentFixture()
+        ..rules = {
+          'sellRefundRate': 0.7,
+          'minDamageFraction': 0.2,
+          'twoStarsFraction': 0.8,
+          'threeStarsFraction': 0.6,
+        };
+
+      expect(
+        await errorOf(fixture),
+        'rules.json → threeStarsFraction: debe ser mayor o igual que '
+        'twoStarsFraction',
+      );
+    });
+
     test('un color mal escrito', () async {
       final fixture = ContentFixture()
         ..pests['gorgojo'] = {...gorgojoJson(), 'color': 'rojo'};
@@ -163,8 +181,7 @@ void main() {
     });
 
     test('un id repetido en el índice', () async {
-      final fixture = ContentFixture()
-        ..index['pests'] = ['gorgojo', 'gorgojo'];
+      final fixture = ContentFixture()..index['pests'] = ['gorgojo', 'gorgojo'];
 
       expect(
         await errorOf(fixture),

@@ -1,4 +1,6 @@
 {
   "sellRefundRate": 0.7,
-  "minDamageFraction": 0.2
+  "minDamageFraction": 0.2,
+  "twoStarsFraction": 0.5,
+  "threeStarsFraction": 0.9
 }

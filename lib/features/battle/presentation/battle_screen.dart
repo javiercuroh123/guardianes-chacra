@@ -1,25 +1,29 @@
-import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 // `material.dart` también exporta una `Simulation` (la de física de Flutter).
 import 'package:flutter/material.dart' hide Simulation;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/battle_stats.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/stars.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart';
-import 'package:guardianes_chacra/features/battle/presentation/hud/battle_end_banner.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
 import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.dart';
 import 'package:guardianes_chacra/features/battle/presentation/menus/radial_menu.dart';
+import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
+import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
 /// Estrategias de apuntado en el orden en que se recorren con el botón
@@ -33,13 +37,18 @@ const _targetingCycle = ['first', 'last', 'strongest', 'closest'];
 /// - El HUD lee `battleHudProvider`, que se actualiza cuando el juego avisa
 ///   un cambio.
 /// - Los menús son widgets de Flutter ubicados sobre el mapa con [MapFit].
+/// - Pausa, victoria y derrota son overlays de Flame: widgets que el
+///   `GameWidget` dibuja encima del juego cuando se activan por nombre
+///   (`game.overlays.add(...)`).
+/// - Los eventos que le importan a la app y no al dibujo (descubrir plagas
+///   y guardianes, ganar o perder) los escucha esta pantalla.
 class BattleScreen extends ConsumerStatefulWidget {
   const new({required this.levelId, this.loadMap, super.key});
 
   final String levelId;
 
   /// Para los tests: un mapa ya cargado (ver `BattleGame.loadMap`).
-  final Future<Component> Function(LevelDef level)? loadMap;
+  final LoadMap? loadMap;
 
   @override
   ConsumerState<BattleScreen> createState() => _BattleScreenState();
@@ -47,11 +56,17 @@ class BattleScreen extends ConsumerStatefulWidget {
 
 /// Lo que dura una partida: se crea de nuevo al reintentar.
 class _Session {
-  new({required this.level, required this.simulation, required this.game});
+  new({
+    required this.level,
+    required this.simulation,
+    required this.game,
+    required this.stats,
+  });
 
   final LevelDef level;
   final Simulation simulation;
   final BattleGame game;
+  final BattleStats stats;
 }
 
 class _BattleScreenState extends ConsumerState<BattleScreen> {
@@ -59,12 +74,29 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   late GameContent _content;
   late String _language;
 
+  /// Pausa la partida cuando la app pasa a segundo plano.
+  late final AppLifecycleListener _lifecycle;
+
+  bool _paused = false;
+
   String? _selectedSlot;
   int? _selectedGuardian;
 
   /// Opción tocada una vez en el menú (se confirma con un segundo toque):
   /// un tipo de guardián, `upgrade`, `sell` o `branch:<id>`.
   String? _preview;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onHide: _pause);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +122,9 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     final session = _session ??= _startSession(content);
     final hud = ref.watch(battleHudProvider);
     final ended = hud != null && hud.status != BattleStatus.playing;
+    // Con un overlay encima, el HUD y los menús se ocultan: el velo los
+    // taparía a medias y sus botones seguirían respondiendo.
+    final covered = ended || _paused;
 
     return SafeArea(
       child: LayoutBuilder(
@@ -105,23 +140,53 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
                 child: GameWidget(
                   key: ObjectKey(session.game),
                   game: session.game,
+                  overlayBuilderMap: {
+                    BattleOverlays.pause: (context, _) => PauseOverlay(
+                      onResume: _resume,
+                      onRetry: _retry,
+                      onExit: _exit,
+                    ),
+                    BattleOverlays.won: (context, _) => _victory(session),
+                    BattleOverlays.lost: (context, _) =>
+                        DefeatOverlay(onRetry: _retry, onExit: _exit),
+                  },
                 ),
               ),
-              const Positioned(top: 6, left: 6, right: 6, child: BattleHud()),
-              if (_menu(context, fit, bounds) case final menu? when !ended)
-                Positioned.fill(child: menu),
-              if (ended)
-                Positioned.fill(
-                  child: BattleEndBanner(
-                    won: hud.status == BattleStatus.won,
-                    onRetry: _retry,
-                    onExit: () => Navigator.of(context).maybePop(),
+              if (!covered)
+                Positioned(
+                  top: 4,
+                  left: 6,
+                  right: 6,
+                  child: BattleHud(
+                    onNextWave: _callNextWave,
+                    onToggleSpeed: _toggleSpeed,
+                    onPause: _pause,
                   ),
                 ),
+              if (_menu(context, fit, bounds) case final menu? when !covered)
+                Positioned.fill(child: menu),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _victory(_Session session) {
+    final next = _levelAfter(session.level);
+    return VictoryOverlay(
+      stars: _starsFor(session, session.simulation.potatoes),
+      potatoes: session.simulation.potatoes,
+      cornHarvested: session.stats.cornHarvested,
+      onNext: next == null
+          ? null
+          : () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => LevelPreviewScreen(levelId: next.id),
+              ),
+            ),
+      onRetry: _retry,
+      onExit: _exit,
     );
   }
 
@@ -150,36 +215,70 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       onChanged: _onGameChanged,
       onRejected: _onRejected,
     );
+    final session = _Session(
+      level: level,
+      simulation: simulation,
+      game: game,
+      stats: BattleStats(simulation.events),
+    );
+    simulation.events.on<SimEvent>((event) => _onSimEvent(session, event));
     // El HUD se muestra apenas termina este frame (no se puede cambiar un
     // provider mientras se construye la pantalla).
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncHud(simulation));
-    return _Session(level: level, simulation: simulation, game: game);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncHud(session));
+    return session;
   }
 
   void _retry() {
     setState(() {
       _session = null;
+      _paused = false;
       _selectedSlot = null;
       _selectedGuardian = null;
       _preview = null;
     });
   }
 
-  void _syncHud(Simulation simulation) {
-    if (!mounted) return;
-    ref.read(battleHudProvider.notifier).hud = BattleHudState.of(simulation);
+  void _exit() => Navigator.of(context).maybePop();
+
+  void _syncHud(_Session session) {
+    if (!mounted || session != _session) return;
+    ref.read(battleHudProvider.notifier).hud = BattleHudState.of(
+      session.simulation,
+      speed: session.game.clock.speed,
+    );
   }
 
   void _onGameChanged() {
     final session = _session;
     if (session == null) return;
-    _syncHud(session.simulation);
+    _syncHud(session);
     if (session.simulation.status != BattleStatus.playing) {
       // Con la partida terminada no queda nada que construir ni mejorar.
       _clearSelection();
     } else if (_selectedSlot != null || _selectedGuardian != null) {
       // El menú abierto muestra costos, niveles y estrategia: se redibuja.
       setState(() {});
+    }
+  }
+
+  void _onSimEvent(_Session session, SimEvent event) {
+    final progress = ref.read(progressProvider.notifier);
+    switch (event) {
+      // El Bestiario se llena al ver cada plaga y al construir cada guardián.
+      case PestSpawned(:final pestType):
+        progress.discoverPest(pestType);
+      case GuardianBuilt(:final guardianType):
+        progress.discoverGuardian(guardianType);
+      case LevelWon(:final potatoesLeft):
+        progress.recordResult(
+          session.level.id,
+          stars: _starsFor(session, potatoesLeft),
+        );
+        session.game.overlays.add(BattleOverlays.won);
+      case LevelLost():
+        session.game.overlays.add(BattleOverlays.lost);
+      case _:
+        break;
     }
   }
 
@@ -197,6 +296,48 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
           ),
         ),
       );
+  }
+
+  // --- Controles del HUD
+
+  void _callNextWave() => _session?.simulation.enqueue(const CallNextWave());
+
+  void _toggleSpeed() {
+    final session = _session;
+    if (session == null) return;
+    final clock = session.game.clock;
+    clock.speed = clock.speed == GameSpeed.normal
+        ? GameSpeed.fast
+        : GameSpeed.normal;
+    _syncHud(session);
+  }
+
+  /// Detiene el bucle de Flame (no se actualiza ni se redibuja) y muestra
+  /// la pausa. También se llama al pasar a segundo plano.
+  void _pause() {
+    final session = _session;
+    if (session == null ||
+        _paused ||
+        session.simulation.status != BattleStatus.playing) {
+      return;
+    }
+    _clearSelection();
+    // Flame también se pausa solo en segundo plano, pero al volver se
+    // reanudaría sin preguntar. `pauseEngine()` desde aquí cuenta como una
+    // pausa del jugador: sigue pausado hasta tocar Continuar.
+    session.game
+      ..pauseEngine()
+      ..overlays.add(BattleOverlays.pause);
+    setState(() => _paused = true);
+  }
+
+  void _resume() {
+    final session = _session;
+    if (session == null || !_paused) return;
+    session.game
+      ..overlays.remove(BattleOverlays.pause)
+      ..resumeEngine();
+    setState(() => _paused = false);
   }
 
   // --- Selección
@@ -336,7 +477,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
           caption: '${def.levels[guardian.level].cost}',
           color: color,
           selected: _preview == 'upgrade',
-          semanticsLabel: '${l10n.menuUpgrade}: '
+          semanticsLabel:
+              '${l10n.menuUpgrade}: '
               '${def.levels[guardian.level].cost}',
           onTap: corn < def.levels[guardian.level].cost
               ? null
@@ -355,7 +497,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
             caption: '${branch.level.cost}',
             color: color,
             selected: _preview == 'branch:${branch.id}',
-            semanticsLabel: '${_branchName(def.id, branch.id)}: '
+            semanticsLabel:
+                '${_branchName(def.id, branch.id)}: '
                 '${branch.level.cost}',
             onTap: corn < branch.level.cost
                 ? null
@@ -406,19 +549,29 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
 
   // --- Datos
 
+  int _starsFor(_Session session, int potatoesLeft) => starsFor(
+    potatoesLeft: potatoesLeft,
+    startingPotatoes: session.level.startingPotatoes,
+    rules: _content.rules,
+  );
+
+  LevelDef? _levelAfter(LevelDef level) {
+    final index = _content.levels.indexOf(level);
+    return index + 1 < _content.levels.length
+        ? _content.levels[index + 1]
+        : null;
+  }
+
   GuardianView? _guardian(int id) => _session?.simulation.guardians
       .where((guardian) => guardian.id == id)
       .firstOrNull;
 
-  GuardianView? _guardianOnSlot(String slotId) => _session?.simulation
-      .guardians
+  GuardianView? _guardianOnSlot(String slotId) => _session?.simulation.guardians
       .where((guardian) => guardian.slotId == slotId)
       .firstOrNull;
 
-  String _guardianName(String type) => _content.texts.text(
-    ContentTexts.guardianName(type),
-    language: _language,
-  );
+  String _guardianName(String type) =>
+      _content.texts.text(ContentTexts.guardianName(type), language: _language);
 
   String _branchName(String guardianType, String branchId) =>
       _content.texts.text(

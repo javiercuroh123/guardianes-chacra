@@ -163,11 +163,24 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Cámara: `MapFit` (zoom y origen) encaja el mapa completo; se aplica en cada `onGameResize` (también antes de cargar) y en `onLoad` con `canvasSize`. En la web `size` todavía vale 0 durante `onLoad` (zoom 0 = mapa invisible).
 - Pools: el `ComponentPool` de Flame (`acquire()` + `world.add`; `removeFromParent()` lo devuelve solo) para proyectiles y anillos (`PulseComponent`).
 - Menús: widgets de Flutter (`RadialMenu`/`RadialButton`) sobre el `GameWidget`, ubicados con `MapFit.toScreen`. Primer toque = vista previa (alcance + "Toca otra vez para confirmar"), segundo = comando. Claves: `build-<id>`, `menu-upgrade`, `menu-branch-<id>`, `menu-sell`, `menu-targeting`. Al terminar la partida se limpia la selección.
-- HUD mínimo (`battleHudProvider`, Riverpod) y aviso de fin con Reintentar/Salir: provisionales hasta la Fase 6, igual que el botón "Jugar" del título (abre el primer nivel).
+- El HUD mínimo, el aviso de fin y el botón "Jugar" que abría el primer nivel fueron provisionales: los reemplazó la Fase 6.
 - `material.dart` exporta otra `Simulation` (física): importarlo con `hide Simulation` donde se use la nuestra.
 - Tests con Flame: el mapa se carga fuera del reloj falso (`preloadMap` usa `runAsync`; decodificar el tileset no funciona con el reloj falso) y se pasa con `loadMap`; un componente no puede estar en dos juegos (precargar uno por partida). `advance()` llama a `game.update` directamente. Tocar el mapa con `tapMap` (espera 50 ms: el detector de toques de Flame deja un temporizador de 40 ms). Nunca `pumpAndSettle`.
 - Balance: `test/helpers/scripted_defense.dart` juega un nivel sin gráficos con un plan fijo; `level_balance_test.dart` exige que el nivel 1 se gane con una defensa razonable y se pierda con una mínima. En la Fase 5 se bajaron el Rey Gorgojo (600 de vida, armadura 2, 8 papas) y el Escarabajo (80, armadura 5) y se subieron las recompensas de las oleadas 7 a 9 del nivel 1 (detalle en `docs/CONTENIDO.md`).
 - En el Redmi, el `SafeArea` deja ~39 dp a la izquierda (la cámara frontal): el mapa ocupa el resto (zoom ≈ 0,49).
+
+### Menús, progreso y pantallas (Fase 6)
+- Flujo: título (Jugar / Bestiario / Ajustes) → valle (`LevelSelectScreen`) → vista previa (`LevelPreviewScreen`) → partida (`pushReplacement`). "Volver al valle" y "Salir del nivel" hacen `maybePop`; "Siguiente nivel" reemplaza la partida por la vista previa del siguiente.
+- Estrellas: `starsFor` (dominio) con `twoStarsFraction`/`threeStarsFraction` de `rules.json` (0,5 y 0,9 de las papas iniciales; cualquier victoria = 1). `Progress` (inmutable) guarda la mejor marca por nivel y las plagas y guardianes descubiertos. Desbloqueo provisional: el primero siempre y cada nivel al ganar el anterior (`TODO(fase-7)`: reglas en los datos).
+- Progreso y ajustes viven en memoria (`progressProvider`, `settingsProvider`, `Notifier`) hasta la Fase 7. Idioma: Sistema/Español/English; `localeFor` da `null` para "Sistema".
+- Descubrimientos: una plaga al aparecer (`PestSpawned`), un guardián al construirlo (`GuardianBuilt`). Los escucha `BattleScreen` (no el juego: no son dibujo), igual que `LevelWon` (guarda las estrellas) y `LevelLost`.
+- `BattleStats` (dominio) cuenta el maíz cosechado: todo `CornChanged` positivo menos lo que devuelve vender (`GuardianSold.refund`).
+- HUD completo: maíz, papas, oleada; botón de siguiente oleada (segundos con `ticksToWholeSeconds` y `+bono`, solo si hay cuenta regresiva), x1/x2 (`clock.speed`) y pausa. `BattleGame` avisa `onChanged` cuando cambian los segundos o el bono. Claves: `hud-next-wave`, `hud-speed`, `hud-pause`.
+- Pausa, victoria y derrota son overlays de Flame (`overlayBuilderMap`, nombres en `BattleOverlays`). Con un overlay activo se ocultan el HUD y los menús. Claves: `pause-resume`, `victory-next`, `battle-retry`, `battle-exit`.
+- Pausa = `pauseEngine()`. Al pasar a segundo plano (`AppLifecycleListener.onHide`) se pausa con el overlay; como `pauseEngine()` borra la marca de "pausado por segundo plano" de Flame, al volver no se reanuda solo.
+- Tema central `AppTheme.light` (verde chacra, maíz, terracota, crema) + `GameColors` (HUD, velo, estrellas, valle); `app_theme_test.dart` mide el contraste AA. Botones del tema: mínimo 200 × 48. `IconButton.foregroundColor` no colorea un `Text` dentro del botón: darle su color.
+- La vista previa ordena las plagas por primera aparición (`pestsAppearingIn`; `List.sort` de Dart no es estable: desempatar por índice).
+- Tests: el ciclo de vida de la app se simula con un mensaje `flutter/lifecycle` (`setLifecycle` en `battle_screen_test.dart`). La tarjeta de los overlays une sus textos en un solo nodo de accesibilidad: buscar con `RegExp`.
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.

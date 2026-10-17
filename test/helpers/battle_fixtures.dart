@@ -8,7 +8,12 @@ import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
 /// Datos de prueba para la simulación. Los JSON reales llegan en la Fase 4;
 /// estos valores están elegidos para que las cuentas se hagan a mano.
 
-const testRules = BattleRules(sellRefundRate: 0.7, minDamageFraction: 0.2);
+const testRules = BattleRules(
+  sellRefundRate: 0.7,
+  minDamageFraction: 0.2,
+  twoStarsFraction: 0.5,
+  threeStarsFraction: 0.9,
+);
 
 /// 2 casillas/s: recorre el camino recto (10 casillas) en 5 s = 150 ticks.
 const gorgojo = PestDef(

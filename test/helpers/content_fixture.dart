@@ -13,8 +13,7 @@ class MemoryAssetSource implements AssetSource {
 
   @override
   Future<String> readText(String path) async =>
-      files[path] ??
-      (throw ContentError('No se encontró el archivo "$path"'));
+      files[path] ?? (throw ContentError('No se encontró el archivo "$path"'));
 }
 
 /// Un contenido mínimo y válido (una plaga, un guardián y un nivel) que cada
@@ -30,6 +29,8 @@ class ContentFixture {
   Map<String, Object?> rules = {
     'sellRefundRate': 0.7,
     'minDamageFraction': 0.2,
+    'twoStarsFraction': 0.5,
+    'threeStarsFraction': 0.9,
   };
 
   Map<String, Map<String, Object?>> pests = {'gorgojo': gorgojoJson()};
@@ -44,20 +45,22 @@ class ContentFixture {
   /// Archivos que se quitan antes de leer (para probar uno que falta).
   Set<String> missing = {};
 
-  AssetSource toSource() => MemoryAssetSource({
-    'assets/content/index.json': jsonEncode(index),
-    'assets/content/rules.json': jsonEncode(rules),
-    for (final MapEntry(:key, :value) in pests.entries)
-      'assets/content/pests/$key.json': jsonEncode(value),
-    for (final MapEntry(:key, :value) in guardians.entries)
-      'assets/content/guardians/$key.json': jsonEncode(value),
-    for (final MapEntry(:key, :value) in levels.entries)
-      'assets/content/levels/$key.json': jsonEncode(value),
-    for (final MapEntry(:key, :value) in maps.entries)
-      'assets/tiles/$key': value,
-    for (final MapEntry(:key, :value) in texts.entries)
-      'assets/content/i18n/$key.json': jsonEncode(value),
-  }..removeWhere((path, _) => missing.contains(path)));
+  AssetSource toSource() => MemoryAssetSource(
+    {
+      'assets/content/index.json': jsonEncode(index),
+      'assets/content/rules.json': jsonEncode(rules),
+      for (final MapEntry(:key, :value) in pests.entries)
+        'assets/content/pests/$key.json': jsonEncode(value),
+      for (final MapEntry(:key, :value) in guardians.entries)
+        'assets/content/guardians/$key.json': jsonEncode(value),
+      for (final MapEntry(:key, :value) in levels.entries)
+        'assets/content/levels/$key.json': jsonEncode(value),
+      for (final MapEntry(:key, :value) in maps.entries)
+        'assets/tiles/$key': value,
+      for (final MapEntry(:key, :value) in texts.entries)
+        'assets/content/i18n/$key.json': jsonEncode(value),
+    }..removeWhere((path, _) => missing.contains(path)),
+  );
 }
 
 Map<String, Object?> gorgojoJson({

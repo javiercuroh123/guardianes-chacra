@@ -1,72 +1,79 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
-import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
+import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/features/bestiary/presentation/bestiary_screen.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
+import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
-/// Primera pantalla: el título del juego en el idioma del dispositivo y,
-/// por ahora, un botón que abre el primer nivel.
-class TitleScreen extends ConsumerWidget {
+/// Menú principal: el título del juego y los caminos a Jugar, Bestiario y
+/// Ajustes.
+class TitleScreen extends StatelessWidget {
   const new({super.key});
 
-  // TODO(fase-6): colores del ThemeData central y fondo del valle.
-  static const _background = Color(0xFF2E7D32);
-  static const Color _titleColor = Colors.white;
   static const _taglineColor = Color(0xFFFFF3C4);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
-    // TODO(fase-6): la selección de nivel reemplaza este botón.
-    final content = ref.watch(gameContentProvider);
+
+    void open(Widget screen) =>
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (_) => screen));
 
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: AppTheme.chacra,
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   l10n.appTitle,
                   textAlign: TextAlign.center,
-                  style: textTheme.displayMedium?.copyWith(
-                    color: _titleColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: textTheme.displayMedium?.copyWith(color: Colors.white),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   l10n.tagline,
                   textAlign: TextAlign.center,
                   style: textTheme.titleLarge?.copyWith(color: _taglineColor),
                 ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  key: const ValueKey('title-play'),
-                  onPressed: switch (content) {
-                    AsyncData(:final value) => () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            BattleScreen(levelId: value.levels.first.id),
+                const SizedBox(height: 28),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    FilledButton(
+                      key: const ValueKey('menu-play'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .secondary,
+                        foregroundColor: Theme.of(context)
+                            .colorScheme
+                            .onSecondary,
                       ),
+                      onPressed: () => open(const LevelSelectScreen()),
+                      child: Text(l10n.titlePlay),
                     ),
-                    _ => null,
-                  },
-                  child: Text(l10n.titlePlay),
+                    OutlinedButton(
+                      key: const ValueKey('menu-bestiary'),
+                      style: _outlinedOnGreen,
+                      onPressed: () => open(const BestiaryScreen()),
+                      child: Text(l10n.menuBestiary),
+                    ),
+                    OutlinedButton(
+                      key: const ValueKey('menu-settings'),
+                      style: _outlinedOnGreen,
+                      onPressed: () => open(const SettingsScreen()),
+                      child: Text(l10n.menuSettings),
+                    ),
+                  ],
                 ),
-                if (content case AsyncError(:final error))
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      l10n.contentLoadError('$error'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: _taglineColor),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -74,4 +81,9 @@ class TitleScreen extends ConsumerWidget {
       ),
     );
   }
+
+  static final ButtonStyle _outlinedOnGreen = OutlinedButton.styleFrom(
+    foregroundColor: Colors.white,
+    side: const BorderSide(color: Colors.white, width: 2),
+  );
 }

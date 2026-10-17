@@ -4,7 +4,12 @@ import 'package:guardianes_chacra/features/content/domain/battle_rules.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
 
 void main() {
-  const rules = BattleRules(sellRefundRate: 0.7, minDamageFraction: 0.2);
+  const rules = BattleRules(
+    sellRefundRate: 0.7,
+    minDamageFraction: 0.2,
+    twoStarsFraction: 0.5,
+    threeStarsFraction: 0.9,
+  );
 
   PestDef pest({
     double armor = 0,

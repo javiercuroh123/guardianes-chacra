@@ -1,47 +1,30 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:guardianes_chacra/features/content/data/content_loader.dart';
-import 'package:guardianes_chacra/features/content/data/file_asset_source.dart';
-import 'package:guardianes_chacra/features/content/domain/game_content.dart';
-import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
+import 'package:guardianes_chacra/features/bestiary/presentation/bestiary_screen.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/menu/presentation/title_screen.dart';
+import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
 
+import '../../helpers/real_content.dart';
 import '../../helpers/test_app.dart';
 
 void main() {
-  FilledButton playButton(WidgetTester tester) =>
-      tester.widget<FilledButton>(find.byKey(const ValueKey('title-play')));
+  final content = useRealContent();
 
-  testWidgets('"Jugar" espera a que cargue el contenido', (tester) async {
-    await tester.pumpWidget(
-      testApp(
-        const TitleScreen(),
-        overrides: [
-          gameContentProvider.overrideWith(
-            (ref) => Completer<GameContent>().future,
-          ),
-        ],
-      ),
-    );
+  for (final (button, screen) in [
+    ('menu-play', LevelSelectScreen),
+    ('menu-bestiary', BestiaryScreen),
+    ('menu-settings', SettingsScreen),
+  ]) {
+    testWidgets('$button abre su pantalla', (tester) async {
+      await tester.pumpWidget(
+        testApp(const TitleScreen(), overrides: [contentOverride(content())]),
+      );
 
-    expect(find.text('Jugar'), findsOneWidget);
-    expect(playButton(tester).onPressed, isNull);
-  });
+      await tester.tap(find.byKey(ValueKey(button)));
+      await tester.pumpAndSettle();
 
-  testWidgets('"Jugar" se activa con el contenido cargado', (tester) async {
-    final content = (await tester.runAsync(
-      () => ContentLoader(FileAssetSource()).load(),
-    ))!;
-    await tester.pumpWidget(
-      testApp(
-        const TitleScreen(),
-        overrides: [gameContentProvider.overrideWith((ref) => content)],
-      ),
-    );
-    await tester.pump();
-
-    expect(playButton(tester).onPressed, isNotNull);
-  });
+      expect(find.byType(screen), findsOneWidget);
+    });
+  }
 }

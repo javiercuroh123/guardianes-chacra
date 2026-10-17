@@ -9,3 +9,8 @@ const ticksPerSecond = 30;
 /// Convierte segundos de los datos en ticks enteros (redondeando). El
 /// tiempo se cuenta en ticks para no acumular errores de decimales.
 int secondsToTicks(double seconds) => (seconds * ticksPerSecond).round();
+
+/// Segundos enteros que faltan en [ticks], redondeando hacia arriba: con un
+/// solo tick por delante todavía se muestra "1 s", nunca "0 s".
+int ticksToWholeSeconds(int ticks) =>
+    (ticks + ticksPerSecond - 1) ~/ ticksPerSecond;

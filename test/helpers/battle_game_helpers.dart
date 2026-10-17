@@ -1,4 +1,3 @@
-import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +10,7 @@ import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 /// Un componente no puede estar en dos juegos: si la prueba crea más de una
 /// partida (por ejemplo, al reintentar), se precargan [count] mapas y cada
 /// partida usa el siguiente.
-Future<Future<Component> Function(LevelDef level)> preloadMap(
+Future<LoadMap> preloadMap(
   WidgetTester tester,
   LevelDef level, {
   int count = 1,
