@@ -150,9 +150,8 @@ void main() {
     final cases = <(String, Object Function(), String)>[
       (
         'falta uno obligatorio',
-        () => registry.createEffect(
-          const BehaviorSpec('slow', {'duration': 2}),
-        ),
+        () =>
+            registry.createEffect(const BehaviorSpec('slow', {'duration': 2})),
         'slow: falta "factor"',
       ),
       (
@@ -243,11 +242,7 @@ void main() {
       (
         'no es un texto',
         () => registry.createAbility(
-          const BehaviorSpec('summon', {
-            'pest': 3,
-            'count': 1,
-            'interval': 2,
-          }),
+          const BehaviorSpec('summon', {'pest': 3, 'count': 1, 'interval': 2}),
         ),
         'summon: "pest" debe ser un texto',
       ),

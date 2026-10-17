@@ -165,6 +165,6 @@ extension _Commands on Simulation {
   Guardian? _guardianById(int id) =>
       _guardians.where((guardian) => guardian.id == id).firstOrNull;
 
-  void _reject(PlayerCommand command, RejectionReason reason) => events
-      .publish(CommandRejected(_tick, command: command, reason: reason));
+  void _reject(PlayerCommand command, RejectionReason reason) =>
+      events.publish(CommandRejected(_tick, command: command, reason: reason));
 }

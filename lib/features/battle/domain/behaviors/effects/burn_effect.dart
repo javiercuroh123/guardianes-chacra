@@ -42,9 +42,6 @@ final class BurnEffect extends StatusEffect {
     final stronger = damagePerSecond >= currentBurn.damagePerSecond
         ? this
         : currentBurn;
-    return ActiveEffect(
-      stronger,
-      math.max(current.remaining, durationTicks),
-    );
+    return ActiveEffect(stronger, math.max(current.remaining, durationTicks));
   }
 }

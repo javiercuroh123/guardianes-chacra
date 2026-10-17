@@ -409,12 +409,7 @@ class Simulation {
     final amount = damageDealt(hit, pest.def, _rules);
     pest.health -= amount;
     events.publish(
-      PestDamaged(
-        _tick,
-        pestId: pest.id,
-        amount: amount,
-        damageType: hit.type,
-      ),
+      PestDamaged(_tick, pestId: pest.id, amount: amount, damageType: hit.type),
     );
   }
 

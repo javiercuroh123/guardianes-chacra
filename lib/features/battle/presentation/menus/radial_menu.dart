@@ -133,9 +133,7 @@ class RadialMenu extends StatelessWidget {
         for (final (index, child) in children.indexed)
           Positioned(
             left:
-                x +
-                radius * math.cos(angleOf(index)) -
-                RadialButton.width / 2,
+                x + radius * math.cos(angleOf(index)) - RadialButton.width / 2,
             top:
                 y +
                 radius * math.sin(angleOf(index)) -

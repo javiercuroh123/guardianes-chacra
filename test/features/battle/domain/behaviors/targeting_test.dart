@@ -65,9 +65,6 @@ void main() {
   test('más fuerte desempata por la que va primera', () {
     final first = _pest(5, distance: 8, health: 30);
 
-    expect(
-      const StrongestTargeting().choose([strong, first], origin),
-      first,
-    );
+    expect(const StrongestTargeting().choose([strong, first], origin), first);
   });
 }

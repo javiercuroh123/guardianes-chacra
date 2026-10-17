@@ -57,24 +57,28 @@ Simulation playScripted(
     Build(:final guardianType) =>
       content.guardians[guardianType]!.levels.first.cost,
     Upgrade(:final slotId) => at(slotId)!.def.levels[at(slotId)!.level].cost,
-    Specialize(:final slotId, :final branchId) =>
-      at(slotId)!.def.branches
-          .firstWhere((branch) => branch.id == branchId)
-          .level
-          .cost,
+    Specialize(:final slotId, :final branchId) => at(
+      slotId,
+    )!.def.branches.firstWhere((branch) => branch.id == branchId).level.cost,
   };
 
   PlayerCommand commandFor(PlannedAction action) => switch (action) {
-    Build(:final slotId, :final guardianType) =>
-      BuildGuardian(slotId: slotId, guardianType: guardianType),
+    Build(:final slotId, :final guardianType) => BuildGuardian(
+      slotId: slotId,
+      guardianType: guardianType,
+    ),
     Upgrade(:final slotId) => UpgradeGuardian(at(slotId)!.id),
-    Specialize(:final slotId, :final branchId) =>
-      SpecializeGuardian(at(slotId)!.id, branchId: branchId),
+    Specialize(:final slotId, :final branchId) => SpecializeGuardian(
+      at(slotId)!.id,
+      branchId: branchId,
+    ),
   };
 
-  for (var tick = 0;
-      tick < maxTicks && simulation.status == BattleStatus.playing;
-      tick++) {
+  for (
+    var tick = 0;
+    tick < maxTicks && simulation.status == BattleStatus.playing;
+    tick++
+  ) {
     if (pending.isNotEmpty && simulation.corn >= costOf(pending.first)) {
       simulation.enqueue(commandFor(pending.removeAt(0)));
     }

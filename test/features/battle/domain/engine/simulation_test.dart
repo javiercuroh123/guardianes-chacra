@@ -78,10 +78,9 @@ void main() {
 
     expect(simulation.potatoes, 8);
     expect(simulation.pests, isEmpty);
-    expect(
-      events.whereType<CollcaDamaged>(),
-      [const CollcaDamaged(90, pestId: 1, potatoesLost: 2, potatoesLeft: 8)],
-    );
+    expect(events.whereType<CollcaDamaged>(), [
+      const CollcaDamaged(90, pestId: 1, potatoesLost: 2, potatoesLeft: 8),
+    ]);
   });
 
   test('aparecer una plaga emite PestSpawned', () {
@@ -122,10 +121,7 @@ void main() {
     // en 90 y llega en 150.
     final simulation = _simulation(
       testLevel(
-        waves: [
-          testWave('gorgojo', count: 2),
-          testWave('polilla', reward: 15),
-        ],
+        waves: [testWave('gorgojo', count: 2), testWave('polilla', reward: 15)],
       ),
     );
     final events = _record(simulation);
@@ -242,8 +238,11 @@ void main() {
     ({List<SimEvent> events, int tick, int corn, int potatoes}) play() {
       final simulation = _simulation(level, seed: 2026);
       final events = _record(simulation);
-      for (var i = 0; i < 2000 && simulation.status == BattleStatus.playing;
-          i++) {
+      for (
+        var i = 0;
+        i < 2000 && simulation.status == BattleStatus.playing;
+        i++
+      ) {
         // Llama las oleadas en ticks fijos (si no se puede, se rechaza).
         if (simulation.tick == 10 || simulation.tick == 200) {
           simulation.enqueue(const CallNextWave());

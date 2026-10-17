@@ -6,8 +6,9 @@ import 'package:guardianes_chacra/features/battle/domain/registry/behavior_param
 import 'package:guardianes_chacra/features/battle/domain/registry/core_behaviors.dart';
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
 
-typedef GuardianBehaviorFactory =
-    GuardianBehavior Function(BehaviorParams params);
+typedef GuardianBehaviorFactory = GuardianBehavior Function(
+  BehaviorParams params,
+);
 typedef EffectFactory = StatusEffect Function(BehaviorParams params);
 typedef AbilityFactory = PestAbility Function(BehaviorParams params);
 

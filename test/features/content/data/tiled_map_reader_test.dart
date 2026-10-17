@@ -30,10 +30,10 @@ void main() {
       Vec2(9, 4.5),
     ]);
     expect(map.collca, const Vec2(9, 4.5));
-    expect(
-      map.buildSlots.map((slot) => (slot.id, slot.position)),
-      const [('e1', Vec2(3.5, 3.5)), ('espacio_3', Vec2(7.5, 2.5))],
-    );
+    expect(map.buildSlots.map((slot) => (slot.id, slot.position)), const [
+      ('e1', Vec2(3.5, 3.5)),
+      ('espacio_3', Vec2(7.5, 2.5)),
+    ]);
   });
 
   test('los puntos de la polilínea son relativos a su objeto', () {

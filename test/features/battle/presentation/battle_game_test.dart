@@ -100,9 +100,7 @@ void main() {
     final game = await pumpGame(tester, simulation);
 
     await advance(tester, game, seconds: 0.1);
-    final guardian = game.world.children
-        .whereType<GuardianComponent>()
-        .single;
+    final guardian = game.world.children.whereType<GuardianComponent>().single;
     // e1 está en la casilla (4,5; 4,5) y las casillas miden 64 px.
     expect(guardian.position, Vector2(4.5 * 64, 4.5 * 64));
 
@@ -126,9 +124,9 @@ void main() {
     await advance(tester, game, seconds: 20);
 
     final pest = simulation.pests.first;
-    final drawn = game.world.children
-        .whereType<PestComponent>()
-        .firstWhere((component) => component.pestId == pest.id);
+    final drawn = game.world.children.whereType<PestComponent>().firstWhere(
+      (component) => component.pestId == pest.id,
+    );
     final actual = Vector2(pest.position.x, pest.position.y) * 64;
     // Como mucho un tick de atraso: velocidad / 30 casillas.
     final oneTick = pest.def.speed / 30 * 64;

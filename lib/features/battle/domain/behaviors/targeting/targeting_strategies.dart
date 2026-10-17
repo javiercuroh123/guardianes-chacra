@@ -14,10 +14,8 @@ final class FirstTargeting implements TargetingStrategy {
   const new();
 
   @override
-  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(
-    candidates,
-    (a, b) => a.distance.compareTo(b.distance),
-  );
+  Pest? choose(List<Pest> candidates, Vec2 origin) =>
+      _best(candidates, (a, b) => a.distance.compareTo(b.distance));
 }
 
 /// La que va última: la que menos avanzó.
@@ -25,10 +23,8 @@ final class LastTargeting implements TargetingStrategy {
   const new();
 
   @override
-  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(
-    candidates,
-    (a, b) => b.distance.compareTo(a.distance),
-  );
+  Pest? choose(List<Pest> candidates, Vec2 origin) =>
+      _best(candidates, (a, b) => b.distance.compareTo(a.distance));
 }
 
 /// La que tiene más vida; si empatan, la que va primera.
@@ -36,13 +32,10 @@ final class StrongestTargeting implements TargetingStrategy {
   const new();
 
   @override
-  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(
-    candidates,
-    (a, b) {
-      final byHealth = a.health.compareTo(b.health);
-      return byHealth != 0 ? byHealth : a.distance.compareTo(b.distance);
-    },
-  );
+  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(candidates, (a, b) {
+    final byHealth = a.health.compareTo(b.health);
+    return byHealth != 0 ? byHealth : a.distance.compareTo(b.distance);
+  });
 }
 
 /// La más cercana al guardián; si empatan, la que va primera.
@@ -50,16 +43,13 @@ final class ClosestTargeting implements TargetingStrategy {
   const new();
 
   @override
-  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(
-    candidates,
-    (a, b) {
-      // Más cerca es mejor: se compara al revés.
-      final byDistance = origin
-          .distanceSquaredTo(b.position)
-          .compareTo(origin.distanceSquaredTo(a.position));
-      return byDistance != 0 ? byDistance : a.distance.compareTo(b.distance);
-    },
-  );
+  Pest? choose(List<Pest> candidates, Vec2 origin) => _best(candidates, (a, b) {
+    // Más cerca es mejor: se compara al revés.
+    final byDistance = origin
+        .distanceSquaredTo(b.position)
+        .compareTo(origin.distanceSquaredTo(a.position));
+    return byDistance != 0 ? byDistance : a.distance.compareTo(b.distance);
+  });
 }
 
 /// La mejor según [compare] (positivo = `a` es mejor que `b`). En un empate

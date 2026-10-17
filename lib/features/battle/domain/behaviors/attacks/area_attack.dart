@@ -13,11 +13,8 @@ import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
 /// Datos: `damage`, `damageType`, `cooldown` (s) y, opcionales,
 /// `bonusAgainst` y `onHit`.
 final class AreaAttack extends GuardianBehavior {
-  new({
-    required this.hit,
-    required int cooldownTicks,
-    this.onHit = const [],
-  }) : _cooldown = Cooldown(cooldownTicks);
+  new({required this.hit, required int cooldownTicks, this.onHit = const []})
+    : _cooldown = Cooldown(cooldownTicks);
 
   factory fromParams(BehaviorParams params) => AreaAttack(
     hit: Hit(

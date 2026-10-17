@@ -180,10 +180,7 @@ void main() {
 
     final events = _apply(simulation, [const UpgradeGuardian(1)]);
 
-    expect(
-      (events.single as CommandRejected).reason,
-      RejectionReason.maxLevel,
-    );
+    expect((events.single as CommandRejected).reason, RejectionReason.maxLevel);
   });
 
   group('vender', () {

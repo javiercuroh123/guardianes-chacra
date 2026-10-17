@@ -17,9 +17,19 @@ void main() {
 
   test('ids distintos del contenido dan colores distintos', () {
     const ids = [
-      'gorgojo', 'polilla', 'langosta', 'escarabajo', 'espiritu_helada',
-      'granizo', 'granizo_chico', 'rey_gorgojo',
-      'hondero', 'llama', 'tullpa', 'condor', 'pututu',
+      'gorgojo',
+      'polilla',
+      'langosta',
+      'escarabajo',
+      'espiritu_helada',
+      'granizo',
+      'granizo_chico',
+      'rey_gorgojo',
+      'hondero',
+      'llama',
+      'tullpa',
+      'condor',
+      'pututu',
     ];
 
     expect(ids.map(colorForId).toSet(), hasLength(ids.length));

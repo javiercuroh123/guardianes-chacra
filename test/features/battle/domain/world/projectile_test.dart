@@ -26,16 +26,16 @@ Projectile _projectile(
   required Vec2 from,
   required double speed,
 }) => Projectile(
-      id: 1,
-      guardianId: 1,
-      position: from,
-      target: target,
-      shot: ProjectileShot(
-        hit: const Hit(amount: 1, type: DamageType.physical),
-        speed: speed,
-      ),
-      targets: const {PestTag.ground},
-    );
+  id: 1,
+  guardianId: 1,
+  position: from,
+  target: target,
+  shot: ProjectileShot(
+    hit: const Hit(amount: 1, type: DamageType.physical),
+    speed: speed,
+  ),
+  targets: const {PestTag.ground},
+);
 
 void main() {
   test('llega a un objetivo quieto en el tiempo que da su velocidad', () {

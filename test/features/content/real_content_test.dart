@@ -32,15 +32,18 @@ void main() {
       'condor',
       'pututu',
     ]);
-    expect(content.pests.keys, containsAll(<String>[
-      'gorgojo',
-      'polilla',
-      'langosta',
-      'escarabajo',
-      'espiritu_helada',
-      'granizo',
-      'rey_gorgojo',
-    ]));
+    expect(
+      content.pests.keys,
+      containsAll(<String>[
+        'gorgojo',
+        'polilla',
+        'langosta',
+        'escarabajo',
+        'espiritu_helada',
+        'granizo',
+        'rey_gorgojo',
+      ]),
+    );
     expect(content.levels.map((level) => level.id), [
       'chacra_del_valle',
       'andenes',
@@ -61,11 +64,7 @@ void main() {
       final lastWavePests = level.waves.last.groups.map(
         (group) => content.pests[group.pestId]!,
       );
-      expect(
-        lastWavePests.any((pest) => pest.boss),
-        isTrue,
-        reason: level.id,
-      );
+      expect(lastWavePests.any((pest) => pest.boss), isTrue, reason: level.id);
     }
   });
 
@@ -98,9 +97,11 @@ void main() {
     // plagas con el registro; jugarla hasta el final recorre cada oleada.
     for (final level in content.levels) {
       final simulation = simulationFor(level);
-      for (var i = 0;
-          i < 30 * 60 * 20 && simulation.status == BattleStatus.playing;
-          i++) {
+      for (
+        var i = 0;
+        i < 30 * 60 * 20 && simulation.status == BattleStatus.playing;
+        i++
+      ) {
         simulation.step();
       }
 

@@ -27,21 +27,18 @@ const double _turnSpeed = 14;
 /// objetivo. Al tocarlo avisa al juego; no decide nada.
 class GuardianComponent extends PositionComponent
     with TapCallbacks, HasGameReference<BattleGame> {
-  new({
-    required this.view,
-    required double tileSize,
-    required String label,
-  }) : _hasAim = view.def.levels.first.targets.isNotEmpty,
-       _bodyPaint = Paint()..color = colorFor(view.def.id, view.def.color),
-       super(
-         position: Vector2(
-           view.position.x * tileSize,
-           view.position.y * tileSize,
-         ),
-         size: Vector2.all(tileSize * 0.78),
-         anchor: Anchor.center,
-         priority: 10,
-       ) {
+  new({required this.view, required double tileSize, required String label})
+    : _hasAim = view.def.levels.first.targets.isNotEmpty,
+      _bodyPaint = Paint()..color = colorFor(view.def.id, view.def.color),
+      super(
+        position: Vector2(
+          view.position.x * tileSize,
+          view.position.y * tileSize,
+        ),
+        size: Vector2.all(tileSize * 0.78),
+        anchor: Anchor.center,
+        priority: 10,
+      ) {
     final side = size.x;
     _body = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, side, side),

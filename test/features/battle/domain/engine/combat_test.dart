@@ -320,36 +320,30 @@ void main() {
       targets: {PestTag.ground},
       behaviors: _llama.levels.single.behaviors,
     );
-    final simulation =
-        Simulation(
-            level: testLevel(
-              corn: 1000,
-              slots: const [BuildSlotDef(id: 'l', position: Vec2(0, 2))],
-              paths: const [
-                PathDef(id: 'tierra', points: [Vec2(0, 0), Vec2(0, 10)]),
-                PathDef(id: 'aire', points: [Vec2(0.5, 0), Vec2(0.5, 10)]),
-              ],
-              waves: const [
-                WaveDef(
-                  prepTime: 0,
-                  reward: 0,
-                  groups: [
-                    SpawnGroupDef(pestId: 'blanco', count: 1, pathId: 'tierra'),
-                    SpawnGroupDef(
-                      pestId: 'blanco_volador',
-                      count: 1,
-                      pathId: 'aire',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            pests: _pests,
-            guardians: {'llama_terrestre': terrestre},
-            rules: testRules,
-            seed: 7,
-          )
-          ..enqueue(_build('l', 'llama_terrestre'));
+    final simulation = Simulation(
+      level: testLevel(
+        corn: 1000,
+        slots: const [BuildSlotDef(id: 'l', position: Vec2(0, 2))],
+        paths: const [
+          PathDef(id: 'tierra', points: [Vec2(0, 0), Vec2(0, 10)]),
+          PathDef(id: 'aire', points: [Vec2(0.5, 0), Vec2(0.5, 10)]),
+        ],
+        waves: const [
+          WaveDef(
+            prepTime: 0,
+            reward: 0,
+            groups: [
+              SpawnGroupDef(pestId: 'blanco', count: 1, pathId: 'tierra'),
+              SpawnGroupDef(pestId: 'blanco_volador', count: 1, pathId: 'aire'),
+            ],
+          ),
+        ],
+      ),
+      pests: _pests,
+      guardians: {'llama_terrestre': terrestre},
+      rules: testRules,
+      seed: 7,
+    )..enqueue(_build('l', 'llama_terrestre'));
 
     _stepUntil(simulation, 4);
 
@@ -400,13 +394,15 @@ void main() {
 
   group('Granizo', () {
     test('se divide al morir y sus trozos cuentan para la oleada', () {
-      final simulation = _simulation(
-        testLevel(waves: [testWave('granizo')]),
-      )..enqueue(_build('a', 'hondero'));
+      final simulation = _simulation(testLevel(waves: [testWave('granizo')]))
+        ..enqueue(_build('a', 'hondero'));
       final events = _record(simulation);
 
-      for (var i = 0; i < 1000 && events.whereType<PestDefeated>().isEmpty;
-          i++) {
+      for (
+        var i = 0;
+        i < 1000 && events.whereType<PestDefeated>().isEmpty;
+        i++
+      ) {
         simulation.step();
       }
 
@@ -444,10 +440,9 @@ void main() {
       _stepUntil(simulation, 2000);
 
       expect(events.whereType<CollcaDamaged>(), hasLength(1));
-      expect(
-        events.whereType<PestSpawned>().map((event) => event.pestType),
-        ['granizo'],
-      );
+      expect(events.whereType<PestSpawned>().map((event) => event.pestType), [
+        'granizo',
+      ]);
       expect(simulation.status, BattleStatus.won);
     });
   });
@@ -462,10 +457,7 @@ void main() {
     _stepUntil(simulation, 90);
     final [rey, ...summonedNow] = simulation.pests;
     expect(summonedNow, hasLength(2));
-    expect(
-      summonedNow.every((pest) => pest.distance < rey.distance),
-      isTrue,
-    );
+    expect(summonedNow.every((pest) => pest.distance < rey.distance), isTrue);
 
     _stepUntil(simulation, 160);
     final summoned = events.whereType<PestSpawned>().where(
@@ -517,8 +509,11 @@ void main() {
         ..enqueue(_build('a', 'hondero'))
         ..enqueue(_build('b', 'llama'));
       final events = _record(simulation);
-      for (var i = 0; i < 3000 && simulation.status == BattleStatus.playing;
-          i++) {
+      for (
+        var i = 0;
+        i < 3000 && simulation.status == BattleStatus.playing;
+        i++
+      ) {
         if (simulation.tick == 100) {
           simulation.enqueue(const SetTargeting(1, strategy: 'strongest'));
         }
