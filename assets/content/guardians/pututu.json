@@ -1,0 +1,39 @@
+{
+  "defaultTargeting": "first",
+  "levels": [
+    {
+      "cost": 90,
+      "range": 2.0,
+      "targets": [],
+      "behaviors": [{ "type": "support_aura", "attackSpeedBonus": 0.2 }]
+    },
+    {
+      "cost": 60,
+      "range": 2.3,
+      "targets": [],
+      "behaviors": [{ "type": "support_aura", "attackSpeedBonus": 0.3 }]
+    },
+    {
+      "cost": 90,
+      "range": 2.6,
+      "targets": [],
+      "behaviors": [{ "type": "support_aura", "attackSpeedBonus": 0.4 }]
+    }
+  ],
+  "branches": [
+    {
+      "id": "llamado_del_valle",
+      "cost": 150,
+      "range": 3.3,
+      "targets": [],
+      "behaviors": [{ "type": "support_aura", "attackSpeedBonus": 0.5 }]
+    },
+    {
+      "id": "toque_de_guerra",
+      "cost": 140,
+      "range": 2.4,
+      "targets": [],
+      "behaviors": [{ "type": "support_aura", "attackSpeedBonus": 0.7 }]
+    }
+  ]
+}

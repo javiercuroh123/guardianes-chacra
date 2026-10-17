@@ -1,19 +1,26 @@
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:meta/meta.dart';
 
-/// Un nivel tal como lo necesita la simulación. En la Fase 4 se arma a
-/// partir del JSON del nivel y su mapa de Tiled.
+/// Un nivel: su JSON (`assets/content/levels/<id>.json`) más su mapa de
+/// Tiled.
 @immutable
 class LevelDef {
   const new({
+    required this.id,
+    required this.mapFile,
+    required this.map,
     required this.startingCorn,
     required this.startingPotatoes,
     required this.earlyCallCornPerSecond,
-    required this.paths,
     required this.waves,
-    this.buildSlots = const [],
   });
 
+  final String id;
+
+  /// Nombre del archivo del mapa dentro de `assets/tiles/`.
+  final String mapFile;
+
+  final MapDef map;
   final int startingCorn;
   final int startingPotatoes;
 
@@ -21,8 +28,26 @@ class LevelDef {
   /// llamar la siguiente oleada antes de tiempo.
   final double earlyCallCornPerSecond;
 
-  final List<PathDef> paths;
   final List<WaveDef> waves;
+}
+
+/// Lo que la simulación necesita del mapa de Tiled, en casillas.
+@immutable
+class MapDef {
+  const new({
+    required this.width,
+    required this.height,
+    required this.collca,
+    required this.paths,
+    this.buildSlots = const [],
+  });
+
+  /// Tamaño en casillas.
+  final int width;
+  final int height;
+
+  final Vec2 collca;
+  final List<PathDef> paths;
 
   /// Espacios fijos donde se puede construir un guardián.
   final List<BuildSlotDef> buildSlots;

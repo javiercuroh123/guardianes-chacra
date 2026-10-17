@@ -1,0 +1,8 @@
+{
+  "maxHealth": 10,
+  "speed": 1.4,
+  "resistances": { "fire": 1.25 },
+  "cornReward": 1,
+  "potatoDamage": 1,
+  "tags": ["ground"]
+}

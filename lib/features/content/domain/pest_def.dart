@@ -25,6 +25,7 @@ class PestDef {
     this.resistances = const {},
     this.immunities = const {},
     this.abilities = const [],
+    this.boss = false,
   });
 
   final String id;
@@ -53,4 +54,7 @@ class PestDef {
 
   /// Habilidades especiales (dividirse al morir, invocar…).
   final List<BehaviorSpec> abilities;
+
+  /// Es un jefe: la última oleada de cada nivel trae uno.
+  final bool boss;
 }

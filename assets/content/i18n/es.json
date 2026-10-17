@@ -1,0 +1,83 @@
+{
+  "@@nota": "Textos del contenido en español (idioma base). Las claves que empiezan con @ son notas: el juego las ignora. Las notas con \"revisar\" señalan datos reales que hay que verificar antes de publicar.",
+
+  "pest.gorgojo.name": "Gorgojo",
+  "pest.gorgojo.description": "Pequeño, lento y testarudo. Sueña con cavar túneles en cada papa de la collca.",
+  "@pest.gorgojo.description": {
+    "revisar": "Inspirado en el gorgojo de los Andes, una plaga real de la papa. La descripción no afirma datos reales; si se agrega uno (nombre científico, daños), verificarlo."
+  },
+  "pest.polilla.name": "Polilla",
+  "pest.polilla.description": "Vuela de noche y se cuela por cualquier rendija. Frágil, pero muy rápida.",
+  "pest.langosta.name": "Langosta",
+  "pest.langosta.description": "Nunca llega sola: donde ves una, viene un enjambre detrás.",
+  "pest.escarabajo.name": "Escarabajo acorazado",
+  "pest.escarabajo.description": "Su caparazón resiste piedras y picotazos, pero el fuego lo hace correr.",
+  "pest.espiritu_helada.name": "Espíritu de la Helada",
+  "pest.espiritu_helada.description": "Baja de las cumbres en las noches despejadas. Nada lo frena y los golpes lo atraviesan: solo el calor lo espanta.",
+  "@pest.espiritu_helada.description": {
+    "revisar": "\"Baja en las noches despejadas\" alude a un dato real: en los Andes las heladas suelen formarse en noches sin nubes. Verificar antes de publicar."
+  },
+  "pest.granizo.name": "Granizo",
+  "pest.granizo.description": "Una piedra de hielo con mal genio. Si la rompes, se parte en granizos más pequeños.",
+  "pest.granizo_chico.name": "Granizo menudo",
+  "pest.granizo_chico.description": "Los trozos de un granizo roto. Pequeños, rápidos y todavía con ganas de molestar.",
+  "pest.rey_gorgojo.name": "Rey Gorgojo",
+  "pest.rey_gorgojo.description": "El más grande y glotón de los gorgojos. Mientras avanza, llama a su corte para que lo siga.",
+
+  "guardian.hondero.name": "Hondero",
+  "guardian.hondero.description": "Gira su honda y lanza piedras sin descanso. Barato y certero contra todo lo que camina o vuela.",
+  "@guardian.hondero.description": {
+    "revisar": "La honda (waraka en quechua) es un arma y herramienta tradicional andina. Verificar el término si se menciona en el juego."
+  },
+  "guardian.hondero.branch.piedra_pesada.name": "Piedra pesada",
+  "guardian.hondero.branch.piedra_pesada.description": "Piedras enormes que dejan aturdida a la plaga por un momento.",
+  "guardian.hondero.branch.honda_rapida.name": "Honda veloz",
+  "guardian.hondero.branch.honda_rapida.description": "Menos fuerza, pero una lluvia de piedras.",
+
+  "guardian.llama.name": "Llama",
+  "guardian.llama.description": "Escupe con puntería a las plagas, que quedan pegajosas y lentas. Hace poco daño, pero da tiempo a los demás.",
+  "@guardian.llama.description": {
+    "revisar": "Las llamas reales escupen, sobre todo entre ellas. Verificar si se quiere presentar como dato real."
+  },
+  "guardian.llama.branch.escupitajo_pegajoso.name": "Escupitajo pegajoso",
+  "guardian.llama.branch.escupitajo_pegajoso.description": "Cubre un área mayor y deja a las plagas casi quietas.",
+  "guardian.llama.branch.escupitajo_certero.name": "Escupitajo certero",
+  "guardian.llama.branch.escupitajo_certero.description": "Tan fuerte que deja aturdido a quien recibe el impacto.",
+
+  "guardian.tullpa.name": "Tullpa",
+  "guardian.tullpa.description": "El fogón andino de piedra. Calienta todo a su alrededor y quema a las plagas que pasan cerca, pero no alcanza a las que vuelan.",
+  "@guardian.tullpa.description": {
+    "revisar": "La tullpa es el fogón tradicional andino (de piedra o barro). Verificar la definición y la escritura (tullpa / q'uncha) antes de publicar."
+  },
+  "guardian.tullpa.branch.fogon_grande.name": "Fogón grande",
+  "guardian.tullpa.branch.fogon_grande.description": "Más brasas, más alcance y llamas más altas.",
+  "guardian.tullpa.branch.brasas_eternas.name": "Brasas eternas",
+  "guardian.tullpa.branch.brasas_eternas.description": "Su fuego se pega a las plagas y las sigue quemando.",
+
+  "guardian.condor.name": "Cóndor",
+  "guardian.condor.description": "Vigila desde lo alto y ve llegar a las plagas de lejos. Nadie caza mejor a las que vuelan.",
+  "@guardian.condor.description": {
+    "revisar": "Si se agrega un dato real (por ejemplo, que el cóndor andino es una de las aves voladoras más grandes), verificarlo y no inventar cifras."
+  },
+  "guardian.condor.branch.vuelo_rasante.name": "Vuelo rasante",
+  "guardian.condor.branch.vuelo_rasante.description": "Se lanza en picada sobre los voladores: ninguno escapa.",
+  "guardian.condor.branch.garras_de_piedra.name": "Garras de piedra",
+  "guardian.condor.branch.garras_de_piedra.description": "Ataca despacio, pero cada golpe atraviesa hasta el caparazón más duro.",
+
+  "guardian.pututu.name": "Pututu",
+  "guardian.pututu.description": "El sonido de la caracola llama a todos a trabajar más rápido. No ataca, pero los guardianes cercanos atacan con más brío.",
+  "@guardian.pututu.description": {
+    "revisar": "El pututu es una trompeta andina hecha de caracola marina (a veces de cuerno). Verificar antes de publicar."
+  },
+  "guardian.pututu.branch.llamado_del_valle.name": "Llamado del valle",
+  "guardian.pututu.branch.llamado_del_valle.description": "Su sonido llega mucho más lejos.",
+  "guardian.pututu.branch.toque_de_guerra.name": "Toque de guerra",
+  "guardian.pututu.branch.toque_de_guerra.description": "Un toque corto e intenso: menos alcance, mucho más brío.",
+
+  "level.chacra_del_valle.name": "Chacra del Valle",
+  "level.andenes.name": "Andenes",
+  "@level.andenes.name": {
+    "revisar": "Los andenes son terrazas agrícolas andinas. Verificar si se agrega una descripción con datos reales."
+  },
+  "level.orilla_del_lago.name": "Orilla del Lago"
+}

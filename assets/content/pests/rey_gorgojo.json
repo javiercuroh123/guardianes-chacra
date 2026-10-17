@@ -1,0 +1,12 @@
+{
+  "maxHealth": 900,
+  "speed": 0.45,
+  "armor": 4,
+  "cornReward": 100,
+  "potatoDamage": 10,
+  "tags": ["ground"],
+  "boss": true,
+  "abilities": [
+    { "type": "summon", "pest": "gorgojo", "count": 2, "interval": 8, "spacing": 0.4 }
+  ]
+}

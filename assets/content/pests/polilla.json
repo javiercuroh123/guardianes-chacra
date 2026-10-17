@@ -1,0 +1,7 @@
+{
+  "maxHealth": 16,
+  "speed": 2.0,
+  "cornReward": 3,
+  "potatoDamage": 1,
+  "tags": ["flying"]
+}

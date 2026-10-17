@@ -1,0 +1,84 @@
+{
+  "defaultTargeting": "first",
+  "levels": [
+    {
+      "cost": 120,
+      "range": 5.0,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 14,
+          "damageType": "physical",
+          "cooldown": 1.5,
+          "projectileSpeed": 16,
+          "bonusAgainst": { "flying": 2.5 }
+        }
+      ]
+    },
+    {
+      "cost": 80,
+      "range": 5.4,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 20,
+          "damageType": "physical",
+          "cooldown": 1.5,
+          "projectileSpeed": 16,
+          "bonusAgainst": { "flying": 2.5 }
+        }
+      ]
+    },
+    {
+      "cost": 120,
+      "range": 5.8,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 28,
+          "damageType": "physical",
+          "cooldown": 1.4,
+          "projectileSpeed": 17,
+          "bonusAgainst": { "flying": 2.5 }
+        }
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "vuelo_rasante",
+      "cost": 170,
+      "range": 5.8,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 30,
+          "damageType": "physical",
+          "cooldown": 1.0,
+          "projectileSpeed": 18,
+          "bonusAgainst": { "flying": 4 }
+        }
+      ]
+    },
+    {
+      "id": "garras_de_piedra",
+      "cost": 180,
+      "range": 6.5,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 75,
+          "damageType": "physical",
+          "cooldown": 2.0,
+          "projectileSpeed": 20,
+          "bonusAgainst": { "flying": 1.5 }
+        }
+      ]
+    }
+  ]
+}

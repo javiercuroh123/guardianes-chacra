@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="26" height="12" tilewidth="64" tileheight="64" infinite="0" nextlayerid="5" nextobjectid="16">
+ <tileset firstgid="1" source="placeholder.tsx"/>
+ <layer id="1" name="terreno" width="26" height="12">
+  <data encoding="csv">
+4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,8,
+1,1,1,1,1,1,1,1,1,2,8,8,1,1,1,1,1,1,1,1,1,1,8,1,1,8,
+4,4,4,6,4,4,4,6,4,2,4,6,4,4,4,4,4,6,4,4,4,6,4,4,4,4,
+1,8,1,8,8,1,1,1,1,2,1,1,1,1,8,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,7,1,
+4,4,4,4,4,4,4,4,4,4,4,4,6,4,2,4,6,4,4,4,4,4,4,4,4,4,
+1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,1,1,6,1,1,1,6,1,1,1,1,
+1,1,8,6,1,2,8,8,1,1,1,1,1,1,8,1,1,1,1,1,1,1,1,1,1,1,
+4,4,4,4,4,2,4,4,6,4,4,4,6,4,4,4,4,4,4,4,4,4,4,4,4,4,
+2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,8,1,1,1,1,1,1,1,1,
+8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <objectgroup id="2" name="caminos">
+  <object id="1" name="norte" x="0" y="96">
+   <polyline points="0,0 608,0 608,256 1568,256"/>
+  </object>
+  <object id="2" name="sur" x="0" y="672">
+   <polyline points="0,0 352,0 352,-192 928,-192 928,-320 1568,-320"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="3" name="espacios">
+  <object id="3" name="e1" x="224" y="224">
+   <point/>
+  </object>
+  <object id="4" name="e2" x="480" y="224">
+   <point/>
+  </object>
+  <object id="5" name="e3" x="736" y="224">
+   <point/>
+  </object>
+  <object id="6" name="e4" x="224" y="544">
+   <point/>
+  </object>
+  <object id="7" name="e5" x="544" y="608">
+   <point/>
+  </object>
+  <object id="8" name="e6" x="800" y="608">
+   <point/>
+  </object>
+  <object id="9" name="e7" x="800" y="416">
+   <point/>
+  </object>
+  <object id="10" name="e8" x="1056" y="416">
+   <point/>
+  </object>
+  <object id="11" name="e9" x="1120" y="224">
+   <point/>
+  </object>
+  <object id="12" name="e10" x="1120" y="480">
+   <point/>
+  </object>
+  <object id="13" name="e11" x="1376" y="224">
+   <point/>
+  </object>
+  <object id="14" name="e12" x="1376" y="480">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="collca">
+  <object id="15" name="collca" x="1568" y="352">
+   <point/>
+  </object>
+ </objectgroup>
+</map>

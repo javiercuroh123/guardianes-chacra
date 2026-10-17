@@ -58,9 +58,9 @@ class Simulation {
        _registry = registry ?? BehaviorRegistry.withDefaults(),
        _pestDefs = Map.unmodifiable(pests),
        _guardianDefs = Map.unmodifiable(guardians),
-       _slots = {for (final slot in level.buildSlots) slot.id: slot},
+       _slots = {for (final slot in level.map.buildSlots) slot.id: slot},
        _tracks = {
-         for (final path in level.paths) path.id: PathTrack(path.points),
+         for (final path in level.map.paths) path.id: PathTrack(path.points),
        },
        _spawner = WaveSpawner(level.waves),
        _corn = level.startingCorn,
@@ -474,7 +474,7 @@ class Simulation {
   /// La Fase 4 valida los JSON con mensajes por archivo; esto protege al
   /// motor.
   void _validate() {
-    if (_slots.length != _level.buildSlots.length) {
+    if (_slots.length != _level.map.buildSlots.length) {
       throw ArgumentError('Hay espacios de construcción con el mismo id.');
     }
     for (final def in _guardianDefs.values) {

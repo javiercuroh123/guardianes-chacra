@@ -21,6 +21,9 @@ dependencies:
   meta: ^1.19.0
   # Progreso y ajustes como un documento JSON versionado (Fase 7).
   shared_preferences: ^2.5.6
+  # Lee los mapas de Tiled en Dart puro (la capa data los convierte en
+  # caminos y espacios). La fija flame_tiled: no subir a 0.12 por separado.
+  tiled: ^0.11.1
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +34,15 @@ flutter:
   uses-material-design: true
   # Genera AppLocalizations a partir de los ARB (configuración en l10n.yaml).
   generate: true
+
+  # Flutter no incluye subcarpetas solas: cada carpeta de contenido se
+  # declara aquí. Un guardián, plaga o nivel nuevo no necesita tocar esta
+  # lista (solo su archivo y su id en assets/content/index.json).
+  assets:
+    - assets/content/
+    - assets/content/guardians/
+    - assets/content/pests/
+    - assets/content/levels/
+    - assets/content/i18n/
+    # Mapas de Tiled y su tileset (flame_tiled los busca en assets/tiles/).
+    - assets/tiles/

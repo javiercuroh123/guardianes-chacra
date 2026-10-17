@@ -1,0 +1,56 @@
+{
+  "defaultTargeting": "first",
+  "levels": [
+    {
+      "cost": 60,
+      "range": 3.0,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        { "type": "projectile", "damage": 8, "damageType": "physical", "cooldown": 0.8, "projectileSpeed": 12 }
+      ]
+    },
+    {
+      "cost": 45,
+      "range": 3.2,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        { "type": "projectile", "damage": 12, "damageType": "physical", "cooldown": 0.75, "projectileSpeed": 12 }
+      ]
+    },
+    {
+      "cost": 70,
+      "range": 3.4,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        { "type": "projectile", "damage": 16, "damageType": "physical", "cooldown": 0.7, "projectileSpeed": 13 }
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "piedra_pesada",
+      "cost": 140,
+      "range": 3.4,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 40,
+          "damageType": "physical",
+          "cooldown": 1.2,
+          "projectileSpeed": 10,
+          "onHit": [{ "type": "stun", "duration": 0.5 }]
+        }
+      ]
+    },
+    {
+      "id": "honda_rapida",
+      "cost": 130,
+      "range": 3.6,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        { "type": "projectile", "damage": 12, "damageType": "physical", "cooldown": 0.3, "projectileSpeed": 14 }
+      ]
+    }
+  ]
+}

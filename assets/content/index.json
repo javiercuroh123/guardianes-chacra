@@ -1,0 +1,15 @@
+{
+  "languages": ["es", "en"],
+  "guardians": ["hondero", "llama", "tullpa", "condor", "pututu"],
+  "pests": [
+    "gorgojo",
+    "polilla",
+    "langosta",
+    "escarabajo",
+    "espiritu_helada",
+    "granizo",
+    "granizo_chico",
+    "rey_gorgojo"
+  ],
+  "levels": ["chacra_del_valle", "andenes", "orilla_del_lago"]
+}

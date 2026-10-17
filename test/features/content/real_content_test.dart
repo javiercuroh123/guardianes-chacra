@@ -1,0 +1,112 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
+import 'package:guardianes_chacra/features/content/data/content_loader.dart';
+import 'package:guardianes_chacra/features/content/data/file_asset_source.dart';
+import 'package:guardianes_chacra/features/content/domain/game_content.dart';
+import 'package:guardianes_chacra/features/content/domain/level_def.dart';
+
+/// Revisa el contenido real de `assets/`: si alguien edita un JSON o un
+/// mapa y lo deja inválido, este test lo dice antes de abrir el juego.
+void main() {
+  late GameContent content;
+
+  setUpAll(() async {
+    content = await ContentLoader(FileAssetSource()).load();
+  });
+
+  Simulation simulationFor(LevelDef level) => Simulation(
+    level: level,
+    pests: content.pests,
+    guardians: content.guardians,
+    rules: content.rules,
+    seed: 1,
+  );
+
+  test('tiene los 5 guardianes, las plagas y los 3 niveles en orden', () {
+    expect(content.guardians.keys, [
+      'hondero',
+      'llama',
+      'tullpa',
+      'condor',
+      'pututu',
+    ]);
+    expect(content.pests.keys, containsAll(<String>[
+      'gorgojo',
+      'polilla',
+      'langosta',
+      'escarabajo',
+      'espiritu_helada',
+      'granizo',
+      'rey_gorgojo',
+    ]));
+    expect(content.levels.map((level) => level.id), [
+      'chacra_del_valle',
+      'andenes',
+      'orilla_del_lago',
+    ]);
+  });
+
+  test('cada guardián tiene 2 mejoras y una especialización de 2 ramas', () {
+    for (final guardian in content.guardians.values) {
+      expect(guardian.levels, hasLength(3), reason: guardian.id);
+      expect(guardian.branches, hasLength(2), reason: guardian.id);
+    }
+  });
+
+  test('cada nivel tiene entre 10 y 15 oleadas y la última trae un jefe', () {
+    for (final level in content.levels) {
+      expect(level.waves.length, inInclusiveRange(10, 15), reason: level.id);
+      final lastWavePests = level.waves.last.groups.map(
+        (group) => content.pests[group.pestId]!,
+      );
+      expect(
+        lastWavePests.any((pest) => pest.boss),
+        isTrue,
+        reason: level.id,
+      );
+    }
+  });
+
+  test('Andenes tiene 2 caminos', () {
+    final andenes = content.levels.firstWhere((level) => level.id == 'andenes');
+
+    expect(andenes.map.paths.map((path) => path.id), ['norte', 'sur']);
+  });
+
+  test('cada nivel crea su partida y, sin guardianes, se pierde', () {
+    // Crear la Simulation valida los comportamientos de guardianes y
+    // plagas con el registro; jugarla hasta el final recorre cada oleada.
+    for (final level in content.levels) {
+      final simulation = simulationFor(level);
+      for (var i = 0;
+          i < 30 * 60 * 20 && simulation.status == BattleStatus.playing;
+          i++) {
+        simulation.step();
+      }
+
+      expect(simulation.status, BattleStatus.lost, reason: level.id);
+    }
+  });
+
+  test('en cada nivel se puede construir cada guardián', () {
+    for (final level in content.levels) {
+      for (final guardianId in content.guardians.keys) {
+        final simulation = simulationFor(level)
+          ..enqueue(
+            BuildGuardian(
+              slotId: level.map.buildSlots.first.id,
+              guardianType: guardianId,
+            ),
+          )
+          ..step();
+
+        expect(
+          simulation.guardians.single.def.id,
+          guardianId,
+          reason: '${level.id} / $guardianId',
+        );
+      }
+    }
+  });
+}

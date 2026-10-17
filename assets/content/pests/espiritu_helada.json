@@ -1,0 +1,9 @@
+{
+  "maxHealth": 60,
+  "speed": 1.2,
+  "resistances": { "physical": 0.5, "fire": 1.5 },
+  "immunities": ["slow"],
+  "cornReward": 8,
+  "potatoDamage": 2,
+  "tags": ["ground"]
+}

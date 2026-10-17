@@ -395,7 +395,7 @@ packages:
     source: hosted
     version: "0.7.12"
   tiled:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: tiled
       sha256: f321ce0f27d103527b0d66878c60d9b000ce16c4ef4ae3ce77ce6f5ba4cf5db0

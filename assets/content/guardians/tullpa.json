@@ -1,0 +1,79 @@
+{
+  "defaultTargeting": "first",
+  "levels": [
+    {
+      "cost": 100,
+      "range": 1.8,
+      "targets": ["ground"],
+      "behaviors": [
+        {
+          "type": "area",
+          "damage": 6,
+          "damageType": "fire",
+          "cooldown": 1.0,
+          "onHit": [{ "type": "burn", "damagePerSecond": 4, "duration": 2 }]
+        }
+      ]
+    },
+    {
+      "cost": 70,
+      "range": 1.9,
+      "targets": ["ground"],
+      "behaviors": [
+        {
+          "type": "area",
+          "damage": 9,
+          "damageType": "fire",
+          "cooldown": 1.0,
+          "onHit": [{ "type": "burn", "damagePerSecond": 6, "duration": 2 }]
+        }
+      ]
+    },
+    {
+      "cost": 100,
+      "range": 2.0,
+      "targets": ["ground"],
+      "behaviors": [
+        {
+          "type": "area",
+          "damage": 13,
+          "damageType": "fire",
+          "cooldown": 1.0,
+          "onHit": [{ "type": "burn", "damagePerSecond": 8, "duration": 2.5 }]
+        }
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "fogon_grande",
+      "cost": 160,
+      "range": 2.5,
+      "targets": ["ground"],
+      "behaviors": [
+        {
+          "type": "area",
+          "damage": 18,
+          "damageType": "fire",
+          "cooldown": 1.0,
+          "onHit": [{ "type": "burn", "damagePerSecond": 10, "duration": 3 }]
+        }
+      ]
+    },
+    {
+      "id": "brasas_eternas",
+      "cost": 150,
+      "range": 2.0,
+      "targets": ["ground"],
+      "behaviors": [
+        {
+          "type": "area",
+          "damage": 8,
+          "damageType": "fire",
+          "cooldown": 0.8,
+          "onHit": [{ "type": "burn", "damagePerSecond": 18, "duration": 3 }]
+        }
+      ]
+    }
+  ]
+}

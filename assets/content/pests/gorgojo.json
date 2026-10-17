@@ -1,0 +1,7 @@
+{
+  "maxHealth": 30,
+  "speed": 1.0,
+  "cornReward": 4,
+  "potatoDamage": 1,
+  "tags": ["ground"]
+}

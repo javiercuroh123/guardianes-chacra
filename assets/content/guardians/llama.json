@@ -1,0 +1,92 @@
+{
+  "defaultTargeting": "first",
+  "levels": [
+    {
+      "cost": 80,
+      "range": 2.6,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 3,
+          "damageType": "physical",
+          "cooldown": 1.2,
+          "projectileSpeed": 8,
+          "splashRadius": 0.8,
+          "onHit": [{ "type": "slow", "factor": 0.6, "duration": 1.5 }]
+        }
+      ]
+    },
+    {
+      "cost": 55,
+      "range": 2.8,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 4,
+          "damageType": "physical",
+          "cooldown": 1.1,
+          "projectileSpeed": 8,
+          "splashRadius": 1.0,
+          "onHit": [{ "type": "slow", "factor": 0.55, "duration": 2 }]
+        }
+      ]
+    },
+    {
+      "cost": 80,
+      "range": 3.0,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 6,
+          "damageType": "physical",
+          "cooldown": 1.0,
+          "projectileSpeed": 9,
+          "splashRadius": 1.1,
+          "onHit": [{ "type": "slow", "factor": 0.5, "duration": 2 }]
+        }
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "escupitajo_pegajoso",
+      "cost": 130,
+      "range": 3.2,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 6,
+          "damageType": "physical",
+          "cooldown": 1.0,
+          "projectileSpeed": 9,
+          "splashRadius": 1.4,
+          "onHit": [{ "type": "slow", "factor": 0.35, "duration": 2.5 }]
+        }
+      ]
+    },
+    {
+      "id": "escupitajo_certero",
+      "cost": 120,
+      "range": 3.0,
+      "targets": ["ground", "flying"],
+      "behaviors": [
+        {
+          "type": "projectile",
+          "damage": 12,
+          "damageType": "physical",
+          "cooldown": 1.4,
+          "projectileSpeed": 10,
+          "splashRadius": 0.9,
+          "onHit": [
+            { "type": "slow", "factor": 0.5, "duration": 2 },
+            { "type": "stun", "duration": 0.6 }
+          ]
+        }
+      ]
+    }
+  ]
+}

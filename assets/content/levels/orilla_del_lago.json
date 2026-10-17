@@ -1,0 +1,113 @@
+{
+  "map": "orilla_del_lago.tmx",
+  "startingCorn": 300,
+  "startingPotatoes": 20,
+  "earlyCallCornPerSecond": 1.5,
+  "waves": [
+    {
+      "prepTime": 15, "reward": 20,
+      "groups": [
+        { "pest": "polilla", "count": 6, "interval": 1.2, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 22,
+      "groups": [
+        { "pest": "gorgojo", "count": 8, "interval": 1.0, "path": "orilla" },
+        { "pest": "polilla", "count": 4, "delay": 4, "interval": 1.2, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 24,
+      "groups": [
+        { "pest": "langosta", "count": 12, "interval": 0.45, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 26,
+      "groups": [
+        { "pest": "granizo", "count": 3, "interval": 2.5, "path": "orilla" },
+        { "pest": "polilla", "count": 6, "delay": 3, "interval": 1.0, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 28,
+      "groups": [
+        { "pest": "escarabajo", "count": 3, "interval": 2.5, "path": "orilla" },
+        { "pest": "gorgojo", "count": 8, "delay": 2, "interval": 0.9, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 30,
+      "groups": [
+        { "pest": "espiritu_helada", "count": 3, "interval": 2.5, "path": "orilla" },
+        { "pest": "polilla", "count": 8, "delay": 4, "interval": 0.8, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 32,
+      "groups": [
+        { "pest": "polilla", "count": 16, "interval": 0.5, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 34,
+      "groups": [
+        { "pest": "granizo", "count": 4, "interval": 2, "path": "orilla" },
+        { "pest": "langosta", "count": 14, "delay": 4, "interval": 0.4, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 36,
+      "groups": [
+        { "pest": "escarabajo", "count": 4, "interval": 2, "path": "orilla" },
+        { "pest": "espiritu_helada", "count": 3, "delay": 6, "interval": 2, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 38,
+      "groups": [
+        { "pest": "polilla", "count": 12, "interval": 0.6, "path": "orilla" },
+        { "pest": "gorgojo", "count": 12, "delay": 3, "interval": 0.7, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 40,
+      "groups": [
+        { "pest": "espiritu_helada", "count": 5, "interval": 1.8, "path": "orilla" },
+        { "pest": "granizo", "count": 3, "delay": 5, "interval": 2.5, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 42,
+      "groups": [
+        { "pest": "escarabajo", "count": 5, "interval": 1.8, "path": "orilla" },
+        { "pest": "polilla", "count": 14, "delay": 2, "interval": 0.5, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 44,
+      "groups": [
+        { "pest": "langosta", "count": 20, "interval": 0.3, "path": "orilla" },
+        { "pest": "espiritu_helada", "count": 4, "delay": 6, "interval": 2, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 46,
+      "groups": [
+        { "pest": "granizo", "count": 6, "interval": 1.8, "path": "orilla" },
+        { "pest": "escarabajo", "count": 4, "delay": 4, "interval": 2, "path": "orilla" },
+        { "pest": "polilla", "count": 10, "delay": 8, "interval": 0.6, "path": "orilla" }
+      ]
+    },
+    {
+      "prepTime": 12, "reward": 80,
+      "groups": [
+        { "pest": "rey_gorgojo", "count": 1, "path": "orilla" },
+        { "pest": "polilla", "count": 12, "delay": 3, "interval": 0.7, "path": "orilla" },
+        { "pest": "espiritu_helada", "count": 4, "delay": 10, "interval": 2.5, "path": "orilla" },
+        { "pest": "escarabajo", "count": 3, "delay": 15, "interval": 3, "path": "orilla" }
+      ]
+    }
+  ]
+}

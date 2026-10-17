@@ -60,11 +60,13 @@ Bestiario: enciclopedia donde se desbloquea la ficha de cada plaga y guardián a
 guardianes_chacra/
 ├─ assets/
 │  ├─ content/
+│  │  ├─ index.json   idiomas y lista ordenada de guardianes, plagas y niveles
+│  │  ├─ rules.json   reglas generales de combate
 │  │  ├─ guardians/   un JSON por guardián (estadísticas, costo, comportamientos, mejoras y ramas)
 │  │  ├─ pests/       un JSON por plaga
-│  │  ├─ levels/      una carpeta por nivel: level.json (oleadas, maíz y papas iniciales) + map.tmx
+│  │  ├─ levels/      un JSON por nivel (mapa, maíz, papas y oleadas)
 │  │  └─ i18n/        es.json, en.json: nombres y fichas del bestiario, buscados por id
-│  └─ tilesets/       tileset de placeholder (.png + .tsx)
+│  └─ tiles/          mapas de Tiled (.tmx) + tileset de placeholder (.tsx + .png), juntos
 ├─ lib/
 │  ├─ main.dart
 │  ├─ app/            App, arranque, ThemeData, navegación
@@ -142,6 +144,17 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - `Simulation` valida al crearse los comportamientos y la estrategia por defecto de cada guardián, las habilidades de las plagas (y las plagas que crean) y los espacios con id repetido.
 - Los comandos están en `simulation_commands.dart` (`part` + extensión `_Commands`); `step()` la llama con `this._applyCommands()`.
 - En los tests de la simulación, acotar todo `while` con un máximo de ticks (si la partida termina, `step()` no avanza y el bucle no sale) y usar `flutter test --timeout 30s`.
+
+### Contenido y mapas (Fase 4)
+- Esquemas, cómo agregar contenido y lógica del balance: `docs/CONTENIDO.md`. Tiled (instalación, capas, ejercicio): `docs/TILED.md`. Tiled 1.12.2 (`winget install --id Tiled.Tiled`).
+- El id de una plaga, guardián o nivel es el nombre de su archivo (minúsculas, números y `_`) y debe estar en `assets/content/index.json`, que fija el orden (Bestiario y mapa del valle). Agregar contenido no toca `pubspec.yaml`.
+- `ContentLoader` (Dart puro, recibe un `AssetSource`) valida tipos, rangos, etiquetas, referencias a plagas y caminos, ramas (0 o ≥ 2) y textos en todos los idiomas, con errores `archivo → ruta: detalle` (`JsonNode`). Los parámetros de los comportamientos los valida el registro al crear la `Simulation`; `real_content_test.dart` crea una partida con cada nivel real, la juega sin guardianes y construye cada guardián.
+- `FileAssetSource` (`dart:io`) es para tests y herramientas: la app no debe importarlo (no compila en web). La versión con `rootBundle` llega en la Fase 5.
+- Mapas: casillas cuadradas de 64 px, 26 × 12. Capas `terreno` (dibujo), `caminos` (polilíneas con nombre = id), `espacios` (puntos; id = nombre o `espacio_<id>`) y `collca` (un punto). Cada camino debe terminar a ≤ 0,75 casillas de la collca. `tiled` es dependencia directa (^0.11.1, la que fija flame_tiled). El `.tmx`, el `.tsx` y el `.png` van juntos en `assets/tiles/`; en la Fase 5 se cargan con `Images(prefix: 'assets/tiles/')` para que Tiled y Flame lean los mismos archivos.
+- `LevelDef` = `id`, `mapFile`, `map` (`MapDef`: tamaño, collca, caminos y espacios) y la economía y las oleadas. `PestDef.boss` marca al jefe; la última oleada de cada nivel debe traer uno (lo comprueba el test del contenido real).
+- Textos del contenido: claves de `ContentTexts` (`pest.<id>.name`, `guardian.<id>.branch.<rama>.description`…). `es.json` es el idioma base y lleva las notas `"@clave": {"revisar": ...}` de los datos reales.
+- `tool/generate_placeholder_maps.py` y `tool/generate_placeholder_tileset.py` (Python sin dependencias) crearon los mapas y el tileset de prueba; el de mapas no sobrescribe sin `--force`, porque una vez editado en Tiled el `.tmx` es el original.
+- Ojo con los lints: la palabra "Todo" al inicio de un comentario dispara `flutter_style_todos`.
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.

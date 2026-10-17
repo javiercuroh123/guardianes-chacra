@@ -56,8 +56,19 @@ const _rey = PestDef(
   ],
 );
 
+/// Blanco de práctica volador: quieto y con mucha vida.
+const _blancoVolador = PestDef(
+  id: 'blanco_volador',
+  maxHealth: 100,
+  speed: 0,
+  cornReward: 1,
+  potatoDamage: 1,
+  tags: {PestTag.flying},
+);
+
 final Map<String, PestDef> _pests = {
   ...pestCatalog,
+  'blanco_volador': _blancoVolador,
   'granizo': _granizo,
   'granizo_chico': _granizoChico,
   'rey': _rey,
@@ -297,6 +308,56 @@ void main() {
     expect(near.activeEffects, ['slow']);
     expect(alsoNear.activeEffects, ['slow']);
     expect(far.activeEffects, isEmpty);
+  });
+
+  test('el área de un proyectil solo daña a las plagas que su guardián '
+      'puede atacar', () {
+    // Una Llama "terrestre" (solo tierra) apunta al blanco de tierra en
+    // (0, 0); el volador en (0,5; 0) queda dentro del área, pero no se toca.
+    final terrestre = _guardian(
+      'llama_terrestre',
+      range: 4,
+      targets: {PestTag.ground},
+      behaviors: _llama.levels.single.behaviors,
+    );
+    final simulation =
+        Simulation(
+            level: testLevel(
+              corn: 1000,
+              slots: const [BuildSlotDef(id: 'l', position: Vec2(0, 2))],
+              paths: const [
+                PathDef(id: 'tierra', points: [Vec2(0, 0), Vec2(0, 10)]),
+                PathDef(id: 'aire', points: [Vec2(0.5, 0), Vec2(0.5, 10)]),
+              ],
+              waves: const [
+                WaveDef(
+                  prepTime: 0,
+                  reward: 0,
+                  groups: [
+                    SpawnGroupDef(pestId: 'blanco', count: 1, pathId: 'tierra'),
+                    SpawnGroupDef(
+                      pestId: 'blanco_volador',
+                      count: 1,
+                      pathId: 'aire',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            pests: _pests,
+            guardians: {'llama_terrestre': terrestre},
+            rules: testRules,
+            seed: 7,
+          )
+          ..enqueue(_build('l', 'llama_terrestre'));
+
+    _stepUntil(simulation, 4);
+
+    final [ground, flying] = simulation.pests;
+    expect(ground.health, 99);
+    expect(ground.activeEffects, ['slow']);
+    expect(flying.health, 100);
+    expect(flying.activeEffects, isEmpty);
   });
 
   test('el Pututu acelera solo a los guardianes a su alcance, y las auras '

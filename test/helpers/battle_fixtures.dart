@@ -137,12 +137,19 @@ LevelDef testLevel({
   List<PathDef> paths = const [straightPath],
   List<BuildSlotDef> slots = testSlots,
 }) => LevelDef(
+  id: 'prueba',
+  mapFile: 'prueba.tmx',
+  map: MapDef(
+    width: 12,
+    height: 6,
+    collca: const Vec2(10, 0),
+    paths: paths,
+    buildSlots: slots,
+  ),
   startingCorn: corn,
   startingPotatoes: potatoes,
   earlyCallCornPerSecond: 2,
-  paths: paths,
   waves: waves,
-  buildSlots: slots,
 );
 
 /// Una oleada de [count] plagas de [pestId] por [pathId], separadas por

@@ -1,0 +1,78 @@
+{
+  "map": "chacra_del_valle.tmx",
+  "startingCorn": 220,
+  "startingPotatoes": 20,
+  "earlyCallCornPerSecond": 1.5,
+  "waves": [
+    {
+      "prepTime": 15, "reward": 20,
+      "groups": [
+        { "pest": "gorgojo", "count": 6, "interval": 1.5, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 22,
+      "groups": [
+        { "pest": "gorgojo", "count": 8, "interval": 1.2, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 24,
+      "groups": [
+        { "pest": "gorgojo", "count": 6, "interval": 1.2, "path": "camino" },
+        { "pest": "polilla", "count": 4, "delay": 3, "interval": 1.5, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 26,
+      "groups": [
+        { "pest": "langosta", "count": 10, "interval": 0.5, "path": "camino" },
+        { "pest": "gorgojo", "count": 4, "delay": 6, "interval": 1.2, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 28,
+      "groups": [
+        { "pest": "escarabajo", "count": 2, "interval": 3, "path": "camino" },
+        { "pest": "gorgojo", "count": 8, "delay": 2, "interval": 1.0, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 30,
+      "groups": [
+        { "pest": "polilla", "count": 8, "interval": 1.0, "path": "camino" },
+        { "pest": "langosta", "count": 8, "delay": 4, "interval": 0.5, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 32,
+      "groups": [
+        { "pest": "escarabajo", "count": 3, "interval": 2.5, "path": "camino" },
+        { "pest": "gorgojo", "count": 10, "delay": 1, "interval": 0.9, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 34,
+      "groups": [
+        { "pest": "langosta", "count": 16, "interval": 0.4, "path": "camino" },
+        { "pest": "polilla", "count": 6, "delay": 5, "interval": 1.0, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 8, "reward": 36,
+      "groups": [
+        { "pest": "escarabajo", "count": 4, "interval": 2, "path": "camino" },
+        { "pest": "polilla", "count": 8, "delay": 2, "interval": 0.8, "path": "camino" },
+        { "pest": "gorgojo", "count": 10, "delay": 4, "interval": 0.8, "path": "camino" }
+      ]
+    },
+    {
+      "prepTime": 12, "reward": 50,
+      "groups": [
+        { "pest": "rey_gorgojo", "count": 1, "path": "camino" },
+        { "pest": "gorgojo", "count": 8, "delay": 4, "interval": 1.0, "path": "camino" },
+        { "pest": "langosta", "count": 10, "delay": 10, "interval": 0.5, "path": "camino" }
+      ]
+    }
+  ]
+}
