@@ -48,6 +48,17 @@ En profile siguen estando el botón 🐞 y el panel de desarrollo (no existen en
 3. Toca **Prueba de estrés (150 plagas)** y pon la velocidad en x2.
 4. Mira los FPS mientras las plagas cruzan el mapa. Deberían quedar cerca de 60 (o de la frecuencia de la pantalla).
 
+Último resultado (17 de octubre de 2026, Redmi Note 14 Pro, pantalla de 120 Hz, modo profile, Andenes con 12 guardianes):
+
+| Situación | Plagas vivas | FPS |
+|---|---|---|
+| Partida normal, x1 | 14–20 | 102–119 |
+| Prueba de estrés, x2 | 118 | 108 |
+| Prueba de estrés, x2 | 167 | 77 |
+| Prueba de estrés, x2 (plagas derrotándose) | 67 | 73 |
+
+Con 167 plagas sigue por encima de 60 FPS. El contador de FPS promedia los últimos cuadros, por eso tarda en volver a subir cuando quedan menos plagas.
+
 ### El gráfico de cuadros
 
 En la terminal donde corre `flutter run --profile`, presiona `P` para mostrar u ocultar el *performance overlay*: dos gráficos encima del juego.
