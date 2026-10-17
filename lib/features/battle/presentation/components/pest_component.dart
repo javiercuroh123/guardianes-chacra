@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/pest.dart';
+import 'package:guardianes_chacra/features/battle/presentation/components/effect_marks.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/interpolated.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/sprite_body.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
@@ -18,18 +19,10 @@ final Paint _healthBackPaint = Paint()..color = BattleColors.healthBack;
 final Paint _healthPaint = Paint()..color = BattleColors.health;
 final Paint _flashBodyPaint = Paint()..color = const Color(0xFFFFFFFF);
 
-Paint _ring(Color color) => Paint()
-  ..style = PaintingStyle.stroke
-  ..strokeWidth = 3
-  ..color = color;
-final Paint _slowPaint = _ring(BattleColors.slow);
-final Paint _burnPaint = _ring(BattleColors.burn);
-final Paint _stunPaint = _ring(BattleColors.stun);
-
 /// Una plaga en pantalla: su sprite animado si tiene uno (mirando hacia
 /// donde camina) o, si no, un círculo si camina y un rombo si vuela (el
-/// jefe es más grande). Además, barra de vida, un anillo por cada efecto
-/// activo y un destello blanco al recibir daño.
+/// jefe es más grande). Además, barra de vida, la marca de cada efecto
+/// activo ([EffectMarks]) y un destello blanco al recibir daño.
 ///
 /// Solo lee su [PestView]: no sabe nada de reglas. Todo lo que dibuja se
 /// prepara al crearla, para no crear objetos en cada frame.
@@ -57,6 +50,7 @@ class PestComponent extends PositionComponent with Interpolated {
         ? -8.0
         : math.min<double>(-8, _spriteRect.top + 4);
     _healthBar = Rect.fromLTWH(0, barTop, radius * 2, 4);
+    _marks = EffectMarks(center: _center, radius: radius, headY: barTop - 8);
     resetInterpolation();
   }
 
@@ -72,7 +66,10 @@ class PestComponent extends PositionComponent with Interpolated {
   late final Path _diamond;
   late final Rect _spriteRect;
   late final Rect _healthBar;
+  late final EffectMarks _marks;
 
+  /// Segundos desde que apareció (para animar las marcas).
+  double _age = 0;
   double _flash = 0;
   bool _facingLeft = false;
   double? _lastX;
@@ -96,6 +93,7 @@ class PestComponent extends PositionComponent with Interpolated {
   void update(double dt) {
     super.update(dt);
     _sprite?.update(dt);
+    _age += dt;
     if (_flash > 0) _flash = math.max(0, _flash - dt);
     // Mira hacia donde camina; si solo sube o baja, sigue como estaba.
     final lastX = _lastX;
@@ -112,18 +110,13 @@ class PestComponent extends PositionComponent with Interpolated {
 
   @override
   void render(Canvas canvas) {
-    var ring = _radius + 3;
-    if (view.hasEffect('slow')) {
-      canvas.drawCircle(_center, ring, _slowPaint);
-      ring += 3;
-    }
-    if (view.hasEffect('burn')) {
-      canvas.drawCircle(_center, ring, _burnPaint);
-      ring += 3;
-    }
-    if (view.hasEffect('stun')) {
-      canvas.drawCircle(_center, ring, _stunPaint);
-    }
+    _marks.render(
+      canvas,
+      slowed: view.hasEffect('slow'),
+      burning: view.hasEffect('burn'),
+      stunned: view.hasEffect('stun'),
+      seconds: _age,
+    );
 
     final sprite = _sprite;
     if (sprite != null) {

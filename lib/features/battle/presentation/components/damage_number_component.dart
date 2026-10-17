@@ -1,14 +1,29 @@
 import 'dart:ui';
 
 import 'package:flame/components.dart';
-import 'package:flutter/painting.dart' show FontWeight, Shadow, TextStyle;
+import 'package:flutter/painting.dart' show FontWeight, TextStyle;
+import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
 
+const _fontSize = 30.0;
+
+// En dos tonos, como las marcas de efectos: primero el borde oscuro y
+// encima el relleno blanco.
+final TextPaint _borderPaint = TextPaint(
+  style: TextStyle(
+    fontSize: _fontSize,
+    fontWeight: FontWeight.w800,
+    foreground: Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeJoin = StrokeJoin.round
+      ..color = BattleColors.effectBorder,
+  ),
+);
 final TextPaint _textPaint = TextPaint(
   style: const TextStyle(
-    color: Color(0xFFFFFFFF),
-    fontSize: 30,
+    color: BattleColors.damageText,
+    fontSize: _fontSize,
     fontWeight: FontWeight.w800,
-    shadows: [Shadow(blurRadius: 3)],
   ),
 );
 
@@ -23,6 +38,8 @@ class DamageNumberComponent extends PositionComponent {
 
   /// Cuánto sube (píxeles del mundo) en ese tiempo.
   static const rise = 24.0;
+
+  static final Vector2 _origin = Vector2.zero();
 
   final Vector2 _from = Vector2.zero();
   String _text = '';
@@ -52,6 +69,8 @@ class DamageNumberComponent extends PositionComponent {
   }
 
   @override
-  void render(Canvas canvas) =>
-      _textPaint.render(canvas, _text, Vector2.zero(), anchor: Anchor.center);
+  void render(Canvas canvas) {
+    _borderPaint.render(canvas, _text, _origin, anchor: Anchor.center);
+    _textPaint.render(canvas, _text, _origin, anchor: Anchor.center);
+  }
 }

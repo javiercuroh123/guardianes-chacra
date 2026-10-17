@@ -1,0 +1,54 @@
+# Integración continua: en cada push y cada pull request revisa que el
+# código esté formateado, que el analizador no encuentre problemas y que
+# todos los tests pasen. Es lo mismo que se corre a mano al terminar cada
+# fase (ver CLAUDE.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Para correrlo a mano desde la pestaña Actions de GitHub.
+  workflow_dispatch:
+
+# Un push nuevo a la misma rama cancela la revisión anterior, que ya no
+# importa.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    name: Formato, análisis y tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # La misma versión que en la computadora de desarrollo: así el
+          # formato y los lints dan igual en los dos lados.
+          flutter-version: 3.47.2
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      # Los textos traducidos (lib/l10n/app_localizations*.dart) se generan
+      # desde los .arb y no se suben al repositorio.
+      - name: Traducciones
+        run: flutter gen-l10n
+
+      - name: Formato
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
+      - name: Análisis
+        run: flutter analyze
+
+      - name: Tests
+        run: flutter test

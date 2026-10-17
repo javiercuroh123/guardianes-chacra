@@ -3,15 +3,18 @@ import 'dart:async';
 import 'package:flame/game.dart';
 // `material.dart` también exporta una `Simulation` (la de física de Flutter).
 import 'package:flutter/material.dart' hide Simulation;
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/audio.dart';
+import 'package:guardianes_chacra/app/haptics.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/core/services/audio_service.dart';
+import 'package:guardianes_chacra/dev/dev_options.dart';
+import 'package:guardianes_chacra/dev/dev_panel.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/battle_stats.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/simulation_cheats.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/stars.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
@@ -21,10 +24,9 @@ import 'package:guardianes_chacra/features/battle/presentation/feedback/battle_f
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
 import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.dart';
-import 'package:guardianes_chacra/features/battle/presentation/menus/radial_menu.dart';
+import 'package:guardianes_chacra/features/battle/presentation/menus/battle_menus.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
-import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
@@ -36,17 +38,15 @@ import 'package:guardianes_chacra/features/progress/presentation/progress_provid
 import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
-/// Estrategias de apuntado en el orden en que se recorren con el botón
-/// "Apuntar" (son los ids del registro de comportamientos).
-const _targetingCycle = ['first', 'last', 'strongest', 'closest'];
-
 /// La pantalla de una partida: el puente entre Flutter, Riverpod y Flame.
 ///
 /// - El juego ([BattleGame]) avisa toques y cambios; esta pantalla decide
 ///   qué menú mostrar y envía los comandos a la simulación.
 /// - El HUD lee `battleHudProvider`, que se actualiza cuando el juego avisa
 ///   un cambio.
-/// - Los menús son widgets de Flutter ubicados sobre el mapa con [MapFit].
+/// - Los menús ([BuildMenu], [GuardianMenu]) son widgets de Flutter
+///   ubicados sobre el mapa con [MapFit]; esta pantalla guarda qué está
+///   seleccionado y confirma sus opciones.
 /// - Pausa, victoria y derrota son overlays de Flame: widgets que el
 ///   `GameWidget` dibuja encima del juego cuando se activan por nombre
 ///   (`game.overlays.add(...)`).
@@ -73,6 +73,7 @@ class _Session {
     required this.game,
     required this.stats,
     required this.guardians,
+    required this.cheats,
   });
 
   final LevelDef level;
@@ -86,6 +87,10 @@ class _Session {
 
   /// Lo que abrió la victoria (para contarlo en el overlay).
   Unlocked? unlocked;
+
+  /// Los trucos de desarrollo de esta partida (solo los cambia el panel de
+  /// desarrollo, nunca en release).
+  final SimulationCheats cheats;
 }
 
 class _BattleScreenState extends ConsumerState<BattleScreen> {
@@ -146,6 +151,11 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
 
   Widget _battle(BuildContext context, GameContent content) {
     final session = _session ??= _startSession(content);
+    if (devToolsEnabled) {
+      session.game.debugOverlay = ref.watch(
+        devOptionsProvider.select((options) => options.debugOverlay),
+      );
+    }
     final hud = ref.watch(battleHudProvider);
     final ended = hud != null && hud.status != BattleStatus.playing;
     // Con un overlay encima, el HUD y los menús se ocultan: el velo los
@@ -187,9 +197,10 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
                     onNextWave: _callNextWave,
                     onToggleSpeed: _toggleSpeed,
                     onPause: _pause,
+                    onDevTools: devToolsEnabled ? _openDevTools : null,
                   ),
                 ),
-              if (_menu(context, fit, bounds) case final menu? when !covered)
+              if (_menu(fit, bounds) case final menu? when !covered)
                 Positioned.fill(child: menu),
             ],
           );
@@ -232,11 +243,14 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       (level) => level.id == widget.levelId,
     );
     final progress = ref.read(progressProvider);
+    final unlockAll = devToolsEnabled && ref.read(devOptionsProvider).unlockAll;
     final guardians = {
       for (final MapEntry(:key, :value) in content.guardians.entries)
-        if (_progression.canBuild(progress, key)) key: value,
+        if (unlockAll || _progression.canBuild(progress, key)) key: value,
     };
+    final cheats = SimulationCheats();
     final simulation = Simulation(
+      cheats: cheats,
       level: level,
       pests: content.pests,
       guardians: guardians,
@@ -270,18 +284,19 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       game: game,
       stats: BattleStats(simulation.events),
       guardians: guardians,
+      cheats: cheats,
     );
+    if (devToolsEnabled) {
+      game.debugOverlay = ref.read(devOptionsProvider).debugOverlay;
+    }
     simulation.events.on<SimEvent>((event) => _onSimEvent(session, event));
     BattleFeedback(
       events: simulation.events,
       audio: _audio,
+      haptics: ref.read(hapticsServiceProvider),
       pests: content.pests,
       music: level.music,
       vibrationEnabled: () => ref.read(settingsProvider).vibration,
-      vibrate: (haptic) => unawaited(switch (haptic) {
-        Haptic.collcaDamaged => HapticFeedback.mediumImpact(),
-        Haptic.boss => HapticFeedback.heavyImpact(),
-      }),
     );
     // El HUD se muestra apenas termina este frame (no se puede cambiar un
     // provider mientras se construye la pantalla).
@@ -361,6 +376,24 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   }
 
   // --- Controles del HUD
+
+  /// El panel de desarrollo (nunca en release).
+  void _openDevTools() {
+    final session = _session;
+    if (session == null) return;
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        // En horizontal, la hoja normal (media pantalla) no alcanza.
+        isScrollControlled: true,
+        builder: (_) => DevPanel(
+          cheats: session.cheats,
+          onSkipWave: () => session.simulation.enqueue(const SkipWave()),
+          onStressTest: () => session.simulation.enqueue(const StressTest()),
+        ),
+      ),
+    );
+  }
 
   void _callNextWave() => _session?.simulation.enqueue(const CallNextWave());
 
@@ -447,168 +480,59 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       ..hideRange();
   }
 
-  /// Primer toque: muestra el alcance de la opción. Segundo toque: la
-  /// confirma.
-  void _previewOrConfirm(
-    String option, {
-    required Vec2 at,
-    required double range,
-    required PlayerCommand command,
-  }) {
-    if (_preview != option) {
-      setState(() => _preview = option);
-      _session!.game.showRange(at: at, radius: range);
+  /// Primer toque: muestra el alcance de la opción (alrededor de [at]).
+  /// Segundo toque: la confirma.
+  void _previewOrConfirm(MenuChoice choice, {required Vec2 at}) {
+    if (_preview != choice.id) {
+      setState(() => _preview = choice.id);
+      _session!.game.showRange(at: at, radius: choice.range);
       return;
     }
-    _session!.simulation.enqueue(command);
+    _session!.simulation.enqueue(choice.command);
     _clearSelection();
   }
 
   // --- Menús
 
-  Widget? _menu(BuildContext context, MapFit fit, Size bounds) {
+  Widget? _menu(MapFit fit, Size bounds) {
     final session = _session!;
     Offset onScreen(Vec2 tiles) => fit.toScreen(
       Offset(tiles.x * BattleGame.tileSize, tiles.y * BattleGame.tileSize),
     );
-    final l10n = AppLocalizations.of(context);
-    final hint = _preview == null ? null : l10n.menuConfirmHint;
 
     if (_selectedSlot case final slotId?) {
       final slot = session.level.map.buildSlots.firstWhere(
         (slot) => slot.id == slotId,
       );
-      return RadialMenu(
+      return BuildMenu(
+        slotId: slotId,
         center: onScreen(slot.position),
         bounds: bounds,
-        hint: hint,
-        children: [
-          for (final def in session.guardians.values)
-            RadialButton(
-              key: ValueKey('build-${def.id}'),
-              label: _guardianName(def.id).characters.first.toUpperCase(),
-              caption: '${def.levels.first.cost}',
-              color: colorFor(def.id, def.color),
-              selected: _preview == def.id,
-              semanticsLabel: l10n.menuBuild(
-                _guardianName(def.id),
-                def.levels.first.cost,
-              ),
-              onTap: session.simulation.corn < def.levels.first.cost
-                  ? null
-                  : () => _previewOrConfirm(
-                      def.id,
-                      at: slot.position,
-                      range: def.levels.first.range,
-                      command: BuildGuardian(
-                        slotId: slotId,
-                        guardianType: def.id,
-                      ),
-                    ),
-            ),
-        ],
+        guardians: session.guardians.values,
+        canAfford: session.simulation.canAfford,
+        nameOf: _guardianName,
+        preview: _preview,
+        onChoose: (choice) => _previewOrConfirm(choice, at: slot.position),
       );
     }
 
     if (_selectedGuardian case final guardianId?) {
       final guardian = _guardian(guardianId);
       if (guardian == null) return null;
-      return RadialMenu(
+      return GuardianMenu(
+        guardian: guardian,
         center: onScreen(guardian.position),
         bounds: bounds,
-        title: '${_guardianName(guardian.def.id)} · ${guardian.level}',
-        hint: hint,
-        children: _guardianOptions(guardian, l10n),
+        sellValue: session.simulation.sellValueOf(guardian),
+        canAfford: session.simulation.canAfford,
+        nameOf: _guardianName,
+        branchNameOf: (branchId) => _branchName(guardian.def.id, branchId),
+        preview: _preview,
+        onChoose: (choice) => _previewOrConfirm(choice, at: guardian.position),
+        onCommand: session.simulation.enqueue,
       );
     }
     return null;
-  }
-
-  List<Widget> _guardianOptions(GuardianView guardian, AppLocalizations l10n) {
-    final session = _session!;
-    final corn = session.simulation.corn;
-    final def = guardian.def;
-    final color = colorFor(def.id, def.color);
-    final atLastLevel = guardian.level == def.levels.length;
-    final canUpgrade = guardian.branchId == null && !atLastLevel;
-    final canSpecialize = guardian.branchId == null && atLastLevel;
-
-    return [
-      if (canUpgrade)
-        RadialButton(
-          key: const ValueKey('menu-upgrade'),
-          icon: Icons.arrow_upward,
-          caption: '${def.levels[guardian.level].cost}',
-          color: color,
-          selected: _preview == 'upgrade',
-          semanticsLabel:
-              '${l10n.menuUpgrade}: '
-              '${def.levels[guardian.level].cost}',
-          onTap: corn < def.levels[guardian.level].cost
-              ? null
-              : () => _previewOrConfirm(
-                  'upgrade',
-                  at: guardian.position,
-                  range: def.levels[guardian.level].range,
-                  command: UpgradeGuardian(guardian.id),
-                ),
-        ),
-      if (canSpecialize)
-        for (final branch in def.branches)
-          RadialButton(
-            key: ValueKey('menu-branch-${branch.id}'),
-            label: _branchName(def.id, branch.id).characters.first,
-            caption: '${branch.level.cost}',
-            color: color,
-            selected: _preview == 'branch:${branch.id}',
-            semanticsLabel:
-                '${_branchName(def.id, branch.id)}: '
-                '${branch.level.cost}',
-            onTap: corn < branch.level.cost
-                ? null
-                : () => _previewOrConfirm(
-                    'branch:${branch.id}',
-                    at: guardian.position,
-                    range: branch.level.range,
-                    command: SpecializeGuardian(
-                      guardian.id,
-                      branchId: branch.id,
-                    ),
-                  ),
-          ),
-      RadialButton(
-        key: const ValueKey('menu-sell'),
-        icon: Icons.sell_outlined,
-        caption: '+${session.simulation.sellValueOf(guardian)}',
-        color: const Color(0xFF8D6E4F),
-        selected: _preview == 'sell',
-        semanticsLabel:
-            '${l10n.menuSell}: ${session.simulation.sellValueOf(guardian)}',
-        onTap: () => _previewOrConfirm(
-          'sell',
-          at: guardian.position,
-          range: guardian.range,
-          command: SellGuardian(guardian.id),
-        ),
-      ),
-      if (def.levels.first.targets.isNotEmpty)
-        RadialButton(
-          key: const ValueKey('menu-targeting'),
-          icon: Icons.gps_fixed,
-          caption: _targetingName(guardian.targetingId, l10n),
-          color: const Color(0xFF455A64),
-          semanticsLabel:
-              '${l10n.menuTargeting}: '
-              '${_targetingName(guardian.targetingId, l10n)}',
-          onTap: () {
-            final index = _targetingCycle.indexOf(guardian.targetingId);
-            final next = _targetingCycle[(index + 1) % _targetingCycle.length];
-            session.simulation.enqueue(
-              SetTargeting(guardian.id, strategy: next),
-            );
-          },
-        ),
-    ];
   }
 
   // --- Datos
@@ -645,12 +569,4 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         ContentTexts.branchName(guardianType, branchId),
         language: _language,
       );
-
-  String _targetingName(String id, AppLocalizations l10n) => switch (id) {
-    'first' => l10n.targetingFirst,
-    'last' => l10n.targetingLast,
-    'strongest' => l10n.targetingStrongest,
-    'closest' => l10n.targetingClosest,
-    _ => id,
-  };
 }

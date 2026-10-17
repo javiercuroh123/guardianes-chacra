@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/widgets/stars_row.dart';
+import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
@@ -27,6 +28,9 @@ class LevelSelectScreen extends ConsumerWidget {
         AsyncData(:final value) => _Valley(
           content: value,
           progress: ref.watch(progressProvider),
+          unlockAll:
+              devToolsEnabled &&
+              ref.watch(devOptionsProvider.select((dev) => dev.unlockAll)),
         ),
         AsyncError(:final error) => Center(
           child: Text(l10n.contentLoadError('$error')),
@@ -38,10 +42,17 @@ class LevelSelectScreen extends ConsumerWidget {
 }
 
 class _Valley extends StatelessWidget {
-  const new({required this.content, required this.progress});
+  const new({
+    required this.content,
+    required this.progress,
+    this.unlockAll = false,
+  });
 
   final GameContent content;
   final Progress progress;
+
+  /// Opción de desarrollo: todos los niveles abiertos.
+  final bool unlockAll;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +66,7 @@ class _Valley extends StatelessWidget {
 
     /// `null` si se puede jugar; si no, qué falta según su regla.
     String? lockedMessage(LevelDef level) {
-      if (progression.canPlay(progress, level.id)) return null;
+      if (unlockAll || progression.canPlay(progress, level.id)) return null;
       final after = level.unlock.afterLevel;
       final stars = level.unlock.totalStars;
       final have = progress.totalStars;

@@ -1,75 +1,57 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
+import 'package:guardianes_chacra/dev/balance/autoplay.dart';
 import 'package:guardianes_chacra/features/content/data/content_loader.dart';
 import 'package:guardianes_chacra/features/content/data/file_asset_source.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 
-import '../../helpers/scripted_defense.dart';
-
-/// Comprobación rápida del balance: el nivel 1 se puede ganar con una
-/// defensa razonable (no óptima). El simulador de la Fase 9 hará un
-/// análisis completo.
+/// El balance mínimo que no debe romperse al tocar los datos, con las
+/// estrategias del simulador (`dart run tool/balance.dart` da el detalle;
+/// ver `docs/BALANCE.md`).
 void main() {
   late GameContent content;
+  late List<AutoplayResult> results;
 
   setUpAll(() async {
     content = await ContentLoader(FileAssetSource()).load();
+    results = runBalance(content);
   });
 
-  test('la Chacra del Valle se gana con una defensa razonable', () {
-    final level = content.levels.firstWhere(
-      (level) => level.id == 'chacra_del_valle',
-    );
+  AutoplayResult result(String level, String strategy) =>
+      results.firstWhere((r) => r.level == level && r.strategy == strategy);
 
-    // Honderos en las curvas, una Tullpa contra enjambres y armaduras, un
-    // Cóndor para los voladores y mejoras a medida que llega el maíz.
-    final simulation = playScripted(content, level, const [
-      Build('e3', 'hondero'),
-      Build('e4', 'hondero'),
-      Build('e1', 'hondero'),
-      Build('e6', 'tullpa'),
-      Upgrade('e3'),
-      Upgrade('e4'),
-      Build('e2', 'llama'),
-      Upgrade('e6'),
-      // En el nivel 1 todavía no hay Cóndor (se abre al ganar Andenes).
-      Build('e9', 'hondero'),
-      Upgrade('e1'),
-      Upgrade('e3'),
-      Upgrade('e4'),
-      Build('e5', 'tullpa'),
-      Upgrade('e6'),
-      Specialize('e3', 'piedra_pesada'),
-      Build('e7', 'hondero'),
-      Upgrade('e9'),
-      Specialize('e4', 'honda_rapida'),
-      Upgrade('e5'),
-      Upgrade('e7'),
-    ]);
-
-    expect(
-      simulation.status,
-      BattleStatus.won,
-      reason:
-          'quedaron ${simulation.potatoes} papas en la oleada '
-          '${simulation.startedWaves}',
-    );
-    // Ganar raspando sería señal de un nivel 1 demasiado difícil.
-    expect(simulation.potatoes, greaterThanOrEqualTo(15));
+  test('cada nivel se puede ganar con una defensa razonable', () {
+    for (final level in content.levels) {
+      final honderos = result(level.id, 'honderos');
+      expect(honderos.won, isTrue, reason: level.id);
+      // Ganar raspando sería señal de un nivel demasiado difícil.
+      expect(honderos.potatoesLeft, greaterThanOrEqualTo(15), reason: level.id);
+    }
   });
 
-  test('la Chacra del Valle no se gana con una defensa mínima', () {
-    final level = content.levels.firstWhere(
-      (level) => level.id == 'chacra_del_valle',
-    );
+  test('ningún nivel se gana con una defensa mínima', () {
+    for (final level in content.levels) {
+      expect(result(level.id, 'minima').won, isFalse, reason: level.id);
+    }
+  });
 
-    // Tres Honderos sin mejoras: si esto ganara, el nivel no tendría reto.
-    final simulation = playScripted(content, level, const [
-      Build('e3', 'hondero'),
-      Build('e4', 'hondero'),
-      Build('e1', 'hondero'),
-    ]);
+  test('el primer nivel perdona una defensa mezclada', () {
+    expect(result('chacra_del_valle', 'mixta').won, isTrue);
+    expect(result('chacra_del_valle', 'mejoras').won, isTrue);
+  });
 
-    expect(simulation.status, BattleStatus.lost);
+  test('el simulador escribe una fila por partida', () {
+    final csv = balanceCsv(results).trim().split('\n');
+
+    expect(csv.first, startsWith('nivel,estrategia,resultado'));
+    expect(csv, hasLength(1 + content.levels.length * 4));
+  });
+
+  test('con varios caminos, los primeros espacios cubren a cada uno', () {
+    final andenes = content.levels.firstWhere((l) => l.id == 'andenes');
+    final ranking = rankSlotsByCoverage(andenes);
+
+    // e2 cubre el tramo propio del norte y e4 el del sur: van primero,
+    // antes que los del tramo compartido junto a la collca.
+    expect(ranking.take(2), ['e2', 'e4']);
   });
 }

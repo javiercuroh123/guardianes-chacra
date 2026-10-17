@@ -21,6 +21,10 @@ extension _Commands on Simulation {
           _sell(command);
         case SetTargeting():
           _setTargeting(command);
+        case SkipWave():
+          _skipWave();
+        case StressTest(:final count):
+          _stressRemaining += count;
       }
     }
   }
@@ -37,6 +41,27 @@ extension _Commands on Simulation {
     _earnCorn(bonus);
   }
 
+  /// Truco de desarrollo: las plagas en pantalla desaparecen sin dar maíz,
+  /// la oleada que aparecía termina y empieza la siguiente.
+  void _skipWave() {
+    for (final pest in _pests) {
+      if (!pest.isAlive) continue;
+      pest.removed = true;
+      _aliveByWave[pest.wave]--;
+      events.publish(
+        PestDefeated(_tick, pestId: pest.id, pestType: pest.def.id, reward: 0),
+      );
+    }
+    _pests.removeWhere((pest) => pest.removed);
+    _spawner.finishActiveWave();
+    final waveNumber = _spawner.startedWaves + 1;
+    if (_spawner.callNextWave() != null) {
+      events.publish(
+        WaveStarted(_tick, waveNumber: waveNumber, calledEarly: true),
+      );
+    }
+  }
+
   void _build(BuildGuardian command) {
     final slot = _slots[command.slotId];
     if (slot == null) return _reject(command, RejectionReason.unknownSlot);
@@ -48,7 +73,7 @@ extension _Commands on Simulation {
       return _reject(command, RejectionReason.unknownGuardianType);
     }
     final level = def.levels.first;
-    if (_corn < level.cost) {
+    if (!canAfford(level.cost)) {
       return _reject(command, RejectionReason.notEnoughCorn);
     }
 
@@ -87,7 +112,7 @@ extension _Commands on Simulation {
     if (atLastLevel) return _reject(command, RejectionReason.chooseBranch);
 
     final next = def.levels[guardian.levelIndex + 1];
-    if (_corn < next.cost) {
+    if (!canAfford(next.cost)) {
       return _reject(command, RejectionReason.notEnoughCorn);
     }
     guardian
@@ -114,7 +139,7 @@ extension _Commands on Simulation {
         .where((branch) => branch.id == command.branchId)
         .firstOrNull;
     if (branch == null) return _reject(command, RejectionReason.unknownBranch);
-    if (_corn < branch.level.cost) {
+    if (!canAfford(branch.level.cost)) {
       return _reject(command, RejectionReason.notEnoughCorn);
     }
 

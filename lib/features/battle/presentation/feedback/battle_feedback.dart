@@ -1,11 +1,9 @@
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/services/audio_service.dart';
+import 'package:guardianes_chacra/core/services/haptics_service.dart';
 import 'package:guardianes_chacra/core/services/sound_limiter.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
-
-/// Qué vibración pide el juego (la pantalla la traduce a `HapticFeedback`).
-enum Haptic { collcaDamaged, boss }
 
 /// El sonido y la vibración de una partida. Escucha los eventos de la
 /// simulación igual que `BattleGame` para dibujar, y no decide nada del
@@ -19,8 +17,8 @@ class BattleFeedback {
     required EventBus<SimEvent> events,
     required this.audio,
     required this._pests,
+    required this.haptics,
     required this.vibrationEnabled,
-    required this.vibrate,
     String? music,
     Duration Function()? now,
   }) {
@@ -37,8 +35,10 @@ class BattleFeedback {
   }
 
   final AudioService audio;
+  final HapticsService haptics;
+
+  /// El interruptor de Ajustes, leído en cada vibración.
   final bool Function() vibrationEnabled;
-  final void Function(Haptic haptic) vibrate;
   final Map<String, PestDef> _pests;
   late final SoundLimiter<Sfx> _sounds;
   late final SoundLimiter<Haptic> _haptics;
@@ -75,6 +75,8 @@ class BattleFeedback {
   }
 
   void _vibrate(Haptic haptic) {
-    if (vibrationEnabled() && _haptics.tryPlay(haptic)) vibrate(haptic);
+    if (vibrationEnabled() && _haptics.tryPlay(haptic)) {
+      haptics.vibrate(haptic);
+    }
   }
 }

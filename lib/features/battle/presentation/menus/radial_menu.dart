@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:guardianes_chacra/app/text_scale.dart';
 
 /// Un botón redondo del menú radial: un círculo de color con una letra o
 /// un ícono y, debajo, un texto corto (el costo, el reembolso…).
@@ -97,7 +98,8 @@ class RadialButton extends StatelessWidget {
 /// Coloca [children] en círculo alrededor de [center] (en coordenadas del
 /// área de [bounds]), corriéndolo si hace falta para que el menú no se
 /// salga de la pantalla. Solo los botones reciben toques: el resto pasa al
-/// juego que está debajo.
+/// juego que está debajo. Con letra grande crece hasta
+/// [TextScaleLimits.battle], como el HUD.
 class RadialMenu extends StatelessWidget {
   const new({
     required this.center,
@@ -128,26 +130,31 @@ class RadialMenu extends StatelessWidget {
     double angleOf(int index) =>
         -math.pi / 2 + 2 * math.pi * index / children.length;
 
-    return Stack(
-      children: [
-        for (final (index, child) in children.indexed)
-          Positioned(
-            left:
-                x + radius * math.cos(angleOf(index)) - RadialButton.width / 2,
-            top:
-                y +
-                radius * math.sin(angleOf(index)) -
-                RadialButton.diameter / 2,
-            child: child,
-          ),
-        if (title != null || hint != null)
-          Positioned(
-            left: x - 90,
-            width: 180,
-            top: y + radius + RadialButton.diameter / 2 + 18,
-            child: _Caption(lines: [?title, ?hint]),
-          ),
-      ],
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: TextScaleLimits.battle,
+      child: Stack(
+        children: [
+          for (final (index, child) in children.indexed)
+            Positioned(
+              left:
+                  x +
+                  radius * math.cos(angleOf(index)) -
+                  RadialButton.width / 2,
+              top:
+                  y +
+                  radius * math.sin(angleOf(index)) -
+                  RadialButton.diameter / 2,
+              child: child,
+            ),
+          if (title != null || hint != null)
+            Positioned(
+              left: x - 90,
+              width: 180,
+              top: y + radius + RadialButton.diameter / 2 + 18,
+              child: _Caption(lines: [?title, ?hint]),
+            ),
+        ],
+      ),
     );
   }
 }

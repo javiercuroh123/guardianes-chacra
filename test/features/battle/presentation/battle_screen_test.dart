@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/audio.dart';
+import 'package:guardianes_chacra/app/haptics.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/core/services/haptics_service.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
@@ -26,6 +28,7 @@ import 'package:guardianes_chacra/features/progress/presentation/save_providers.
 
 import '../../../helpers/battle_game_helpers.dart';
 import '../../../helpers/fake_audio_service.dart';
+import '../../../helpers/fake_haptics_service.dart';
 import '../../../helpers/test_app.dart';
 
 void main() {
@@ -43,6 +46,7 @@ void main() {
     GameContent? withContent,
     Progress progress = const Progress(),
     FakeAudioService? audio,
+    FakeHapticsService? haptics,
   }) async {
     usePhoneLandscape(tester);
     final assets = await preloadAssets(
@@ -58,6 +62,9 @@ void main() {
           gameContentProvider.overrideWith((ref) => withContent ?? content),
           savedGameProvider.overrideWithValue(SaveData(progress: progress)),
           audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
+          hapticsServiceProvider.overrideWithValue(
+            haptics ?? FakeHapticsService(),
+          ),
         ],
       ),
     );
@@ -386,11 +393,14 @@ void main() {
   testWidgets('al perder aparece el aviso y Reintentar empieza de nuevo', (
     tester,
   ) async {
-    final game = await pumpScreen(tester, maps: 2);
+    final haptics = FakeHapticsService();
+    final game = await pumpScreen(tester, maps: 2, haptics: haptics);
 
     // Sin guardianes, las plagas se comen las 20 papas antes de los 150 s.
     await advance(tester, game, seconds: 150);
     expect(game.simulation.status, BattleStatus.lost);
+    // Cada plaga que llega a la collca vibra (la vibración viene encendida).
+    expect(haptics.vibrations, contains(Haptic.collcaDamaged));
     expect(find.text('La collca quedó vacía'), findsOneWidget);
     expect(find.text('Volver al valle'), findsOneWidget);
     expect(key('hud-pause'), findsNothing);
@@ -402,6 +412,59 @@ void main() {
     expect(retried, isNot(same(game)));
     expect(find.text('La collca quedó vacía'), findsNothing);
     expect(find.text('🥔 20'), findsOneWidget);
+  });
+
+  group('herramientas de desarrollo (modo debug)', () {
+    Future<BattleGame> openPanel(WidgetTester tester) async {
+      final game = await pumpScreen(tester);
+      await tester.tap(key('hud-dev'));
+      // Nunca pumpAndSettle con Flame: el bucle del juego no se detiene.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      return game;
+    }
+
+    testWidgets('maíz infinito: se construye sin gastar', (tester) async {
+      final game = await openPanel(tester);
+      await tester.tap(key('dev-infinite-corn'));
+      await tester.pump();
+
+      for (final slot in ['e1', 'e2', 'e3', 'e4', 'e5']) {
+        game.simulation.enqueue(
+          BuildGuardian(slotId: slot, guardianType: 'tullpa'),
+        );
+      }
+      await advance(tester, game, seconds: 0.1);
+
+      // 5 Tullpas (500) con 220 de maíz.
+      expect(game.simulation.guardians, hasLength(5));
+      expect(game.simulation.corn, 220);
+    });
+
+    testWidgets('invencible y la superposición de depuración', (tester) async {
+      final game = await openPanel(tester);
+      await tester.tap(key('dev-invincible'));
+      await tester.tap(key('dev-overlay'));
+      await tester.pump();
+
+      expect(game.debugOverlay, isTrue);
+      // Sin guardianes, las plagas llegan a la collca y no se comen nada.
+      await advance(tester, game, seconds: 120);
+      expect(game.simulation.potatoes, 20);
+    });
+
+    testWidgets('saltar oleada y prueba de estrés', (tester) async {
+      final game = await openPanel(tester);
+
+      await tester.ensureVisible(key('dev-skip-wave'));
+      await tester.tap(key('dev-skip-wave'));
+      await advance(tester, game, seconds: 0.1);
+      expect(game.simulation.startedWaves, 1);
+
+      await tester.tap(key('dev-stress'));
+      await advance(tester, game, seconds: 12);
+      expect(game.simulation.pests.length, greaterThan(100));
+    });
   });
 }
 

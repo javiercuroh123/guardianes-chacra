@@ -120,3 +120,36 @@ final class SetTargeting extends PlayerCommand {
   @override
   String toString() => 'SetTargeting(#$guardianId → $strategy)';
 }
+
+/// Truco de desarrollo (nunca en release): quita las plagas en pantalla sin
+/// dar maíz y empieza ya la siguiente oleada.
+final class SkipWave extends PlayerCommand {
+  const new();
+
+  @override
+  bool operator ==(Object other) => other is SkipWave;
+
+  @override
+  int get hashCode => (SkipWave).hashCode;
+
+  @override
+  String toString() => 'SkipWave';
+}
+
+/// Truco de desarrollo (nunca en release): hace aparecer [count] plagas del
+/// primer tipo del nivel, una cada dos ticks y alternando caminos, para
+/// medir el rendimiento con muchas plagas en pantalla.
+final class StressTest extends PlayerCommand {
+  const new({this.count = 150});
+
+  final int count;
+
+  @override
+  bool operator ==(Object other) => other is StressTest && other.count == count;
+
+  @override
+  int get hashCode => Object.hash(StressTest, count);
+
+  @override
+  String toString() => 'StressTest($count)';
+}

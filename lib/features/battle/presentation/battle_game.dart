@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame/particles.dart';
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/dev/debug_overlay.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/sim_time.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
@@ -148,6 +149,37 @@ class BattleGame extends FlameGame {
   double _shake = 0;
 
   bool get isShaking => _shake > 0;
+
+  DebugWorldOverlay? _debugWorld;
+  DebugStatsOverlay? _debugStats;
+
+  /// La superposición de depuración: caminos, alcances, FPS y conteos (la
+  /// enciende el panel de desarrollo, nunca en release).
+  bool get debugOverlay => _debugWorld != null;
+
+  set debugOverlay(bool on) {
+    if (on == debugOverlay) return;
+    if (!on) {
+      _debugWorld?.removeFromParent();
+      _debugStats?.removeFromParent();
+      _debugWorld = _debugStats = null;
+      return;
+    }
+    world.add(
+      _debugWorld = DebugWorldOverlay(
+        level: level,
+        simulation: simulation,
+        tileSize: tileSize,
+      ),
+    );
+    camera.viewport.add(
+      _debugStats = DebugStatsOverlay(
+        counts: () =>
+            '${_pests.length} plagas · ${_projectiles.length} proyectiles · '
+            '${world.children.length} componentes',
+      ),
+    );
+  }
 
   @override
   Color backgroundColor() => BattleColors.letterbox;

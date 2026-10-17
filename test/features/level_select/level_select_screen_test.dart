@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/valley_layout.dart';
@@ -116,6 +117,23 @@ void main() {
 
     progress.recordResult('andenes', stars: 3, progression: progression);
     await tester.pump();
+    expect(
+      find.bySemanticsLabel('Orilla del Lago: 0 de 3 estrellas'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('desarrollo: "todo desbloqueado" abre todos los niveles', (
+    tester,
+  ) async {
+    await pumpValley(tester);
+
+    containerOf(
+      tester,
+      LevelSelectScreen,
+    ).read(devOptionsProvider.notifier).unlockAll = true;
+    await tester.pump();
+
     expect(
       find.bySemanticsLabel('Orilla del Lago: 0 de 3 estrellas'),
       findsOneWidget,

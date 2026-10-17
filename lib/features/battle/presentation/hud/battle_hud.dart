@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
@@ -9,18 +10,23 @@ import 'package:guardianes_chacra/l10n/app_localizations.dart';
 /// siguiente oleada, velocidad y pausa a la derecha.
 ///
 /// Solo muestra `battleHudProvider` y avisa los toques: la pantalla decide
-/// qué hacer con ellos.
+/// qué hacer con ellos. Con letra grande crece hasta
+/// [TextScaleLimits.battle], para no tapar el mapa.
 class BattleHud extends ConsumerWidget {
   const new({
     required this.onNextWave,
     required this.onToggleSpeed,
     required this.onPause,
+    this.onDevTools,
     super.key,
   });
 
   final VoidCallback onNextWave;
   final VoidCallback onToggleSpeed;
   final VoidCallback onPause;
+
+  /// Abre el panel de desarrollo; sin él (en release), no hay botón.
+  final VoidCallback? onDevTools;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,60 +45,86 @@ class BattleHud extends ConsumerWidget {
         ? (scheme.secondary, scheme.onSecondary)
         : (colors.hud, colors.onHud);
 
-    return Row(
-      children: [
-        _Chip(
-          key: const ValueKey('hud-corn'),
-          text: '🌽 ${hud.corn}',
-          semanticsLabel: l10n.hudCorn(hud.corn),
-        ),
-        const SizedBox(width: 6),
-        _Chip(
-          key: const ValueKey('hud-potatoes'),
-          text: '🥔 ${hud.potatoes}',
-          semanticsLabel: l10n.hudPotatoes(hud.potatoes),
-        ),
-        const SizedBox(width: 6),
-        _Chip(
-          key: const ValueKey('hud-wave'),
-          text: l10n.hudWave(hud.wave, hud.totalWaves),
-          semanticsLabel: l10n.hudWave(hud.wave, hud.totalWaves),
-        ),
-        const Spacer(),
-        if (hud.nextWaveSeconds case final seconds?) ...[
-          _NextWaveButton(
-            seconds: seconds,
-            bonus: hud.earlyCallBonus,
-            onTap: onNextWave,
-          ),
-          const SizedBox(width: 6),
-        ],
-        IconButton(
-          key: const ValueKey('hud-speed'),
-          tooltip: l10n.hudSpeedSemantics(fast ? '2' : '1'),
-          style: IconButton.styleFrom(
-            backgroundColor: speedBackground,
-            foregroundColor: speedForeground,
-          ),
-          onPressed: onToggleSpeed,
-          // `foregroundColor` solo colorea íconos: el texto lleva su color.
-          icon: Text(
-            fast ? 'x2' : 'x1',
-            style: TextStyle(
-              color: speedForeground,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: TextScaleLimits.battle,
+      child: Row(
+        children: [
+          // Los datos ocupan lo que dejan los botones. Si no les alcanza
+          // (letra grande en un teléfono angosto), se achican un poco en
+          // lugar de desbordarse.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  children: [
+                    _Chip(
+                      key: const ValueKey('hud-corn'),
+                      text: '🌽 ${hud.corn}',
+                      semanticsLabel: l10n.hudCorn(hud.corn),
+                    ),
+                    const SizedBox(width: 6),
+                    _Chip(
+                      key: const ValueKey('hud-potatoes'),
+                      text: '🥔 ${hud.potatoes}',
+                      semanticsLabel: l10n.hudPotatoes(hud.potatoes),
+                    ),
+                    const SizedBox(width: 6),
+                    _Chip(
+                      key: const ValueKey('hud-wave'),
+                      text: l10n.hudWave(hud.wave, hud.totalWaves),
+                      semanticsLabel: l10n.hudWave(hud.wave, hud.totalWaves),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        IconButton(
-          key: const ValueKey('hud-pause'),
-          tooltip: l10n.hudPause,
-          style: buttonStyle,
-          onPressed: onPause,
-          icon: const Icon(Icons.pause),
-        ),
-      ],
+          const SizedBox(width: 6),
+          if (hud.nextWaveSeconds case final seconds?) ...[
+            _NextWaveButton(
+              seconds: seconds,
+              bonus: hud.earlyCallBonus,
+              onTap: onNextWave,
+            ),
+            const SizedBox(width: 6),
+          ],
+          IconButton(
+            key: const ValueKey('hud-speed'),
+            tooltip: l10n.hudSpeedSemantics(fast ? '2' : '1'),
+            style: IconButton.styleFrom(
+              backgroundColor: speedBackground,
+              foregroundColor: speedForeground,
+            ),
+            onPressed: onToggleSpeed,
+            // `foregroundColor` solo colorea íconos: el texto lleva su color.
+            icon: Text(
+              fast ? 'x2' : 'x1',
+              style: TextStyle(
+                color: speedForeground,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          if (onDevTools case final onDevTools?)
+            IconButton(
+              key: const ValueKey('hud-dev'),
+              tooltip: 'Desarrollo',
+              style: buttonStyle,
+              onPressed: onDevTools,
+              icon: const Icon(Icons.bug_report_outlined),
+            ),
+          IconButton(
+            key: const ValueKey('hud-pause'),
+            tooltip: l10n.hudPause,
+            style: buttonStyle,
+            onPressed: onPause,
+            icon: const Icon(Icons.pause),
+          ),
+        ],
+      ),
     );
   }
 }

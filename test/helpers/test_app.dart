@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
-/// Una app mínima en español, con el tema del juego, para probar una
-/// pantalla.
+/// Una app mínima en español, con el tema del juego y su límite de letra,
+/// para probar una pantalla.
 Widget testApp(Widget home, {List<Override> overrides = const []}) =>
     ProviderScope(
       overrides: overrides,
@@ -15,6 +16,7 @@ Widget testApp(Widget home, {List<Override> overrides = const []}) =>
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light,
+        builder: clampAppTextScale,
         home: home,
       ),
     );

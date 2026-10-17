@@ -45,6 +45,17 @@ class WaveSpawner {
     return remaining;
   }
 
+  /// Da por terminada la oleada que está apareciendo (las plagas que
+  /// faltaban ya no salen) y empieza la cuenta regresiva de la siguiente.
+  /// Lo usa el truco de saltar oleada.
+  void finishActiveWave() {
+    if (_active == null) return;
+    _active = null;
+    if (_started < _waves.length) {
+      _countdown = secondsToTicks(_waves[_started].prepTime);
+    }
+  }
+
   SpawnerUpdate tick() {
     int? started;
     final countdown = _countdown;

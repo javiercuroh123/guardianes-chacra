@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/features/settings/domain/settings.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
@@ -46,6 +47,15 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.damageNumbers,
                 onChanged: (on) => controller.damageNumbers = on,
               ),
+              if (devToolsEnabled)
+                SwitchListTile(
+                  key: const ValueKey('settings-dev-unlock'),
+                  title: const Text('Desarrollo: todo desbloqueado'),
+                  subtitle: const Text('No existe en release; no se guarda'),
+                  value: ref.watch(devOptionsProvider).unlockAll,
+                  onChanged: (on) =>
+                      ref.read(devOptionsProvider.notifier).unlockAll = on,
+                ),
               const Divider(height: 32),
               ListTile(title: Text(l10n.settingsLanguage)),
               Padding(

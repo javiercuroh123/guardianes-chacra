@@ -2,11 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/core/events/event_bus.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/core/services/audio_service.dart';
+import 'package:guardianes_chacra/core/services/haptics_service.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/presentation/feedback/battle_feedback.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
 
 import '../../../../helpers/fake_audio_service.dart';
+import '../../../../helpers/fake_haptics_service.dart';
 
 void main() {
   const rey = PestDef(
@@ -29,22 +31,22 @@ void main() {
 
   late EventBus<SimEvent> events;
   late FakeAudioService audio;
-  late List<Haptic> vibrations;
+  late FakeHapticsService haptics;
   var vibration = true;
   var now = Duration.zero;
 
   setUp(() {
     events = EventBus();
     audio = FakeAudioService();
-    vibrations = [];
+    haptics = FakeHapticsService();
     vibration = true;
     now = Duration.zero;
     BattleFeedback(
       events: events,
       audio: audio,
       pests: {'rey': rey, 'gorgojo': gorgojo},
+      haptics: haptics,
       vibrationEnabled: () => vibration,
-      vibrate: vibrations.add,
       music: 'music/valle.wav',
       now: () => now,
     );
@@ -98,7 +100,7 @@ void main() {
       ..publish(const PestSpawned(1, pestId: 2, pestType: 'rey', pathId: 'a'));
 
     expect(audio.sfx, [Sfx.boss]);
-    expect(vibrations, [Haptic.boss]);
+    expect(haptics.vibrations, [Haptic.boss]);
   });
 
   test('al ganar o perder se corta la música y suena el final', () {
@@ -112,13 +114,13 @@ void main() {
     events.publish(
       const CollcaDamaged(1, pestId: 1, potatoesLost: 1, potatoesLeft: 19),
     );
-    expect(vibrations, [Haptic.collcaDamaged]);
+    expect(haptics.vibrations, [Haptic.collcaDamaged]);
 
     vibration = false;
     now = const Duration(seconds: 1);
     events.publish(
       const CollcaDamaged(2, pestId: 2, potatoesLost: 1, potatoesLeft: 18),
     );
-    expect(vibrations, [Haptic.collcaDamaged]);
+    expect(haptics.vibrations, [Haptic.collcaDamaged]);
   });
 }

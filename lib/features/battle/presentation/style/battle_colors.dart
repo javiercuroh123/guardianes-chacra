@@ -10,6 +10,12 @@ abstract final class BattleColors {
   static const slow = Color(0xFF7FDBFF);
   static const burn = Color(0xFFFF8C1A);
   static const stun = Color(0xFFFFE066);
+
+  /// El borde oscuro debajo de las marcas de efectos y de los números de
+  /// daño: con él se leen sobre cualquier suelo (ver
+  /// `battle_colors_test.dart`).
+  static const effectBorder = Color(0xFF1B1B1B);
+  static const damageText = Color(0xFFFFFFFF);
   static const projectile = Color(0xFFF5F0E6);
   static const impact = Color(0xFFFFF3C4);
   static const rangeFill = Color(0x26FFFFFF);

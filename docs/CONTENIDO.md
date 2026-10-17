@@ -191,7 +191,9 @@ Son valores de partida razonables para afinar con el simulador de balance (Fase 
 
 ### Comprobación del nivel 1 (Fase 5)
 
-`test/features/content/level_balance_test.dart` juega la Chacra del Valle sin gráficos con planes fijos de construcción. Con los valores iniciales, el Rey Gorgojo (900 de vida, armadura 4) y el Escarabajo (armadura 6) hacían que incluso una defensa completa ganara con 1 papa, así que se bajaron a los valores de arriba y se subió la recompensa de las oleadas 7 a 9. Resultado actual:
+> Desde la Fase 9 el balance de todos los niveles lo mide el simulador (`dart run tool/balance.dart`; ver `docs/BALANCE.md`). Esta sección queda como historia de los primeros ajustes.
+
+En la Fase 5 se jugó la Chacra del Valle sin gráficos con planes fijos de construcción. Con los valores iniciales, el Rey Gorgojo (900 de vida, armadura 4) y el Escarabajo (armadura 6) hacían que incluso una defensa completa ganara con 1 papa, así que se bajaron a los valores de arriba y se subió la recompensa de las oleadas 7 a 9. Resultado actual:
 
 | Defensa | Resultado |
 |---|---|

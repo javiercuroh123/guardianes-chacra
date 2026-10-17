@@ -10,6 +10,7 @@ import 'package:guardianes_chacra/features/battle/domain/behaviors/effects/statu
 import 'package:guardianes_chacra/features/battle/domain/engine/battle_context.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/sim_time.dart';
+import 'package:guardianes_chacra/features/battle/domain/engine/simulation_cheats.dart';
 import 'package:guardianes_chacra/features/battle/domain/events/sim_events.dart';
 import 'package:guardianes_chacra/features/battle/domain/registry/behavior_registry.dart';
 import 'package:guardianes_chacra/features/battle/domain/waves/wave_spawner.dart';
@@ -52,7 +53,9 @@ class Simulation {
     Map<String, GuardianDef> guardians = const {},
     BehaviorRegistry? registry,
     EventBus<SimEvent>? events,
+    SimulationCheats? cheats,
   }) : events = events ?? EventBus<SimEvent>(),
+       cheats = cheats ?? SimulationCheats(),
        random = SeededRandom(seed),
        _level = level,
        _registry = registry ?? BehaviorRegistry.withDefaults(),
@@ -71,6 +74,9 @@ class Simulation {
   }
 
   final EventBus<SimEvent> events;
+
+  /// Trucos de desarrollo (apagados salvo con las herramientas de desarrollo).
+  final SimulationCheats cheats;
 
   /// Azar con semilla para los comportamientos que lo necesiten. Con la
   /// misma semilla y los mismos comandos, la partida se repite igual.
@@ -109,6 +115,10 @@ class Simulation {
   int _nextProjectileId = 1;
   BattleStatus _status = BattleStatus.playing;
 
+  /// Plagas que faltan por aparecer de la prueba de estrés (ver
+  /// [StressTest]).
+  int _stressRemaining = 0;
+
   int get tick => _tick;
   int get corn => _corn;
   int get potatoes => _potatoes;
@@ -135,6 +145,9 @@ class Simulation {
     final bonus = countdown * _level.earlyCallCornPerSecond / ticksPerSecond;
     return (bonus + 1e-9).floor();
   }
+
+  /// Si alcanza el maíz para pagar [cost] (siempre, con maíz infinito).
+  bool canAfford(int cost) => cheats.infiniteCorn || _corn >= cost;
 
   /// Maíz que devolvería vender [guardian] ahora (redondeado hacia abajo).
   int sellValueOf(GuardianView guardian) =>
@@ -209,7 +222,9 @@ class Simulation {
 
   void _reachCollca(Pest pest) {
     pest.removed = true;
-    final lost = pest.def.potatoDamage.clamp(0, _potatoes);
+    final lost = cheats.invincible
+        ? 0
+        : pest.def.potatoDamage.clamp(0, _potatoes);
     _potatoes -= lost;
     _aliveByWave[pest.wave]--;
     events.publish(
@@ -326,6 +341,7 @@ class Simulation {
         WaveStarted(_tick, waveNumber: wave + 1, calledEarly: false),
       );
     }
+    if (_stressRemaining > 0 && _tick.isEven) _spawnStressPest();
     for (final order in update.spawns) {
       _aliveByWave[order.wave]++;
       _addPest(
@@ -337,6 +353,24 @@ class Simulation {
         ),
       );
     }
+  }
+
+  /// Una plaga de la prueba de estrés: del primer tipo del nivel, por el
+  /// camino que toque. Cuenta como de la última oleada empezada.
+  void _spawnStressPest() {
+    _stressRemaining--;
+    final paths = _level.map.paths;
+    final path = paths[_stressRemaining % paths.length];
+    final wave = math.max(0, _spawner.startedWaves - 1);
+    _aliveByWave[wave]++;
+    _addPest(
+      _createPest(
+        _pestDefs[_level.waves.first.groups.first.pestId]!,
+        wave: wave,
+        pathId: path.id,
+        track: _tracks[path.id]!,
+      ),
+    );
   }
 
   Pest _createPest(
@@ -457,7 +491,7 @@ class Simulation {
   }
 
   void _spendCorn(int amount) {
-    if (amount == 0) return;
+    if (amount == 0 || cheats.infiniteCorn) return;
     _corn -= amount;
     events.publish(CornChanged(_tick, delta: -amount, total: _corn));
   }
