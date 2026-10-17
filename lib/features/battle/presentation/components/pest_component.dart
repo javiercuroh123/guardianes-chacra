@@ -50,7 +50,8 @@ class PestComponent extends PositionComponent with Interpolated {
         ? -8.0
         : math.min<double>(-8, _spriteRect.top + 4);
     _healthBar = Rect.fromLTWH(0, barTop, radius * 2, 4);
-    _marks = EffectMarks(center: _center, radius: radius, headY: barTop - 8);
+    // Los puntos de aturdido giran justo encima de la barra de vida.
+    _marks = EffectMarks(center: _center, radius: radius, headY: barTop - 14);
     resetInterpolation();
   }
 

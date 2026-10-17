@@ -32,7 +32,7 @@ class EffectMarks {
   /// altura a la que giran los puntos de aturdido.
   new({required Offset center, required double radius, required double headY})
     : _orbit = Offset(center.dx, headY),
-      _orbitRadius = Size(radius * 0.8, 4),
+      _orbitRadius = Size(radius, 7),
       slow = _dashedRing(center, radius + 5),
       burn = _flameCrown(center, inner: radius + 9, outer: radius + 14);
 
@@ -44,6 +44,12 @@ class EffectMarks {
 
   /// Cuánto tarda una vuelta de los puntos de aturdido.
   static const stunTurnSeconds = 1.2;
+
+  /// El radio de cada punto de aturdido y el de su borde (píxeles del
+  /// mundo). Con el zoom del mapa en un teléfono (≈ 0,5) el punto queda de
+  /// unos 6 dp: con menos, en el Redmi casi no se veía.
+  static const stunDotRadius = 4.5;
+  static const stunDotBorder = 6.0;
 
   final Offset _orbit;
   final Size _orbitRadius;
@@ -82,8 +88,8 @@ class EffectMarks {
       for (var i = 0; i < 3; i++) {
         final dot = stunDot(i, seconds);
         canvas
-          ..drawCircle(dot, 4, _dotBorderPaint)
-          ..drawCircle(dot, 2.5, _stunPaint);
+          ..drawCircle(dot, stunDotBorder, _dotBorderPaint)
+          ..drawCircle(dot, stunDotRadius, _stunPaint);
       }
     }
   }

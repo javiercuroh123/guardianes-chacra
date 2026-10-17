@@ -46,6 +46,30 @@ void main() {
     );
   });
 
+  test('los puntos de aturdido no se tapan entre sí en toda la vuelta', () {
+    // El de una plaga chica (vuela, radio 0,26 casillas): la órbita más
+    // angosta.
+    const radius = 0.26 * 64;
+    final small = EffectMarks(
+      center: const Offset(radius, radius),
+      radius: radius,
+      headY: -20,
+    );
+    for (var step = 0; step < 60; step++) {
+      final seconds = EffectMarks.stunTurnSeconds * step / 60;
+      final dots = [for (var i = 0; i < 3; i++) small.stunDot(i, seconds)];
+      for (var a = 0; a < 3; a++) {
+        for (var b = a + 1; b < 3; b++) {
+          expect(
+            (dots[a] - dots[b]).distance,
+            greaterThanOrEqualTo(2 * EffectMarks.stunDotBorder),
+            reason: 'a los $seconds s, puntos $a y $b',
+          );
+        }
+      }
+    }
+  });
+
   test('se dibujan los tres a la vez', () {
     final recorder = PictureRecorder();
 
