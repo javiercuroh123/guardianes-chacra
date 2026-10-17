@@ -45,6 +45,29 @@ class ContentFixture {
   /// Archivos que se quitan antes de leer (para probar uno que falta).
   Set<String> missing = {};
 
+  /// Agrega otro nivel (con el mismo mapa) y su nombre en cada idioma.
+  void addLevel(String id, {Map<String, Object?>? unlock}) {
+    index['levels'] = [...index['levels']! as List<Object?>, id];
+    levels[id] = {...levelJson(), 'unlock': ?unlock};
+    for (final language in texts.values) {
+      language['level.$id.name'] = id;
+    }
+  }
+
+  /// Agrega otro guardián (igual al Hondero) y sus textos en cada idioma.
+  void addGuardian(String id, {Map<String, Object?>? unlock}) {
+    index['guardians'] = [...index['guardians']! as List<Object?>, id];
+    guardians[id] = {...honderoJson(), 'unlock': ?unlock};
+    for (final language in texts.values) {
+      language['guardian.$id.name'] = id;
+      language['guardian.$id.description'] = '…';
+      for (final branch in ['piedra', 'rapida']) {
+        language['guardian.$id.branch.$branch.name'] = branch;
+        language['guardian.$id.branch.$branch.description'] = '…';
+      }
+    }
+  }
+
   AssetSource toSource() => MemoryAssetSource(
     {
       'assets/content/index.json': jsonEncode(index),

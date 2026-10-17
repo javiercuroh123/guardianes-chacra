@@ -78,6 +78,7 @@ Fórmula de daño: `daño × resistencia del tipo × bonus contra sus etiquetas`
 | `color` | `"#RRGGBB"` | Opcional. Color de reemplazo hasta que tenga imagen; debe ser oscuro (contraste ≥ 3:1 con blanco) porque su inicial se dibuja en blanco. |
 | `levels` | lista (≥ 1) | El primero se construye; los siguientes son las mejoras, en orden. |
 | `branches` | lista (0 o ≥ 2) | La especialización final: después de la última mejora se elige una. Cada rama tiene además un `id`. |
+| `unlock` | objeto | Opcional. Qué hace falta para poder construirlo (ver [Desbloqueos](#desbloqueos)). |
 
 Cada nivel o rama tiene **todas** sus estadísticas (no solo las diferencias):
 
@@ -115,6 +116,7 @@ Un comportamiento nuevo se programa como una clase que se registra en `lib/featu
 | `startingPotatoes` | entero ≥ 1 | |
 | `earlyCallCornPerSecond` | número ≥ 0 | Maíz por cada segundo de cuenta regresiva que se salta al llamar la oleada antes. |
 | `waves` | lista (≥ 1) | Ver abajo. Cada nivel debe tener entre 10 y 15 oleadas y un jefe en la última (lo comprueba `real_content_test.dart`). |
+| `unlock` | objeto | Opcional. Qué hace falta para poder jugarlo (ver [Desbloqueos](#desbloqueos)). |
 
 Cada oleada:
 
@@ -123,6 +125,23 @@ Cada oleada:
 | `prepTime` | segundos | Cuenta regresiva antes de empezar: la primera, desde el inicio del nivel; las demás, desde que terminó de aparecer la anterior. |
 | `reward` | entero | Maíz al completarla (aparecieron todas sus plagas y no queda ninguna). |
 | `groups` | lista (≥ 1) | `pest`, `count` (≥ 1), `path` (nombre de un camino del mapa), `delay` (s desde el inicio de la oleada, 0) e `interval` (s entre plagas, 0). |
+
+## Desbloqueos
+
+`"unlock"` en un nivel o un guardián. Si tiene las dos condiciones, se piden ambas; sin `"unlock"`, está abierto desde el principio.
+
+| Campo | Tipo | Qué pide |
+|---|---|---|
+| `afterLevel` | id de nivel | Haber ganado ese nivel (al menos 1 estrella). |
+| `totalStars` | entero ≥ 1 | Juntar esas estrellas entre todos los niveles (cada nivel cuenta su mejor marca). |
+
+```json
+"unlock": { "afterLevel": "andenes", "totalStars": 4 }
+```
+
+El cargador comprueba que cada regla se pueda cumplir: "juega" ganando con 3 estrellas cada nivel que se va abriendo y avisa si algo queda cerrado para siempre (por ejemplo, un nivel que se pide a sí mismo o más estrellas de las que existen). Al menos un guardián debe estar abierto desde el principio.
+
+Lo desbloqueado queda guardado: si una actualización endurece una regla, el jugador no pierde lo que ya abrió. Valores actuales: Andenes tras la Chacra del Valle; Orilla del Lago tras Andenes y con 4 estrellas; Pututu tras la Chacra del Valle; Cóndor tras Andenes.
 
 ## i18n/&lt;idioma&gt;.json
 
@@ -141,7 +160,7 @@ Las claves que empiezan con `@` son notas y el juego las ignora. Los datos reale
 
 - **Una plaga**: crea `pests/<id>.json`, agrega el id a `pests` en `index.json` y sus textos en cada idioma. Úsala en las oleadas.
 - **Un guardián**: crea `guardians/<id>.json`, agrega el id a `guardians` en `index.json` y sus textos (incluidas las ramas). Si necesita un comportamiento que no existe, es código nuevo (una clase registrada), no un cambio en el motor.
-- **Un nivel**: dibuja su mapa (ver `docs/TILED.md`), crea `levels/<id>.json`, agrega el id a `levels` y su nombre en cada idioma.
+- **Un nivel**: dibuja su mapa (ver `docs/TILED.md`), crea `levels/<id>.json`, agrega el id a `levels` y su nombre en cada idioma. Si no es el primero, dale un `unlock`.
 
 ## Lógica del balance inicial
 

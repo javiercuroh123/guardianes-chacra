@@ -3,6 +3,7 @@ import 'package:guardianes_chacra/features/content/data/content_loader.dart';
 import 'package:guardianes_chacra/features/content/data/json_reader.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 
 import '../../../helpers/content_fixture.dart';
 import '../../../helpers/tmx_builder.dart';
@@ -65,6 +66,118 @@ void main() {
     expect(content.guardians['hondero']!.color, 0xFFA0522D);
     // Sin "color", la vista usa uno derivado del id.
     expect(content.pests['gorgojo']!.color, isNull);
+  });
+
+  test('lee las reglas de desbloqueo', () async {
+    final fixture = ContentFixture()
+      ..addLevel('segundo', unlock: {'afterLevel': 'prueba', 'totalStars': 2})
+      ..addGuardian('llama', unlock: {'afterLevel': 'segundo'});
+    final content = await ContentLoader(fixture.toSource()).load();
+
+    expect(content.levels.first.unlock, UnlockRule.always);
+    expect(
+      content.levels.last.unlock,
+      const UnlockRule(afterLevel: 'prueba', totalStars: 2),
+    );
+    expect(content.guardians['hondero']!.unlock, UnlockRule.always);
+    expect(
+      content.guardians['llama']!.unlock,
+      const UnlockRule(afterLevel: 'segundo'),
+    );
+  });
+
+  group('reglas de desbloqueo', () {
+    test('se cumplen con el nivel ganado y las estrellas juntadas', () {
+      const rule = UnlockRule(afterLevel: 'uno', totalStars: 4);
+
+      expect(rule.isMetBy({}), isFalse);
+      // Ganó el nivel, pero faltan estrellas.
+      expect(rule.isMetBy({'uno': 3}), isFalse);
+      // Estrellas de sobra, pero sin ganar ese nivel.
+      expect(rule.isMetBy({'dos': 3, 'tres': 3}), isFalse);
+      expect(rule.isMetBy({'uno': 2, 'dos': 2}), isTrue);
+      expect(UnlockRule.always.isMetBy({}), isTrue);
+    });
+
+    test('un campo mal escrito', () async {
+      final fixture = ContentFixture()
+        ..addLevel('segundo', unlock: {'afterlevel': 'prueba'});
+
+      expect(
+        await errorOf(fixture),
+        'levels/segundo.json → unlock.afterlevel: campo desconocido '
+        '(válidos: afterLevel, totalStars)',
+      );
+    });
+
+    test('un nivel que no existe', () async {
+      final fixture = ContentFixture()
+        ..addGuardian('llama', unlock: {'afterLevel': 'tercero'});
+
+      expect(
+        await errorOf(fixture),
+        'guardians/llama.json → unlock.afterLevel: el nivel "tercero" no '
+        'existe',
+      );
+    });
+
+    test('sin condiciones', () async {
+      final fixture = ContentFixture()..addLevel('segundo', unlock: {});
+
+      expect(
+        await errorOf(fixture),
+        'levels/segundo.json → unlock: necesita afterLevel o totalStars (o '
+        'quitar "unlock")',
+      );
+    });
+
+    test('más estrellas de las que se pueden juntar', () async {
+      // Dos niveles: como mucho 6 estrellas.
+      final fixture = ContentFixture()
+        ..addLevel('segundo', unlock: {'totalStars': 7});
+
+      expect(
+        await errorOf(fixture),
+        'levels/segundo.json → unlock: no se puede cumplir ni ganando con 3 '
+        'estrellas todos los niveles que se van abriendo',
+      );
+    });
+
+    test('un nivel que se pide a sí mismo deja el juego cerrado', () async {
+      final fixture = ContentFixture()
+        ..levels['prueba'] = {
+          ...levelJson(),
+          'unlock': {'afterLevel': 'prueba'},
+        };
+
+      expect(
+        await errorOf(fixture),
+        startsWith('levels/prueba.json → unlock: no se puede cumplir'),
+      );
+    });
+
+    test('un guardián que no se abre nunca', () async {
+      final fixture = ContentFixture()
+        ..addGuardian('llama', unlock: {'totalStars': 4});
+
+      expect(
+        await errorOf(fixture),
+        startsWith('guardians/llama.json → unlock: no se puede cumplir'),
+      );
+    });
+
+    test('ningún guardián abierto al empezar', () async {
+      final fixture = ContentFixture()
+        ..guardians['hondero'] = {
+          ...honderoJson(),
+          'unlock': {'afterLevel': 'prueba'},
+        };
+
+      expect(
+        await errorOf(fixture),
+        'index.json → guardians: ninguno está abierto desde el principio',
+      );
+    });
   });
 
   group('errores claros', () {

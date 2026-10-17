@@ -27,6 +27,8 @@ void main() {
       4.5,
     ),
     ('estrella ganada sobre el fondo', game.star, scheme.surface, 3.0),
+    // Lo desbloqueado en la tarjeta de victoria.
+    ('texto terciario sobre el fondo', scheme.tertiary, scheme.surface, 4.5),
   ]) {
     test('contraste suficiente: $name', () {
       expect(_contrast(foreground, background), greaterThanOrEqualTo(minimum));

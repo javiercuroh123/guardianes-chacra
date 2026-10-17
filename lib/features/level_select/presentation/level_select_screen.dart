@@ -4,10 +4,12 @@ import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/widgets/stars_row.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
+import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/valley_layout.dart';
 import 'package:guardianes_chacra/features/progress/domain/progress.dart';
+import 'package:guardianes_chacra/features/progress/domain/progression.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
@@ -45,8 +47,28 @@ class _Valley extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = GameColors.of(context);
     final language = Localizations.localeOf(context).languageCode;
-    final levelIds = [for (final level in content.levels) level.id];
-    final fractions = valleyNodePositions(levelIds.length);
+    final l10n = AppLocalizations.of(context);
+    final progression = Progression.of(content);
+    final fractions = valleyNodePositions(content.levels.length);
+    String levelName(String id) =>
+        content.texts.text(ContentTexts.levelName(id), language: language);
+
+    /// `null` si se puede jugar; si no, qué falta según su regla.
+    String? lockedMessage(LevelDef level) {
+      if (progression.canPlay(progress, level.id)) return null;
+      final after = level.unlock.afterLevel;
+      final stars = level.unlock.totalStars;
+      final have = progress.totalStars;
+      return switch ((after, stars)) {
+        (final after?, 0) => l10n.valleyLockedLevel(levelName(after)),
+        (null, _) => l10n.valleyLockedStars(stars, have),
+        (final after?, _) => l10n.valleyLockedBoth(
+          levelName(after),
+          stars,
+          have,
+        ),
+      };
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -69,12 +91,9 @@ class _Valley extends StatelessWidget {
                 child: _LevelNode(
                   key: ValueKey('level-${level.id}'),
                   number: index + 1,
-                  name: content.texts.text(
-                    ContentTexts.levelName(level.id),
-                    language: language,
-                  ),
+                  name: levelName(level.id),
                   stars: progress.starsOf(level.id),
-                  unlocked: progress.isUnlocked(levelIds, index),
+                  lockedMessage: lockedMessage(level),
                   onOpen: () {
                     // El aviso de "bloqueado" es de toda la app: si sigue
                     // visible, taparía los botones de la vista previa.
@@ -99,7 +118,7 @@ class _LevelNode extends StatelessWidget {
     required this.number,
     required this.name,
     required this.stars,
-    required this.unlocked,
+    required this.lockedMessage,
     required this.onOpen,
     super.key,
   });
@@ -110,8 +129,12 @@ class _LevelNode extends StatelessWidget {
   final int number;
   final String name;
   final int stars;
-  final bool unlocked;
+
+  /// Qué falta para abrirlo, o `null` si está abierto.
+  final String? lockedMessage;
   final VoidCallback onOpen;
+
+  bool get unlocked => lockedMessage == null;
 
   @override
   Widget build(BuildContext context) {
@@ -127,11 +150,13 @@ class _LevelNode extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: unlocked
-            ? onOpen
-            : () => ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(content: Text(l10n.valleyLocked))),
+        onTap: switch (lockedMessage) {
+          null => onOpen,
+          final message =>
+            () => ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(message))),
+        },
         child: SizedBox(
           width: width,
           child: Column(

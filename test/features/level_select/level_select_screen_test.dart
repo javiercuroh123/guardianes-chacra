@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/valley_layout.dart';
+import 'package:guardianes_chacra/features/progress/domain/progression.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 
 import '../../helpers/battle_game_helpers.dart';
@@ -50,7 +51,11 @@ void main() {
 
     containerOf(tester, LevelSelectScreen)
         .read(progressProvider.notifier)
-        .recordResult('chacra_del_valle', stars: 2);
+        .recordResult(
+          'chacra_del_valle',
+          stars: 2,
+          progression: Progression.of(content()),
+        );
     await tester.pump();
 
     expect(
@@ -68,12 +73,52 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('level-andenes')));
     await tester.pump();
-    expect(find.text('Gana el nivel anterior para abrir este'), findsOneWidget);
+    expect(
+      find.text('Gana Chacra del Valle para abrir este nivel'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const ValueKey('level-chacra_del_valle')));
     await tester.pumpAndSettle();
     expect(find.byType(LevelPreviewScreen), findsOneWidget);
     // El aviso no sigue tapando la vista previa.
-    expect(find.text('Gana el nivel anterior para abrir este'), findsNothing);
+    expect(
+      find.text('Gana Chacra del Valle para abrir este nivel'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('el aviso dice qué le falta al nivel según su regla', (
+    tester,
+  ) async {
+    await pumpValley(tester);
+    final progress = containerOf(
+      tester,
+      LevelSelectScreen,
+    ).read(progressProvider.notifier);
+    final progression = Progression.of(content());
+
+    progress
+      ..recordResult('chacra_del_valle', stars: 1, progression: progression)
+      ..recordResult('andenes', stars: 1, progression: progression);
+    await tester.pump();
+
+    // Andenes ya está ganado, pero faltan estrellas: 2 de 4.
+    expect(find.bySemanticsLabel('Orilla del Lago: bloqueado'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('level-orilla_del_lago')));
+    await tester.pump();
+    expect(
+      find.text(
+        'Gana Andenes y junta 4 estrellas para abrir este nivel (tienes 2)',
+      ),
+      findsOneWidget,
+    );
+
+    progress.recordResult('andenes', stars: 3, progression: progression);
+    await tester.pump();
+    expect(
+      find.bySemanticsLabel('Orilla del Lago: 0 de 3 estrellas'),
+      findsOneWidget,
+    );
   });
 }

@@ -1,4 +1,5 @@
 {
+  "unlock": { "afterLevel": "chacra_del_valle" },
   "color": "#7B1FA2",
   "defaultTargeting": "first",
   "levels": [

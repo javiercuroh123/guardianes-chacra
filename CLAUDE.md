@@ -82,7 +82,7 @@ guardianes_chacra/
 │     ├─ progress/    domain: repositorio y reglas de desbloqueo · data: implementación local y migraciones
 │     ├─ level_select/  presentation
 │     ├─ bestiary/    presentation
-│     ├─ settings/    domain · data · presentation
+│     ├─ settings/    domain · presentation (se guardan con el progreso)
 │     └─ menu/        presentation
 ├─ tool/              simulador de balance por línea de comandos (Fase 9)
 └─ test/              espejo de lib/ + test/architecture/
@@ -171,8 +171,8 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 
 ### Menús, progreso y pantallas (Fase 6)
 - Flujo: título (Jugar / Bestiario / Ajustes) → valle (`LevelSelectScreen`) → vista previa (`LevelPreviewScreen`) → partida (`pushReplacement`). "Volver al valle" y "Salir del nivel" hacen `maybePop`; "Siguiente nivel" reemplaza la partida por la vista previa del siguiente.
-- Estrellas: `starsFor` (dominio) con `twoStarsFraction`/`threeStarsFraction` de `rules.json` (0,5 y 0,9 de las papas iniciales; cualquier victoria = 1). `Progress` (inmutable) guarda la mejor marca por nivel y las plagas y guardianes descubiertos. Desbloqueo provisional: el primero siempre y cada nivel al ganar el anterior (`TODO(fase-7)`: reglas en los datos).
-- Progreso y ajustes viven en memoria (`progressProvider`, `settingsProvider`, `Notifier`) hasta la Fase 7. Idioma: Sistema/Español/English; `localeFor` da `null` para "Sistema".
+- Estrellas: `starsFor` (dominio) con `twoStarsFraction`/`threeStarsFraction` de `rules.json` (0,5 y 0,9 de las papas iniciales; cualquier victoria = 1). `Progress` (inmutable) guarda la mejor marca por nivel y las plagas y guardianes descubiertos. Desbloqueos: ver Fase 7.
+- Progreso y ajustes: `progressProvider` y `settingsProvider` (`Notifier`), guardados desde la Fase 7. Idioma: Sistema/Español/English; `localeFor` da `null` para "Sistema".
 - Descubrimientos: una plaga al aparecer (`PestSpawned`), un guardián al construirlo (`GuardianBuilt`). Los escucha `BattleScreen` (no el juego: no son dibujo), igual que `LevelWon` (guarda las estrellas) y `LevelLost`.
 - `BattleStats` (dominio) cuenta el maíz cosechado: todo `CornChanged` positivo menos lo que devuelve vender (`GuardianSold.refund`).
 - HUD completo: maíz, papas, oleada; botón de siguiente oleada (segundos con `ticksToWholeSeconds` y `+bono`, solo si hay cuenta regresiva), x1/x2 (`clock.speed`) y pausa. `BattleGame` avisa `onChanged` cuando cambian los segundos o el bono. Claves: `hud-next-wave`, `hud-speed`, `hud-pause`.
@@ -181,6 +181,17 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Tema central `AppTheme.light` (verde chacra, maíz, terracota, crema) + `GameColors` (HUD, velo, estrellas, valle); `app_theme_test.dart` mide el contraste AA. Botones del tema: mínimo 200 × 48. `IconButton.foregroundColor` no colorea un `Text` dentro del botón: darle su color.
 - La vista previa ordena las plagas por primera aparición (`pestsAppearingIn`; `List.sort` de Dart no es estable: desempatar por índice).
 - Tests: el ciclo de vida de la app se simula con un mensaje `flutter/lifecycle` (`setLifecycle` en `battle_screen_test.dart`). La tarjeta de los overlays une sus textos en un solo nodo de accesibilidad: buscar con `RegExp`.
+
+### Progresión y guardado (Fase 7)
+- Reglas de desbloqueo en los datos: `"unlock": {"afterLevel": "<nivel>", "totalStars": N}` (opcional, una o ambas) en cada nivel y guardián → `UnlockRule` (content/domain, `isMetBy(stars)`). Valores: Andenes tras la Chacra del Valle; Orilla del Lago tras Andenes + 4 estrellas; Pututu tras la Chacra del Valle; Cóndor tras Andenes. `ContentLoader` valida campos, referencias y que todo sea alcanzable (gana con 3 estrellas lo que se va abriendo); al menos un guardián abierto al empezar.
+- `Progression` (progress/domain): abierto = ya guardado en `Progress.unlockedLevels/unlockedGuardians` ∪ cumple hoy su regla (lo ganado no se pierde si una actualización endurece una regla). `record()` anota el resultado, guarda todo lo abierto y devuelve lo recién abierto (`Unlocked`), que la victoria muestra ("¡Desbloqueaste: …!").
+- El bloqueo lo aplica el motor: `BattleScreen` le pasa a la `Simulation` solo los guardianes desbloqueados (otro tipo → `unknownGuardianType`) y el menú radial muestra solo esos. `playScripted` (tests) hace lo mismo y falla si el plan construye uno bloqueado. El plan de balance del nivel 1 cambió el Cóndor de e9 por un Hondero (gana con 20 papas).
+- El aviso de nivel bloqueado dice la regla (`valleyLockedLevel/Stars/Both`).
+- Guardado: `ProgressRepository` (domain) con `SaveData` = progreso + ajustes, un solo documento. `SaveCodec` (data, Dart puro): JSON `{"version", "progress", "settings"}`; la versión actual es `saveMigrations.length + 1` (v1 = primer formato, todavía sin migraciones); los campos que faltan toman su valor por defecto; JSON roto, tipo inesperado o versión futura → `SaveFormatException`.
+- `LocalProgressRepository`: `SharedPreferencesAsync` (la API que recomienda shared_preferences; la clásica quedará obsoleta), clave `guardianes.save`; un guardado ilegible se copia a `guardianes.save.backup` y se empieza de cero; las escrituras van en cola. `MemoryProgressRepository` es la implementación por defecto (tests).
+- Arranque: `main.dart` lee el guardado antes de `runApp` y lo pasa con overrides (`progressRepositoryProvider`, `savedGameProvider`); los controladores arrancan de ahí. `autosaveProvider` (`lib/app/autosave.dart`, lo mantiene vivo `GuardianesApp`) guarda cuando cambian progreso o ajustes; los controladores no saben de disco.
+- Tests del guardado: `InMemorySharedPreferencesAsync` de `shared_preferences_platform_interface` (dev, ^2.4.2). Un `const {}` sin tipo es `Map<dynamic, dynamic>` y no pasa `is Map<String, Object?>`.
+- Partida a medias: no se guarda (decisión de la Fase 7). Si se pide, la opción recomendada es guardar semilla + comandos con su tick y re-simular, con un hash del contenido para descartar si cambió el balance.
 
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.

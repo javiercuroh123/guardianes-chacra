@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/features/progress/domain/progress.dart';
 
 void main() {
-  const levels = ['valle', 'andenes', 'lago'];
-
   test('guarda el mejor resultado de cada nivel', () {
     final progress = const Progress()
         .withResult('valle', stars: 2)
@@ -23,20 +21,6 @@ void main() {
     expect(progress.starsOf('valle'), 3);
   });
 
-  test('el primer nivel está abierto y cada nivel se abre al ganar el '
-      'anterior', () {
-    const fresh = Progress();
-    expect(fresh.isUnlocked(levels, 0), isTrue);
-    expect(fresh.isUnlocked(levels, 1), isFalse);
-
-    final afterLoss = fresh.withResult('valle', stars: 0);
-    expect(afterLoss.isUnlocked(levels, 1), isFalse);
-
-    final afterWin = fresh.withResult('valle', stars: 1);
-    expect(afterWin.isUnlocked(levels, 1), isTrue);
-    expect(afterWin.isUnlocked(levels, 2), isFalse);
-  });
-
   test('registra plagas y guardianes descubiertos', () {
     final progress = const Progress()
         .discoverPest('gorgojo')
@@ -52,5 +36,31 @@ void main() {
 
     // Así Riverpod no avisa un cambio que no hubo.
     expect(progress.discoverPest('gorgojo'), same(progress));
+  });
+
+  test('suma lo desbloqueado; si no hay nada nuevo, es el mismo', () {
+    final progress = const Progress().withUnlocked(
+      levels: ['valle'],
+      guardians: ['hondero'],
+    );
+
+    expect(progress.unlockedLevels, {'valle'});
+    expect(progress.unlockedGuardians, {'hondero'});
+    expect(progress.withUnlocked(levels: ['valle']), same(progress));
+  });
+
+  test('dos progresos con los mismos datos son iguales', () {
+    final a = const Progress()
+        .withResult('valle', stars: 2)
+        .discoverPest('gorgojo')
+        .withUnlocked(levels: ['valle', 'andenes']);
+    final b = const Progress()
+        .withUnlocked(levels: ['andenes', 'valle'])
+        .discoverPest('gorgojo')
+        .withResult('valle', stars: 2);
+
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+    expect(a, isNot(a.withResult('valle', stars: 3)));
   });
 }

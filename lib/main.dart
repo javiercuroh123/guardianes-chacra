@@ -2,6 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app.dart';
+import 'package:guardianes_chacra/features/progress/data/local_progress_repository.dart';
+import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,5 +21,19 @@ Future<void> main() async {
   // momento al deslizar desde el borde, sin sacar al jugador del juego.
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  runApp(const ProviderScope(child: GuardianesApp()));
+  // El guardado se lee antes de mostrar nada (es un texto pequeño): así el
+  // idioma, las estrellas y los desbloqueos están listos desde el primer
+  // cuadro, sin pantallas de carga.
+  final repository = LocalProgressRepository(SharedPreferencesAsync());
+  final saved = await repository.load();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(repository),
+        savedGameProvider.overrideWithValue(saved),
+      ],
+      child: const GuardianesApp(),
+    ),
+  );
 }

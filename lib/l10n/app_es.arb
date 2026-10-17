@@ -135,9 +135,41 @@
   "@valleyTitle": {
     "description": "Título de la selección de nivel."
   },
-  "valleyLocked": "Gana el nivel anterior para abrir este",
-  "@valleyLocked": {
-    "description": "Aviso al tocar un nivel bloqueado."
+  "valleyLockedLevel": "Gana {level} para abrir este nivel",
+  "@valleyLockedLevel": {
+    "description": "Aviso al tocar un nivel que pide ganar otro.",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "valleyLockedStars": "Junta {stars} estrellas para abrir este nivel (tienes {have})",
+  "@valleyLockedStars": {
+    "description": "Aviso al tocar un nivel que pide estrellas.",
+    "placeholders": {
+      "stars": {
+        "type": "int"
+      },
+      "have": {
+        "type": "int"
+      }
+    }
+  },
+  "valleyLockedBoth": "Gana {level} y junta {stars} estrellas para abrir este nivel (tienes {have})",
+  "@valleyLockedBoth": {
+    "description": "Aviso al tocar un nivel que pide ganar otro y estrellas.",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      },
+      "stars": {
+        "type": "int"
+      },
+      "have": {
+        "type": "int"
+      }
+    }
   },
   "valleyLevelSemantics": "{name}: {stars} de 3 estrellas",
   "@valleyLevelSemantics": {
@@ -238,6 +270,15 @@
     "placeholders": {
       "amount": {
         "type": "int"
+      }
+    }
+  },
+  "victoryUnlocked": "¡Desbloqueaste: {names}!",
+  "@victoryUnlocked": {
+    "description": "Lo que abrió esta victoria (niveles y guardianes, separados por comas).",
+    "placeholders": {
+      "names": {
+        "type": "String"
       }
     }
   },

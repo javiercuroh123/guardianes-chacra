@@ -32,7 +32,8 @@ void main() {
       Upgrade('e4'),
       Build('e2', 'llama'),
       Upgrade('e6'),
-      Build('e9', 'condor'),
+      // En el nivel 1 todavía no hay Cóndor (se abre al ganar Andenes).
+      Build('e9', 'hondero'),
       Upgrade('e1'),
       Upgrade('e3'),
       Upgrade('e4'),

@@ -56,9 +56,13 @@ class VictoryOverlay extends StatelessWidget {
     required this.cornHarvested,
     required this.onRetry,
     required this.onExit,
+    this.unlocked = const [],
     this.onNext,
     super.key,
   });
+
+  /// Nombres de lo que abrió esta victoria (niveles y guardianes).
+  final List<String> unlocked;
 
   final int stars;
   final int potatoes;
@@ -82,6 +86,18 @@ class VictoryOverlay extends StatelessWidget {
           const SizedBox(height: 8),
           Text(l10n.victoryPotatoes(potatoes), style: textTheme.titleMedium),
           Text(l10n.victoryCorn(cornHarvested), style: textTheme.titleMedium),
+          if (unlocked.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.victoryUnlocked(unlocked.join(', ')),
+              key: const ValueKey('victory-unlocked'),
+              style: textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.tertiary,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
       actions: [

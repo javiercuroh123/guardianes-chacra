@@ -1,4 +1,5 @@
 {
+  "unlock": { "afterLevel": "chacra_del_valle" },
   "map": "andenes.tmx",
   "startingCorn": 260,
   "startingPotatoes": 20,

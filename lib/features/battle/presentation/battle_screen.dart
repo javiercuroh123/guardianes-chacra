@@ -20,9 +20,11 @@ import 'package:guardianes_chacra/features/battle/presentation/style/battle_colo
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
+import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
+import 'package:guardianes_chacra/features/progress/domain/progression.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
@@ -61,17 +63,26 @@ class _Session {
     required this.simulation,
     required this.game,
     required this.stats,
+    required this.guardians,
   });
 
   final LevelDef level;
   final Simulation simulation;
   final BattleGame game;
   final BattleStats stats;
+
+  /// Los guardianes desbloqueados al empezar: los únicos que la simulación
+  /// conoce (construir otro se rechaza) y los que ofrece el menú.
+  final Map<String, GuardianDef> guardians;
+
+  /// Lo que abrió la victoria (para contarlo en el overlay).
+  Unlocked? unlocked;
 }
 
 class _BattleScreenState extends ConsumerState<BattleScreen> {
   _Session? _session;
   late GameContent _content;
+  late Progression _progression;
   late String _language;
 
   /// Pausa la partida cuando la app pasa a segundo plano.
@@ -174,7 +185,14 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
 
   Widget _victory(_Session session) {
     final next = _levelAfter(session.level);
+    final unlocked = session.unlocked;
     return VictoryOverlay(
+      unlocked: [
+        if (unlocked != null) ...[
+          for (final id in unlocked.levels) _levelName(id),
+          for (final id in unlocked.guardians) _guardianName(id),
+        ],
+      ],
       stars: _starsFor(session, session.simulation.potatoes),
       potatoes: session.simulation.potatoes,
       cornHarvested: session.stats.cornHarvested,
@@ -194,13 +212,19 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
 
   _Session _startSession(GameContent content) {
     _content = content;
+    _progression = Progression.of(content);
     final level = content.levels.firstWhere(
       (level) => level.id == widget.levelId,
     );
+    final progress = ref.read(progressProvider);
+    final guardians = {
+      for (final MapEntry(:key, :value) in content.guardians.entries)
+        if (_progression.canBuild(progress, key)) key: value,
+    };
     final simulation = Simulation(
       level: level,
       pests: content.pests,
-      guardians: content.guardians,
+      guardians: guardians,
       rules: content.rules,
       seed: 1,
     );
@@ -220,6 +244,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       simulation: simulation,
       game: game,
       stats: BattleStats(simulation.events),
+      guardians: guardians,
     );
     simulation.events.on<SimEvent>((event) => _onSimEvent(session, event));
     // El HUD se muestra apenas termina este frame (no se puede cambiar un
@@ -270,9 +295,10 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       case GuardianBuilt(:final guardianType):
         progress.discoverGuardian(guardianType);
       case LevelWon(:final potatoesLeft):
-        progress.recordResult(
+        session.unlocked = progress.recordResult(
           session.level.id,
           stars: _starsFor(session, potatoesLeft),
+          progression: _progression,
         );
         session.game.overlays.add(BattleOverlays.won);
       case LevelLost():
@@ -419,7 +445,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         bounds: bounds,
         hint: hint,
         children: [
-          for (final def in _content.guardians.values)
+          for (final def in session.guardians.values)
             RadialButton(
               key: ValueKey('build-${def.id}'),
               label: _guardianName(def.id).characters.first.toUpperCase(),
@@ -569,6 +595,9 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   GuardianView? _guardianOnSlot(String slotId) => _session?.simulation.guardians
       .where((guardian) => guardian.slotId == slotId)
       .firstOrNull;
+
+  String _levelName(String id) =>
+      _content.texts.text(ContentTexts.levelName(id), language: _language);
 
   String _guardianName(String type) =>
       _content.texts.text(ContentTexts.guardianName(type), language: _language);

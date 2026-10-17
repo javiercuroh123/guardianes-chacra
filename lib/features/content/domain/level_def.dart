@@ -1,4 +1,5 @@
 import 'package:guardianes_chacra/core/math/vec2.dart';
+import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 import 'package:meta/meta.dart';
 
 /// Un nivel: su JSON (`assets/content/levels/<id>.json`) más su mapa de
@@ -13,6 +14,7 @@ class LevelDef {
     required this.startingPotatoes,
     required this.earlyCallCornPerSecond,
     required this.waves,
+    this.unlock = UnlockRule.always,
   });
 
   final String id;
@@ -29,6 +31,9 @@ class LevelDef {
   final double earlyCallCornPerSecond;
 
   final List<WaveDef> waves;
+
+  /// Qué hace falta para poder jugarlo.
+  final UnlockRule unlock;
 }
 
 /// Lo que la simulación necesita del mapa de Tiled, en casillas.

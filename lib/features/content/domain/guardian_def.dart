@@ -1,5 +1,6 @@
 import 'package:guardianes_chacra/features/content/domain/behavior_spec.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 import 'package:meta/meta.dart';
 
 /// Definición de un tipo de guardián, tal como viene de los datos.
@@ -15,6 +16,7 @@ class GuardianDef {
     this.branches = const [],
     this.defaultTargeting = 'first',
     this.color,
+    this.unlock = UnlockRule.always,
   });
 
   final String id;
@@ -27,6 +29,9 @@ class GuardianDef {
   /// Color de reemplazo para dibujarlo (ARGB) mientras no tenga imagen.
   /// Si falta, la vista usa uno derivado de su id.
   final int? color;
+
+  /// Qué hace falta para poder construirlo.
+  final UnlockRule unlock;
 }
 
 /// Las estadísticas completas de un nivel (no las diferencias con el

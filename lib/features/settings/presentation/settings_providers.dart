@@ -1,13 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 import 'package:guardianes_chacra/features/settings/domain/settings.dart';
 
-// TODO(fase-7): guardarlos junto con el progreso.
-/// Los ajustes del jugador. En la Fase 6 viven en memoria.
+/// Los ajustes del jugador. Se guardan junto con el avance (ver
+/// `lib/app/autosave.dart`).
 class SettingsController extends Notifier<Settings> {
   @override
-  Settings build() => const Settings();
+  Settings build() => ref.watch(savedGameProvider).settings;
 
   set music(bool on) => state = state.copyWith(music: on);
   bool get music => state.music;

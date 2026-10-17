@@ -8,10 +8,12 @@ import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/domain/pest_def.dart';
+import 'package:guardianes_chacra/features/content/domain/unlock_rule.dart';
 
 /// Convierte los JSON de `assets/content/` y los mapas de `assets/tiles/`
 /// en objetos del dominio, validando todo lo que entiende: tipos, rangos,
-/// etiquetas, referencias a plagas y caminos, ramas y textos.
+/// etiquetas, referencias a plagas, caminos y niveles, ramas, textos y que
+/// cada nivel y guardián bloqueado se pueda abrir alguna vez.
 ///
 /// Los parámetros de cada comportamiento ("damage", "factor"…) los valida
 /// el registro de la simulación al crear la partida (ver
@@ -31,18 +33,23 @@ class ContentLoader {
     final languages = _ids(index, 'languages');
     final rules = _rules(await _json('rules.json'));
 
+    // Los ids de los niveles se conocen antes de leerlos: las reglas de
+    // desbloqueo de guardianes y niveles los mencionan.
+    final levelIds = _ids(index, 'levels');
+
     final pests = <String, PestDef>{
       for (final id in _ids(index, 'pests'))
         id: _pest(id, await _json('pests/$id.json')),
     };
     final guardians = <String, GuardianDef>{
       for (final id in _ids(index, 'guardians'))
-        id: _guardian(id, await _json('guardians/$id.json')),
+        id: _guardian(id, await _json('guardians/$id.json'), levelIds),
     };
     final levels = <LevelDef>[
-      for (final id in _ids(index, 'levels'))
-        await _level(id, await _json('levels/$id.json'), pests),
+      for (final id in levelIds)
+        await _level(id, await _json('levels/$id.json'), pests, levelIds),
     ];
+    _checkUnlocksReachable(levels, guardians);
     final texts = ContentTexts({
       for (final language in languages)
         language: _texts(
@@ -173,7 +180,7 @@ class ContentLoader {
 
   // --- guardians/<id>.json
 
-  GuardianDef _guardian(String id, JsonNode node) {
+  GuardianDef _guardian(String id, JsonNode node, List<String> levelIds) {
     final levels = node.list('levels');
     if (levels.isEmpty) {
       throw node['levels'].error('necesita al menos un nivel');
@@ -197,6 +204,7 @@ class ContentLoader {
           ? node.string('defaultTargeting')
           : 'first',
       color: _color(node),
+      unlock: _unlock(node, levelIds),
       levels: [for (final level in levels) _guardianLevel(level)],
       branches: [
         for (final branch in branches)
@@ -221,6 +229,7 @@ class ContentLoader {
     String id,
     JsonNode node,
     Map<String, PestDef> pests,
+    List<String> levelIds,
   ) async {
     final mapFile = node.string('map');
     final map = readTiledMap(
@@ -240,6 +249,7 @@ class ContentLoader {
       startingCorn: node.integer('startingCorn', min: 0),
       startingPotatoes: node.integer('startingPotatoes', min: 1),
       earlyCallCornPerSecond: node.number('earlyCallCornPerSecond', min: 0),
+      unlock: _unlock(node, levelIds),
       waves: [
         for (final wave in waves)
           _wave(wave, pests: pests, map: map, mapFile: mapFile),
@@ -290,6 +300,81 @@ class ContentLoader {
     final id = node.asString();
     if (!exists(id)) throw node.error(missing(id));
     return id;
+  }
+
+  // --- "unlock" de guardianes y niveles
+
+  static const _unlockFields = ['afterLevel', 'totalStars'];
+
+  /// `"unlock": {"afterLevel": "andenes", "totalStars": 4}` (cualquiera de
+  /// las dos o ambas). Sin `"unlock"`, abierto desde el principio.
+  UnlockRule _unlock(JsonNode def, List<String> levelIds) {
+    if (!def.has('unlock')) return UnlockRule.always;
+    final node = def['unlock'];
+    final fields = node.asObject();
+    for (final MapEntry(:key, :value) in fields.entries) {
+      if (!_unlockFields.contains(key)) {
+        throw value.error(
+          'campo desconocido (válidos: ${_unlockFields.join(', ')})',
+        );
+      }
+    }
+    if (fields.isEmpty) {
+      throw node.error(
+        'necesita ${_unlockFields.join(' o ')} (o quitar "unlock")',
+      );
+    }
+    return UnlockRule(
+      afterLevel: node.has('afterLevel')
+          ? _reference(
+              node['afterLevel'],
+              exists: levelIds.contains,
+              missing: (id) => 'el nivel "$id" no existe',
+            )
+          : null,
+      totalStars: node.has('totalStars')
+          ? node.integer('totalStars', min: 1)
+          : 0,
+    );
+  }
+
+  /// Juega "en teoría": gana con 3 estrellas cada nivel que se va abriendo
+  /// hasta que no se abre ninguno más. Lo que quede cerrado no se podría
+  /// abrir nunca (una regla que se pide a sí misma, demasiadas estrellas…).
+  void _checkUnlocksReachable(
+    List<LevelDef> levels,
+    Map<String, GuardianDef> guardians,
+  ) {
+    const reason =
+        'no se puede cumplir ni ganando con 3 estrellas todos los '
+        'niveles que se van abriendo';
+    if (!guardians.values.any((guardian) => guardian.unlock.isMetBy({}))) {
+      throw ContentError(
+        'index.json → guardians: ninguno está abierto desde el principio',
+      );
+    }
+
+    final stars = <String, int>{};
+    var opened = true;
+    while (opened) {
+      opened = false;
+      for (final level in levels) {
+        if (!stars.containsKey(level.id) && level.unlock.isMetBy(stars)) {
+          stars[level.id] = 3;
+          opened = true;
+        }
+      }
+    }
+    for (final level in levels) {
+      if (!stars.containsKey(level.id)) {
+        throw ContentError('levels/${level.id}.json → unlock: $reason');
+      }
+    }
+    for (final guardian in guardians.values) {
+      if (!guardian.unlock.isMetBy(stars)) {
+        throw ContentError('guardians/${guardian.id}.json → unlock: $reason');
+      }
+    }
   }
 
   // --- i18n/<idioma>.json

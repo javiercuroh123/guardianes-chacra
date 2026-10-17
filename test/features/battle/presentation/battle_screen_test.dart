@@ -18,7 +18,10 @@ import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
+import 'package:guardianes_chacra/features/progress/domain/progress.dart';
+import 'package:guardianes_chacra/features/progress/domain/progress_repository.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
+import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 
 import '../../../helpers/battle_game_helpers.dart';
 import '../../../helpers/test_app.dart';
@@ -36,6 +39,7 @@ void main() {
     WidgetTester tester, {
     int maps = 1,
     GameContent? withContent,
+    Progress progress = const Progress(),
   }) async {
     usePhoneLandscape(tester);
     final loadMap = await preloadMap(tester, level, count: maps);
@@ -44,6 +48,7 @@ void main() {
         BattleScreen(levelId: level.id, loadMap: loadMap),
         overrides: [
           gameContentProvider.overrideWith((ref) => withContent ?? content),
+          savedGameProvider.overrideWithValue(SaveData(progress: progress)),
         ],
       ),
     );
@@ -198,6 +203,9 @@ void main() {
     expect(progress.starsOf(level.id), 3);
     expect(progress.discoveredPests, {'gorgojo'});
     expect(progress.discoveredGuardians, {'hondero'});
+    // Ganar el nivel 1 abre Andenes y el Pututu, y la victoria lo cuenta.
+    expect(progress.unlockedLevels, contains('andenes'));
+    expect(find.text('¡Desbloqueaste: Andenes, Pututu!'), findsOneWidget);
 
     await tester.tap(key('victory-next'));
     await tester.pump();
@@ -210,10 +218,35 @@ void main() {
     );
   });
 
-  testWidgets('tocar un espacio abre el menú con los 5 guardianes', (
+  testWidgets('el menú ofrece solo los guardianes desbloqueados', (
     tester,
   ) async {
-    await pumpScreen(tester);
+    final game = await pumpScreen(tester);
+
+    await tapMap(tester, onScreen(slot('e1')));
+
+    // Un jugador nuevo: Pututu y Cóndor siguen bloqueados.
+    for (final type in ['hondero', 'llama', 'tullpa']) {
+      expect(key('build-$type'), findsOneWidget, reason: type);
+    }
+    expect(key('build-pututu'), findsNothing);
+    expect(key('build-condor'), findsNothing);
+
+    // La simulación tampoco los conoce: construirlos se rechaza.
+    game.simulation.enqueue(
+      const BuildGuardian(slotId: 'e2', guardianType: 'condor'),
+    );
+    await advance(tester, game, seconds: 0.1);
+    expect(game.simulation.guardians, isEmpty);
+  });
+
+  testWidgets('con Andenes ganado aparecen Pututu y Cóndor', (tester) async {
+    await pumpScreen(
+      tester,
+      progress: const Progress()
+          .withResult('chacra_del_valle', stars: 3)
+          .withResult('andenes', stars: 1),
+    );
 
     await tapMap(tester, onScreen(slot('e1')));
 
@@ -246,15 +279,17 @@ void main() {
     tester,
   ) async {
     final game = await pumpScreen(tester);
-    // Tullpa (100) + Cóndor (120) = 220: no queda maíz.
+    // Tullpa (100) + dos Honderos (60 + 60) = 220: no queda maíz.
     game.simulation
       ..enqueue(const BuildGuardian(slotId: 'e1', guardianType: 'tullpa'))
-      ..enqueue(const BuildGuardian(slotId: 'e2', guardianType: 'condor'));
+      ..enqueue(const BuildGuardian(slotId: 'e2', guardianType: 'hondero'))
+      ..enqueue(const BuildGuardian(slotId: 'e4', guardianType: 'hondero'));
     await advance(tester, game, seconds: 0.1);
+    expect(game.simulation.corn, 0);
 
     await tapMap(tester, onScreen(slot('e3')));
 
-    for (final type in content.guardians.keys) {
+    for (final type in ['hondero', 'llama', 'tullpa']) {
       expect(
         tester.widget<RadialButton>(key('build-$type')).onTap,
         isNull,
