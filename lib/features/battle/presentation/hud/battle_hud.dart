@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/rive/rive_counter.dart';
 import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
@@ -59,10 +60,16 @@ class BattleHud extends ConsumerWidget {
                 fit: BoxFit.scaleDown,
                 child: Row(
                   children: [
-                    _Chip(
+                    // Prueba de la Fase 1 de la interfaz: el maíz ya es de
+                    // Rive; el resto del HUD llega en la Fase 4.
+                    RiveCounter(
                       key: const ValueKey('hud-corn'),
-                      text: '🌽 ${hud.corn}',
+                      value: hud.corn,
                       semanticsLabel: l10n.hudCorn(hud.corn),
+                      fallback: _Chip(
+                        text: '🌽 ${hud.corn}',
+                        semanticsLabel: l10n.hudCorn(hud.corn),
+                      ),
                     ),
                     const SizedBox(width: 6),
                     _Chip(

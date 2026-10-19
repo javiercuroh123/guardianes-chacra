@@ -9,6 +9,7 @@ import 'package:guardianes_chacra/app/analytics.dart';
 import 'package:guardianes_chacra/app/app.dart';
 import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
+import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/core/services/ad_unit_ids.dart';
 import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/core/services/analytics_service.dart';
@@ -40,6 +41,10 @@ Future<void> main() async {
   final repository = LocalProgressRepository(SharedPreferencesAsync());
   final saved = await repository.load();
 
+  // La interfaz de Rive (16 KB) también se carga antes del primer cuadro.
+  // Si falla, cada pantalla usa su aspecto de Flutter.
+  final riveFile = await RiveUi.load();
+
   // Anuncios: los de prueba fuera de release; en release, solo si se
   // compiló con los IDs reales (ver docs/MONETIZACION.md).
   final adUnits = AdUnitIds.forThisBuild();
@@ -58,6 +63,7 @@ Future<void> main() async {
         audioServiceProvider.overrideWithValue(FlameAudioService()),
         hapticsServiceProvider.overrideWithValue(SystemHapticsService()),
         adsServiceProvider.overrideWithValue(ads),
+        riveFileProvider.overrideWithValue(riveFile),
         // Hasta conectar Firebase (Fase 11), los eventos solo se ven en la
         // consola.
         analyticsServiceProvider.overrideWithValue(

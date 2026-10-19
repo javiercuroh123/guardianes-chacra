@@ -35,6 +35,7 @@ flutter run --release
 - [ ] Tocar un guardián abre su menú: mejorar, vender, cambiar a quién apunta; en el último nivel ofrece las dos ramas.
 - [ ] Tocar fuera cierra el menú.
 - [ ] "⏭ … s +N" llama la oleada antes y suma ese maíz.
+- [ ] El contador de maíz (hecho en Rive) muestra el número; al ganar maíz el ícono rebota y el número destella en verde, al gastarlo destella en rojo. Con "Quitar animaciones" de Android solo cambia el número.
 - [ ] x1 / x2 cambia la velocidad; a x2 el botón se pinta de amarillo.
 - [ ] Las marcas de efectos se distinguen por la forma: lento = anillo punteado, quemadura = corona de puntas, aturdido = puntos girando sobre la cabeza.
 - [ ] Al aparecer el jefe: sonido propio, vibración fuerte y una sacudida corta de la cámara.

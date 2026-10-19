@@ -50,5 +50,10 @@ jobs:
       - name: Análisis
         run: flutter analyze
 
+      # El test de contrato de la interfaz carga el .riv real con las
+      # librerías nativas de Rive (ver docs/UI_RIVE.md).
+      - name: Librerías de Rive para los tests
+        run: dart run tool/setup_rive_native.dart
+
       - name: Tests
         run: flutter test

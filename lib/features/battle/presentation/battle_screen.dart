@@ -13,6 +13,7 @@ import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/core/services/audio_service.dart';
 import 'package:guardianes_chacra/dev/dev_options.dart';
 import 'package:guardianes_chacra/dev/dev_panel.dart';
+import 'package:guardianes_chacra/dev/rive_bench.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/battle_stats.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
@@ -223,6 +224,27 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
                 ),
               if (_menu(fit, bounds) case final menu? when !covered)
                 Positioned.fill(child: menu),
+              if (devToolsEnabled
+                      ? ref.watch(
+                          devOptionsProvider.select(
+                            (options) => options.riveBench,
+                          ),
+                        )
+                      : RiveBenchMode.off
+                  case final mode when mode != RiveBenchMode.off)
+                Positioned(
+                  left: 6,
+                  right: 6,
+                  bottom: 6,
+                  child: RiveBench(
+                    mode: mode,
+                    sharedTexture: ref.watch(
+                      devOptionsProvider.select(
+                        (options) => options.riveSharedTexture,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },

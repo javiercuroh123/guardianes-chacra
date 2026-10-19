@@ -23,6 +23,9 @@ dependencies:
   intl: any
   # @immutable y otras anotaciones en Dart puro (sirve dentro de domain/).
   meta: ^1.19.0
+  # La interfaz animada hecha en Rive (trae rive_native: librerías nativas
+  # que se descargan al compilar). Ver docs/UI_RIVE.md.
+  rive: ^0.14.11
   # Progreso y ajustes como un documento JSON versionado (Fase 7).
   shared_preferences: ^2.5.6
   # Lee los mapas de Tiled en Dart puro (la capa data los convierte en
@@ -58,3 +61,5 @@ flutter:
     # Sprites de plagas y guardianes (Flame los busca en assets/images/). Al
     # agregar la primera imagen de guardianes, sumar assets/images/guardians/.
     - assets/images/pests/
+    # La interfaz hecha en Rive: un solo archivo (ver docs/UI_RIVE.md).
+    - assets/rive/

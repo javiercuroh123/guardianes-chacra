@@ -224,6 +224,76 @@ events/      sealed class SimEvent (PestSpawned, PestDefeated, GuardianFired, Co
 - Analítica: `AnalyticsService` (`NoAnalyticsService` en tests y release, `DebugAnalyticsService` en debug/profile). `BattleAnalytics` anota `level_start` (`level`, `extra_corn`), `level_complete` (`level`, `stars`, `potatoes`, `seconds`, `revived`) y `level_fail` (`level`, `wave`, `total_waves`, `seconds`, `revived`); booleanos como 0/1. Firebase queda para la Fase 11. Sin Play Games (decisión de la Fase 10).
 - Público 13+ con anuncios G. Qué cambia en la política de privacidad y en Seguridad de los datos: `docs/PRIVACIDAD.md`. Cómo pasar a IDs reales y probar: `docs/MONETIZACION.md`. Tests: `FakeAdsService`, `FakeAnalyticsService`.
 
+## Interfaz con Rive
+
+Plan aparte, por fases (Prompt 0 + Fases 1–8): `docs/PROMPT_UI_RIVE.md`. Rehacemos toda la interfaz con Rive, con animaciones, y la conectamos al juego. Actúa también como diseñador de UX/UI de juegos móviles y animador de Rive, y explica brevemente cada decisión de Rive (artboards, componentes, layouts, view models, data binding, state machines): es mi primera vez con la herramienta.
+
+### Contexto
+- Referencias en `referencias_ui/2026-10-19/`: `propuestas/01–15` (1870×841, 20:9) son la dirección de arte; son maquetas generadas con IA (texto horneado, baja resolución, cifras ilustrativas), no assets finales. `capturas_actuales/01–13` es el juego hoy en el Redmi. `00_vista_general.jpg`, `prompts.json` (dirección de arte escrita) y `README.md`.
+- Rive desktop con el MCP de Rive. Archivo de trabajo: "Guardianes UI" (la pestaña activa). Rive guarda en la nube; el juego usa el `.riv` exportado.
+- Dirección visual: cartoon andino expresivo y legible, para todas las edades, horizontal. Paneles crema con borde marrón oscuro grueso y guarda tejida sutil; botones principales de maíz dorado con bisel, secundarios crema; acentos turquesa, terracota, verde hoja y ciruela; títulos en carteles de madera ocre con hojas. Letra redondeada y gruesa (¡ ¿ á é ñ). Maíz = única moneda, papas = vidas, estrellas = avance; nada de gemas, tienda, energía ni misiones.
+- En Rive va la "piel" animada: botones, contadores del HUD, barra de oleadas, menús de construcción, mejora y especialización, pausa, victoria y derrota, logo y mascotas, nodos del valle, bestiario, ajustes y transiciones. Flutter sigue a cargo de navegación, toques, semántica, claves de los tests, textos traducidos y estado (Riverpod). Flame sigue dibujando el campo de batalla; el arte del mapa y los sprites de batalla no entran en este plan.
+
+### Requisitos
+1. Data binding: cada artboard expone un view model; sin inputs heredados de state machine. Estados = enums, acciones = triggers, números y textos = propiedades. Flutter escribe una propiedad solo cuando cambia.
+2. Ningún texto horneado: cada texto visible es una propiedad string ligada al Text Run, llenada desde los ARB o `assets/content/i18n`. Los números los formatea Dart. Probar con el texto más largo de los dos idiomas.
+3. Los toques los maneja Flutter: cada control de Rive va dentro de un widget de Flutter con la Key, la Semantics, el onTap, el sonido y la vibración, que le pasa a Rive `pressed` y `enabled`. Se conservan todas las claves existentes: `menu-play`, `menu-bestiary`, `menu-settings`, `level-<id>`, `preview-pest-<id>`, `preview-rewarded`, `preview-start`, `hud-corn`, `hud-potatoes`, `hud-wave`, `hud-next-wave`, `hud-speed`, `hud-pause`, `hud-dev`, `build-<id>`, `menu-upgrade`, `menu-branch-<id>`, `menu-sell`, `menu-targeting`, `pause-resume`, `victory-next`, `victory-unlocked`, `battle-retry`, `battle-exit`, `battle-revive`, `bestiary-pest-<id>`, `bestiary-guardian-<id>`, `settings-*` y `dev-*`. Si conviene que un toque lo detecte Rive (listener → trigger que Flutter escucha), proponerlo y justificarlo.
+4. Rive no reproduce sonido: el audio sigue en `AudioService` con `SoundLimiter`. Para sincronizar un sonido con una animación, Rive dispara un trigger del view model y Flutter toca el sonido y vibra.
+5. Accesibilidad: `TextScaleLimits` (HUD y menú radial hasta 1,3×, el resto hasta 2×; `text_scale_test.dart` no debe fallar), contraste AA (`app_theme_test.dart`) y una propiedad `reduceMotion` (desde `MediaQuery.disableAnimations`) que apaga bucles y movimientos grandes.
+6. Responsive: artboards de pantalla a 853×384 (SafeArea de ~39 dp por la cámara), probados también a 1280×800 y 1024×768, con Layouts de Rive que reacomodan en vez de estirar.
+7. Rendimiento: 60 FPS con más de 100 plagas en el Redmi (hoy 73–77 FPS en x2 con 167 plagas). Los bucles se detienen cuando no se ven. Medir el peso que agrega Rive al APK.
+8. Respaldo: si el `.riv` no carga, el widget muestra el aspecto actual de Flutter.
+9. Un solo archivo de Rive, exportado a `assets/rive/guardianes_ui.riv` y versionado en git. Nombres dentro del archivo (artboards, view models, propiedades, enums, state machines) en inglés con el estilo del código Dart. Un test de contrato (como `real_content_test.dart`) carga el `.riv` y comprueba que existen.
+10. El contrato se documenta en `docs/UI_RIVE.md`: por artboard, su view model, cada propiedad, quién la escribe y qué animación dispara.
+
+### Principios de animación
+- Micro (presionar, cambiar un número): 80–150 ms. Entradas: 200–350 ms con ease-out o rebote leve. Paneles: 350–500 ms. Celebraciones: hasta 1,5 s, y un toque las salta al final.
+- Rebote y squash & stretch sutiles: los bucles de reposo no pasan del 5 % de escala.
+- En batalla la interfaz no le roba atención al mapa, salvo para avisar peligro (pocas papas, jefe).
+- Ninguna animación bloquea la entrada más de 300 ms.
+- Estado (habilitado/deshabilitado) y efectos (pulso, brillo) en capas separadas de la state machine.
+
+### Cómo se trabaja con Rive
+- Antes de construir una pantalla, revisar su referencia y contar en 3–5 líneas qué se va a hacer.
+- Aprovechar el timeline y la state machine que trae cada artboard nuevo y ponerle nombre a todo.
+- Componentes reutilizables (artboards marcados como componente) y Component Lists ligadas a listas del view model para las grillas.
+- Verificar: después de cada componente, `capture_artboard` comparado con la referencia y `simulateStateMachine` con cambios de propiedades hasta alcanzar cada estado y transición.
+- Scripting de Rive solo si algo no se puede con state machines, explicando por qué.
+- Al cerrar cada fase: exportar el `.riv`, integrarlo en Flutter, `dart format lib test tool`, `flutter analyze`, `flutter test`, probar en el Redmi (`docs/PRUEBAS_MANUALES.md`) y mostrar capturas de Rive y del teléfono.
+- El usuario usa el Redmi mientras trabajo: antes de cada toque por adb comprobar que el juego esté al frente (`adb shell dumpsys window | findstr mCurrentFocus`) y nunca abrir el juego encima de lo que tenga en pantalla sin preguntar.
+- Las diferencias entre las referencias y el juego actual las decide el usuario; no se pierde ninguna función existente (doble toque para confirmar, cuenta regresiva, botón 🐞 en debug, anuncios condicionales). Las decisiones se anotan aquí abajo.
+
+### Decisiones (UI)
+Prompt 0 de UI aprobado el 2026-10-19, con todas las recomendaciones:
+- Paleta muestreada de las referencias: maíz `#FDB119` (cara superior `#FEC81D`), crema de panel `#FEF3D7`, crema de botón `#FBD7A5` y de pastilla `#FDEAC5`, texto y contorno `#4A1302`, borde de panel `#AF5212`, madera `#9E430B`, guarda `#F59950`, verde éxito `#36901D` (texto `#117D16`), turquesa `#0F676F` / `#0B889F`, brillo de selección `#27D491`, terracota `#CA5233` (oscurecerla para AA con texto claro), ciruela `#8B2055`, estrella `#FECE18` (siempre con contorno oscuro).
+- HUD: siguiente oleada abajo a la derecha con anillo de segundos y bono; papas como "N/máximo" (máximo = papas iniciales del nivel); barra de oleadas por segmentos; 🐞 solo en debug, junto a pausa.
+- Construcción: los guardianes bloqueados se muestran con candado y su regla; tocarlos no construye.
+- Guardián construido: tarjeta lateral (retrato, a qué ataca, estadísticas actual → siguiente, Mejorar, Objetivo, Vender) en el lado opuesto al guardián; doble toque para Mejorar y Vender; Objetivo como botón que rota con un toque. La estadística principal depende del tipo (daño; ralentización en la Llama; bono de velocidad en el Pututu).
+- Especialización: ventana con dos tarjetas; primer toque = vista previa del alcance, "Elegir" confirma (`menu-branch-<id>`); la partida se pausa mientras está abierta.
+- Título: escena ilustrada, Jugar grande, Bestiario y Ajustes debajo, mascotas.
+- Valle: un toque abre la vista previa (como hoy), contador de estrellas "N/máximo" y aviso de bloqueo en un globo junto al nodo (no snackbar).
+- Preparación: ilustración del escenario por nivel hecha en Rive en lugar de miniatura del mapa (hasta que exista el arte del mapa).
+- Textos nuevos en ARB es/en ("La chacra puede esperar", "Prueba otra combinación de guardianes", "0/20").
+- Victoria: hasta 2 tarjetas de desbloqueo lado a lado.
+- Bestiario: grilla + ficha a la derecha; lo no descubierto como silueta "???".
+- Ajustes: dos columnas, idioma como selector de tres opciones, privacidad como enlace abajo, "Desarrollo: todo desbloqueado" solo en debug.
+- Botón atrás de madera arriba a la izquierda en lugar de la AppBar.
+- El alcance en el mapa (Flame) pasa a círculo turquesa punteado (Fase 4).
+- Nombres reales completos (dos líneas si hace falta).
+- Ilustraciones: íconos, marcos, carteles, logo, fondos en capas y retratos (estilo sticker) en vectores hechos en Rive; mascotas grandes (llama y hondero) desde PNG del usuario por partes, animadas con mallas, o en vectores si no hay PNG. Retrato de prueba del Hondero en la Fase 2.
+- Estructura: un widget de Rive por control tocable (Flutter lo ubica y escucha) y artboards grandes para paneles y escenas sin toques; enums `GuardianId`/`PestId` con los ids del contenido (un id nuevo cae en un retrato de respaldo). La Fase 1 confirma si el reparto aguanta el rendimiento.
+
+### Prueba técnica (Fase 1 de UI)
+- Paquete `rive` 0.14.11 (trae `rive_native` 0.1.11; la API nueva: `File.decode/asset`, `RiveWidgetController`, `DataBind.auto()`, `viewModel.string/number/boolean/trigger/enumerator`). Se importa con prefijo (`import 'package:rive/rive.dart' as rive;`) porque exporta `File`, `Fit`, etc. Muchos ejemplos de internet son de la API vieja (0.13): seguir la documentación oficial y el código del paquete en el pub cache.
+- `RiveUi` (`lib/app/rive/rive_ui.dart`): ruta del `.riv`, state machine `Main`, renderer y `load()`, que devuelve `null` si falla. **Renderer: `Factory.flutter`** por decisión de la Fase 1 (`--dart-define=RIVE_RENDERER=rive` o `none` para comparar). Medido en el Redmi con estrés a x2: 6 widgets tipo HUD (2 animándose) = 114 FPS con Flutter frente a 59 con Rive (75 con `RivePanel`); línea base sin Rive 118. Sin *vector feathering* (solo existe en el renderer de Rive): brillos y sombras con degradados. `RivePanel`/textura compartida solo con el renderer de Rive (con Flutter, `RiveWidget` muestra un error; `RiveCounter` ya no la pide). En batalla, pocas animaciones a la vez y estados de reposo de un solo disparo (una state machine asentada no repinta). `main.dart` lo carga antes de `runApp` y lo pone en `riveFileProvider` (por defecto `null` → respaldo de Flutter, así corren los tests de siempre).
+- `RiveCounter` (`lib/app/rive/rive_counter.dart`): primer widget envoltorio. Crea el controller en `initState` (artboard y state machine por nombre, `DataBind.auto()`), escribe `value` y dispara `gain`/`loss` en `didUpdateWidget` (no con `disableAnimations`), libera view model y controller en `dispose`, mide 34 dp de alto × escala de letra, y envuelve todo en `Semantics` con la misma etiqueta del respaldo. El maíz del HUD ya lo usa (clave `hud-corn`).
+- Editor de Rive vía MCP, aprendido en la Fase 1: los `layoutStyle` de `createLayout` no aplican sus enums (alineación, `widthScaleType`): crear y luego fijar con `set_property_values` (claves de `query_property_keys`). Los textos se crean con `appendLayout` pasando `text`/`textValue`/`fontSize`/`color` y un `layoutStyle` con `widthScaleType`; para centrar uno fuera de un layout, tamaño fijo (`sizingvalue`=fixed, ancho y alto) con alineación centrada (el origen no lo mueve). El peso de Inter es el eje `wght` (`TextStyleAxis`, tag 2003265652). Las propiedades de view model creadas con valor quedan en "Initial value"/false: fijar el valor en la instancia (`propertyvalue`). Transición al terminar: `flags` = 12 (exit time en %) y `exittime` = 100. `capture_artboard` con `backgroundColor` devuelve una imagen en blanco: capturar sin fondo. `simulateStateMachine` se corta cuando la máquina se asienta: poner las entradas en cuadros cercanos.
+- Fuente del `.riv` (asset de fuente: `includetypevalue` = custom, `includedunicodes`): **rangos Unicode** (`U+0020-007E,U+00A1,…`; lista completa en `docs/UI_RIVE.md`). Con los caracteres escritos tal cual el `.riv` quedó en 16 KB y el texto no se dibujaba; con todos los glifos, 890 KB; con los rangos, 199 KB (Inter variable). `rive_counter_test.dart` cuenta píxeles del texto para detectarlo.
+- Peso: `librive_native.so` = 7,7 MB instalados en arm64 (~2,8 MB comprimidos, la descarga con App Bundle).
+- Medir cuadros en el Redmi sin tocar el juego: `dumpsys SurfaceFlinger --latency '<hash> SurfaceView[...](BLAST)#id'` (en Android 16 el nombre sale de `--list` dentro de `RequestedLayerState{...}`, con el hash delante); `--latency-clear` antes de cada muestra.
+- Tests: `rive_contract_test.dart` (artboards, state machines y propiedades del `.riv` real) y `rive_counter_test.dart`, con `File.decode` + `Factory.flutter`. Necesitan `dart run tool/setup_rive_native.dart` una vez por PC (en Windows sin Visual Studio la DLL de debug no carga, error 126, y el script copia la de release); el CI lo corre antes de `flutter test`.
+- Panel de desarrollo: "Prueba de Rive" (12 contadores animados cada 250 ms, `lib/dev/rive_bench.dart`) y "en una sola textura" (`RivePanel`), para medir el costo de muchos widgets de Rive.
+
 ## Reglas de trabajo
 - Trabajamos UNA fase a la vez. Al terminar una fase: resume qué hiciste, cómo probarlo y espera mi confirmación antes de seguir.
 - Antes de escribir código en cada fase, muéstrame un plan breve con los archivos que vas a crear o modificar.

@@ -59,6 +59,15 @@ Formatos:
 - **Música: OGG Vorbis** (96–128 kbps). Funciona en Android y en la web y, a diferencia del MP3, hace bucles sin silencio en la unión. iOS no reproduce OGG: si algún día se publica ahí, hará falta AAC (`.m4a`).
 - **Efectos: OGG o WAV** cortos, mono, 44,1 o 22,05 kHz, normalizados sin saturar.
 
+### Interfaz (Rive)
+
+La interfaz animada vive en `assets/rive/guardianes_ui.riv` (ver [UI_RIVE.md](UI_RIVE.md)). Lo que lleva adentro:
+
+| Qué | Origen | Licencia | Notas |
+|---|---|---|---|
+| Fuente Inter | La que trae el editor de Rive por defecto ([rsms/inter](https://github.com/rsms/inter)) | SIL Open Font License 1.1: uso comercial permitido, se puede incrustar | Provisional hasta la Fase 2 de la interfaz. Va recortada a los caracteres del español y el inglés. |
+| Formas, íconos y animaciones | Dibujados en el editor de Rive para este juego | Propios | |
+
 ## Fuentes gratuitas que permiten uso comercial
 
 Licencias revisadas en el sitio de cada fuente el 17 de octubre de 2026. Las condiciones pueden cambiar: **antes de usar un archivo, revisa la licencia de ese archivo en concreto** (no la del sitio) y guarda dónde lo descargaste.
