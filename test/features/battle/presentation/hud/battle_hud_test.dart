@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Simulation;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/rive/rive_banner.dart';
 import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation.dart';
@@ -35,18 +36,31 @@ void main() {
     await tester.pumpWidget(
       testApp(
         Scaffold(
-          body: Align(
-            alignment: Alignment.topCenter,
-            // El mismo margen que le deja `BattleScreen`.
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: BattleHud(
-                onNextWave: () => taps.add('next'),
-                onToggleSpeed: () => taps.add('speed'),
-                onPause: () => taps.add('pause'),
-                onDevTools: devTools ? () => taps.add('dev') : null,
+          // Los mismos lugares que les da `BattleScreen`.
+          body: Stack(
+            children: [
+              Positioned(
+                top: 4,
+                left: 6,
+                right: 6,
+                child: BattleHud(
+                  onToggleSpeed: () => taps.add('speed'),
+                  onPause: () => taps.add('pause'),
+                  onDevTools: devTools ? () => taps.add('dev') : null,
+                ),
               ),
-            ),
+              const Positioned(
+                top: 52,
+                left: 0,
+                right: 0,
+                child: Center(child: BattleWaveBanner()),
+              ),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: BattleNextWave(onNextWave: () => taps.add('next')),
+              ),
+            ],
           ),
         ),
       ),
@@ -59,6 +73,16 @@ void main() {
   }
 
   Finder key(String value) => find.byKey(ValueKey(value));
+
+  /// Cuánto se ve el cartel de respaldo.
+  double bannerOpacity(WidgetTester tester) => tester
+      .widget<AnimatedOpacity>(
+        find.descendant(
+          of: find.byType(RiveWaveBanner),
+          matching: find.byType(AnimatedOpacity),
+        ),
+      )
+      .opacity;
 
   testWidgets('sin estado (antes del primer cuadro) no muestra nada', (
     tester,
@@ -75,7 +99,8 @@ void main() {
     await pumpHud(tester, playing);
 
     expect(find.text('🌽 220'), findsOneWidget);
-    expect(find.text('🥔 20'), findsOneWidget);
+    // Sin máximo propio, el máximo son las papas del estado.
+    expect(find.text('🥔 20/20'), findsOneWidget);
     expect(find.text('Oleada 3/10'), findsOneWidget);
     expect(find.text('12 s'), findsOneWidget);
     expect(find.text('+18'), findsOneWidget);
@@ -142,7 +167,10 @@ void main() {
     await pumpHud(tester, playing);
 
     expect(find.bySemanticsLabel('Maíz: 220'), findsOneWidget);
-    expect(find.bySemanticsLabel('Papas en la collca: 20'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Papas en la collca: 20 de 20'),
+      findsOneWidget,
+    );
     expect(
       find.bySemanticsLabel(
         'Llamar la siguiente oleada ahora: faltan 12 s, ganas 18 de maíz',
@@ -169,6 +197,45 @@ void main() {
       expect(size.height, greaterThanOrEqualTo(48), reason: button);
       expect(size.width, greaterThanOrEqualTo(48), reason: button);
     }
+  });
+
+  testWidgets(
+    'las papas se muestran sobre el máximo y avisan si quedan pocas',
+    (tester) async {
+      const few = BattleHudState(
+        corn: 40,
+        potatoes: 3,
+        maxPotatoes: 10,
+        wave: 4,
+        totalWaves: 10,
+        status: BattleStatus.playing,
+      );
+      expect(few.lowPotatoes, isTrue);
+      expect(playing.lowPotatoes, isFalse);
+
+      await pumpHud(tester, few);
+
+      expect(find.text('🥔 3/10'), findsOneWidget);
+    },
+  );
+
+  testWidgets('al empezar una oleada cae el cartel, rojo si trae al jefe', (
+    tester,
+  ) async {
+    await pumpHud(tester, playing.copyForTest(startedWaves: 2));
+    // Al montarse no se muestra (por ejemplo, al volver de la pausa).
+    expect(bannerOpacity(tester), 0);
+
+    containerOf(tester, Scaffold).read(battleHudProvider.notifier).hud = playing
+        .copyForTest(startedWaves: 3, wave: 3, boss: true);
+    await tester.pump();
+
+    expect(bannerOpacity(tester), 1);
+    expect(find.text('Oleada 3\n¡Llega el jefe!'), findsOneWidget);
+
+    // Se va solo.
+    await tester.pump(const Duration(seconds: 3));
+    expect(bannerOpacity(tester), 0);
   });
 
   testWidgets('con letra grande crece hasta 1,3 y cabe en el teléfono', (
@@ -198,4 +265,25 @@ void main() {
       closeTo(10 * TextScaleLimits.battle, 1e-9),
     );
   });
+}
+
+extension on BattleHudState {
+  BattleHudState copyForTest({
+    required int startedWaves,
+    int? wave,
+    bool boss = false,
+  }) => BattleHudState(
+    corn: corn,
+    potatoes: potatoes,
+    maxPotatoes: maxPotatoes,
+    wave: wave ?? this.wave,
+    totalWaves: totalWaves,
+    startedWaves: startedWaves,
+    boss: boss,
+    status: status,
+    nextWaveSeconds: nextWaveSeconds,
+    nextWaveTotalSeconds: nextWaveTotalSeconds,
+    earlyCallBonus: earlyCallBonus,
+    speed: speed,
+  );
 }

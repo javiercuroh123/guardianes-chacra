@@ -6,6 +6,7 @@ import 'package:guardianes_chacra/app/analytics.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
+import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/core/services/haptics_service.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
@@ -15,7 +16,6 @@ import 'package:guardianes_chacra/features/battle/presentation/battle_game.dart'
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
 import 'package:guardianes_chacra/features/battle/presentation/components/range_component.dart';
 import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.dart';
-import 'package:guardianes_chacra/features/battle/presentation/menus/radial_menu.dart';
 import 'package:guardianes_chacra/features/content/data/content_loader.dart';
 import 'package:guardianes_chacra/features/content/data/file_asset_source.dart';
 import 'package:guardianes_chacra/features/content/domain/ads_def.dart';
@@ -99,7 +99,7 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.text('🌽 220'), findsOneWidget);
-    expect(find.text('🥔 20'), findsOneWidget);
+    expect(find.text('🥔 20/20'), findsOneWidget);
     expect(find.text('Oleada 1/10'), findsOneWidget);
     // La primera oleada llega en 15 s; llamarla ya da 15 × 1,5 = 22 de maíz.
     expect(find.text('15 s'), findsOneWidget);
@@ -124,7 +124,10 @@ void main() {
     expect(game.simulation.startedWaves, 1);
     // El bono baja 1 cada 2/3 s: puede haber bajado 1 antes del tick.
     expect(game.simulation.corn - 220, inInclusiveRange(bonus - 1, bonus));
-    // Mientras la oleada aparece no hay otra en cuenta regresiva.
+    // Mientras la oleada aparece no hay otra en cuenta regresiva: el botón
+    // se va después de su rebote.
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
     expect(key('hud-next-wave'), findsNothing);
   });
 
@@ -266,19 +269,29 @@ void main() {
     );
   });
 
-  testWidgets('el menú ofrece solo los guardianes desbloqueados', (
+  testWidgets('el menú muestra los bloqueados con candado y su regla', (
     tester,
   ) async {
     final game = await pumpScreen(tester);
 
     await tapMap(tester, onScreen(slot('e1')));
+    await tester.pump(const Duration(milliseconds: 600));
 
     // Un jugador nuevo: Pututu y Cóndor siguen bloqueados.
-    for (final type in ['hondero', 'llama', 'tullpa']) {
-      expect(key('build-$type'), findsOneWidget, reason: type);
+    for (final type in content.guardians.keys) {
+      expect(
+        tester.widget<RiveBuildOption>(key('build-$type')).locked,
+        type == 'pututu' || type == 'condor',
+        reason: type,
+      );
     }
-    expect(key('build-pututu'), findsNothing);
-    expect(key('build-condor'), findsNothing);
+    await tester.tap(key('build-pututu'));
+    await tester.pump();
+    await tester.tap(key('build-pututu'));
+    await tester.pump();
+    expect(find.text('Se abre al ganar Chacra del Valle'), findsOneWidget);
+    await advance(tester, game, seconds: 0.1);
+    expect(game.simulation.guardians, isEmpty);
 
     // La simulación tampoco los conoce: construirlos se rechaza.
     game.simulation.enqueue(
@@ -299,7 +312,11 @@ void main() {
     await tapMap(tester, onScreen(slot('e1')));
 
     for (final type in content.guardians.keys) {
-      expect(key('build-$type'), findsOneWidget, reason: type);
+      expect(
+        tester.widget<RiveBuildOption>(key('build-$type')).locked,
+        isFalse,
+        reason: type,
+      );
     }
   });
 
@@ -309,13 +326,20 @@ void main() {
     final game = await pumpScreen(tester);
     await tapMap(tester, onScreen(slot('e1')));
 
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(key('build-hondero'));
     await tester.pump();
-    expect(find.text('Toca otra vez para confirmar'), findsOneWidget);
+    expect(find.textContaining('Toca otra vez para confirmar'), findsOneWidget);
     expect(game.simulation.guardians, isEmpty);
 
     await tester.tap(key('build-hondero'));
     await tester.pump();
+    // El "pop" de la tarjeta y el menú se cierra.
+    expect(
+      tester.widget<RiveBuildOption>(key('build-hondero')).confirmed,
+      isTrue,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
     expect(key('build-hondero'), findsNothing);
 
     await advance(tester, game, seconds: 0.1);
@@ -336,14 +360,22 @@ void main() {
     expect(game.simulation.corn, 0);
 
     await tapMap(tester, onScreen(slot('e3')));
+    await tester.pump(const Duration(milliseconds: 600));
 
     for (final type in ['hondero', 'llama', 'tullpa']) {
       expect(
-        tester.widget<RadialButton>(key('build-$type')).onTap,
-        isNull,
+        tester.widget<RiveBuildOption>(key('build-$type')).affordable,
+        isFalse,
         reason: type,
       );
     }
+    await tester.tap(key('build-hondero'));
+    await tester.pump();
+    await tester.tap(key('build-hondero'));
+    await tester.pump();
+    expect(find.text('No alcanza el maíz'), findsOneWidget);
+    await advance(tester, game, seconds: 0.1);
+    expect(game.simulation.guardians, hasLength(3));
   });
 
   testWidgets('tocar fuera cierra el menú', (tester) async {
@@ -366,15 +398,18 @@ void main() {
     await advance(tester, game, seconds: 0.1);
 
     await tapMap(tester, onScreen(slot('e1')));
-    expect(find.text('Primera'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Objetivo: Primera'), findsOneWidget);
+    // La ficha ocupa el rincón de la siguiente oleada.
+    expect(key('hud-next-wave'), findsNothing);
 
     await tester.tap(key('menu-targeting'));
     await advance(tester, game, seconds: 0.1);
-    expect(find.text('Última'), findsOneWidget);
+    expect(find.text('Objetivo: Última'), findsOneWidget);
     expect(game.simulation.guardians.single.targetingId, 'last');
 
     // Vender: 70 % de 60 = 42.
-    expect(find.text('+42'), findsOneWidget);
+    expect(find.text('Vender +42'), findsOneWidget);
     await tester.tap(key('menu-sell'));
     await tester.pump();
     await tester.tap(key('menu-sell'));
@@ -382,6 +417,96 @@ void main() {
 
     expect(game.simulation.guardians, isEmpty);
     expect(find.text('🌽 202'), findsOneWidget);
+  });
+
+  testWidgets('Mejorar se confirma con dos toques y sube el nivel', (
+    tester,
+  ) async {
+    final game = await pumpScreen(tester);
+    game.simulation.enqueue(
+      const BuildGuardian(slotId: 'e1', guardianType: 'hondero'),
+    );
+    await advance(tester, game, seconds: 0.1);
+    await tapMap(tester, onScreen(slot('e1')));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(key('menu-upgrade'));
+    await tester.pump();
+    expect(find.text('Toca otra vez para confirmar'), findsOneWidget);
+    await tester.tap(key('menu-upgrade'));
+    await advance(tester, game, seconds: 0.1);
+
+    expect(game.simulation.guardians.single.level, 2);
+    expect(key('menu-upgrade'), findsNothing);
+  });
+
+  testWidgets('la especialización pausa, muestra las ramas y elige una', (
+    tester,
+  ) async {
+    final game = await pumpScreen(tester);
+    final hondero = content.guardians['hondero']!;
+    game.simulation.cheats.infiniteCorn = true;
+    game.simulation.enqueue(
+      const BuildGuardian(slotId: 'e1', guardianType: 'hondero'),
+    );
+    await advance(tester, game, seconds: 0.1);
+    for (var level = 1; level < hondero.levels.length; level++) {
+      game.simulation.enqueue(
+        UpgradeGuardian(game.simulation.guardians.single.id),
+      );
+      await advance(tester, game, seconds: 0.1);
+    }
+    await tapMap(tester, onScreen(slot('e1')));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(key('menu-specialize'));
+    await tester.pump();
+    expect(game.clock.paused, isTrue);
+    expect(find.text('Elige una especialización'), findsOneWidget);
+
+    final branch = hondero.branches.first;
+    await tester.tap(key('menu-branch-${branch.id}'));
+    await tester.pump();
+    final range = game.world.children.whereType<RangeComponent>().single;
+    expect(range.visible, isTrue);
+    await tester.tap(key('menu-branch-confirm'));
+    await tester.pump();
+    // La tarjeta estalla y la ventana se cierra.
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(key('menu-branch-${branch.id}'), findsNothing);
+    expect(game.clock.paused, isFalse);
+
+    await advance(tester, game, seconds: 0.1);
+    expect(game.simulation.guardians.single.branchId, branch.id);
+  });
+
+  testWidgets('cerrar la especialización vuelve a la ficha y a jugar', (
+    tester,
+  ) async {
+    final game = await pumpScreen(tester);
+    final hondero = content.guardians['hondero']!;
+    game.simulation.cheats.infiniteCorn = true;
+    game.simulation.enqueue(
+      const BuildGuardian(slotId: 'e1', guardianType: 'hondero'),
+    );
+    await advance(tester, game, seconds: 0.1);
+    for (var level = 1; level < hondero.levels.length; level++) {
+      game.simulation.enqueue(
+        UpgradeGuardian(game.simulation.guardians.single.id),
+      );
+      await advance(tester, game, seconds: 0.1);
+    }
+    await tapMap(tester, onScreen(slot('e1')));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(key('menu-specialize'));
+    await tester.pump();
+
+    await tester.tap(key('menu-branch-close'));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(game.clock.paused, isFalse);
+    expect(key('menu-specialize'), findsOneWidget);
+    expect(game.simulation.guardians.single.branchId, isNull);
   });
 
   testWidgets('al terminar la partida se quita la selección', (tester) async {
@@ -423,7 +548,7 @@ void main() {
 
     expect(retried, isNot(same(game)));
     expect(find.text('La collca quedó vacía'), findsNothing);
-    expect(find.text('🥔 20'), findsOneWidget);
+    expect(find.text('🥔 20/20'), findsOneWidget);
   });
 
   group('anuncios', () {
@@ -461,7 +586,7 @@ void main() {
       expect(ads.rewardedShown, 1);
       expect(game.simulation.status, BattleStatus.playing);
       expect(find.text(lostTitle), findsNothing);
-      expect(find.text('🥔 5'), findsOneWidget);
+      expect(find.text('🥔 5/20'), findsOneWidget);
 
       // Vuelve a perder: ya no se ofrece.
       await advance(tester, game, seconds: 150);

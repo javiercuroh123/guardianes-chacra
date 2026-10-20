@@ -479,5 +479,180 @@
   "settingsPrivacySubtitle": "Cambia tu consentimiento para los anuncios",
   "@settingsPrivacySubtitle": {
     "description": "Explica la opción de privacidad."
+  },
+  "hudPotatoesOf": "Papas en la collca: {amount} de {max}",
+  "@hudPotatoesOf": {
+    "description": "Lectura de pantalla de las vidas con su máximo.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "hudBannerWave": "Oleada {wave}",
+  "@hudBannerWave": {
+    "description": "Cartel que cae al empezar una oleada.",
+    "placeholders": {
+      "wave": {
+        "type": "int"
+      }
+    }
+  },
+  "hudBannerBoss": "¡Llega el jefe!",
+  "@hudBannerBoss": {
+    "description": "Cinta roja del cartel cuando la oleada trae un jefe."
+  },
+  "targetsGround": "plagas de tierra",
+  "@targetsGround": {
+    "description": "A qué ataca un guardián: solo las que caminan."
+  },
+  "targetsAir": "plagas voladoras",
+  "@targetsAir": {
+    "description": "A qué ataca un guardián: solo las que vuelan."
+  },
+  "targetsBoth": "tierra y aire",
+  "@targetsBoth": {
+    "description": "A qué ataca un guardián: las que caminan y las que vuelan."
+  },
+  "targetsNone": "no ataca: ayuda a los cercanos",
+  "@targetsNone": {
+    "description": "Un guardián de apoyo (el Pututu)."
+  },
+  "menuAttacks": "Ataca: {targets}",
+  "@menuAttacks": {
+    "description": "Ficha y etiqueta del menú: a qué plagas ataca.",
+    "placeholders": {
+      "targets": {
+        "type": "String"
+      }
+    }
+  },
+  "menuOptionInfo": "{name} · {attacks}",
+  "@menuOptionInfo": {
+    "description": "Etiqueta de abajo del menú de construcción: nombre y a qué ataca.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "attacks": {
+        "type": "String"
+      }
+    }
+  },
+  "menuTapToChoose": "Toca un guardián para ver su alcance",
+  "@menuTapToChoose": {
+    "description": "Etiqueta del menú de construcción antes de elegir."
+  },
+  "unlockAfterLevel": "Se abre al ganar {level}",
+  "@unlockAfterLevel": {
+    "description": "Por qué un guardián está bloqueado: hay que ganar un nivel.",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockStars": "Se abre con {stars} estrellas",
+  "@unlockStars": {
+    "description": "Por qué un guardián está bloqueado: faltan estrellas.",
+    "placeholders": {
+      "stars": {
+        "type": "int"
+      }
+    }
+  },
+  "menuLockedSemantics": "{name}: bloqueado. {rule}",
+  "@menuLockedSemantics": {
+    "description": "Lectura de pantalla de un guardián bloqueado en el menú.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "rule": {
+        "type": "String"
+      }
+    }
+  },
+  "guardianLevel": "{name} · Nivel {level}",
+  "@guardianLevel": {
+    "description": "Título de la ficha de un guardián construido.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "cardDamage": "Daño",
+  "@cardDamage": {
+    "description": "Ficha: daño por ataque."
+  },
+  "cardSlow": "Frena",
+  "@cardSlow": {
+    "description": "Ficha de la Llama: cuánto frena a las plagas."
+  },
+  "cardBoost": "Brío",
+  "@cardBoost": {
+    "description": "Ficha del Pututu: cuánto más rápido atacan los cercanos."
+  },
+  "cardRange": "Alcance",
+  "@cardRange": {
+    "description": "Ficha: alcance en casillas."
+  },
+  "cardNextWord": "luego",
+  "@cardNextWord": {
+    "description": "Lectura de pantalla: \"Daño: 8, luego 12\"."
+  },
+  "menuUpgradeCost": "Mejorar · {cost}",
+  "@menuUpgradeCost": {
+    "description": "Botón de la ficha: mejorar por ese maíz.",
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "menuSpecialize": "Especializar",
+  "@menuSpecialize": {
+    "description": "Botón de la ficha en el último nivel: abre las dos ramas."
+  },
+  "menuTargetingName": "Objetivo: {name}",
+  "@menuTargetingName": {
+    "description": "Botón de la ficha: a quién apunta (cambia con cada toque).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "menuSellValue": "Vender +{value}",
+  "@menuSellValue": {
+    "description": "Botón de la ficha: vender y recuperar ese maíz.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "menuClose": "Cerrar",
+  "@menuClose": {
+    "description": "Cierra la ficha o la ventana."
+  },
+  "specializeTitle": "Elige una especialización",
+  "@specializeTitle": {
+    "description": "Título de la ventana de especialización."
+  },
+  "specializeSubtitle": "Solo puedes elegir una",
+  "@specializeSubtitle": {
+    "description": "Subtítulo de la ventana de especialización."
+  },
+  "specializeChoose": "Elegir",
+  "@specializeChoose": {
+    "description": "Confirma la rama marcada."
   }
 }

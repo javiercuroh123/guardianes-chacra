@@ -30,15 +30,18 @@ flutter run --release
 
 ## Partida
 
-- [ ] Tocar un espacio vacío abre el menú de construir; el primer toque muestra el alcance y el segundo construye.
-- [ ] Lo que no alcanza el maíz se ve gris y no responde; intentar algo inválido muestra un aviso breve.
-- [ ] Tocar un guardián abre su menú: mejorar, vender, cambiar a quién apunta; en el último nivel ofrece las dos ramas.
+- [ ] Tocar un espacio vacío abre el menú de construir: las tarjetas (retrato, nombre, costo) salen en abanico una tras otra. El primer toque levanta la tarjeta con brillo de maíz, muestra el alcance (círculo turquesa punteado) y abajo "Nombre · a qué ataca / Toca otra vez para confirmar"; el segundo hace un "pop" y construye.
+- [ ] Lo que no alcanza el maíz se ve gris con el costo en rojo: tocarlo lo sacude y abajo dice "No alcanza el maíz". Los guardianes bloqueados se ven con candado: tocarlos los sacude y abajo dice qué falta ("Se abre al ganar…"). Intentar algo inválido muestra un aviso breve.
+- [ ] Tocar un guardián abre su ficha del lado contrario: retrato, "Nombre · Nivel N", a qué ataca y dos filas "actual → siguiente" donde el valor nuevo late. Mejorar y Vender (terracota) piden dos toques; Objetivo cambia con uno; la X cierra.
+- [ ] En el último nivel, "Especializar" abre la ventana: el juego se detiene, las dos tarjetas entran girando, tocar una la levanta y muestra su alcance en el mapa, "Elegir" la hace estallar y se cierra; la X vuelve a la ficha y el juego sigue.
 - [ ] Tocar fuera cierra el menú.
-- [ ] "⏭ … s +N" llama la oleada antes y suma ese maíz.
+- [ ] "Siguiente oleada" (abajo a la derecha): el anillo verde se vacía con la cuenta regresiva; tocarlo rebota el anillo y el bono, llama la oleada y el maíz suma ese bono con su "+N".
+- [ ] Al empezar cada oleada cae el cartel "Oleada N" y se va solo; si trae al jefe, el cartel es rojo con la cinta "¡Llega el jefe!" y la barra de oleadas se pone roja.
+- [ ] Las papas se ven "N/máx"; al perder una, el número destella en rojo y tiembla; con pocas (30 % o menos) la pastilla late en rojo.
 - [ ] El contador de maíz (hecho en Rive) muestra el número; al ganar maíz el ícono rebota, el número destella en verde y flota un "+N" debajo; al gastarlo destella en rojo. Con "Quitar animaciones" de Android solo cambia el número.
 - [ ] Los botones de Rive (título, preparación, pausa, victoria y derrota): se hunden al apoyar el dedo, rebotan al soltar, suenan y vibran (si la vibración está encendida en Ajustes). El principal tiene un brillo que lo cruza cada ~4 s; con "Quitar animaciones", no. Con letra al 200 % crecen sin cortarse.
 - [ ] Panel 🐞 → "Catálogo de la interfaz": arriba todos los estados quietos; abajo, cada componente responde ("Mejorar" se sacude y avisa que no alcanza el maíz, las estrellas se llenan una por una, el interruptor cruza con squash, la pastilla del selector se desliza, el tooltip y el panel entran y salen).
-- [ ] x1 / x2 cambia la velocidad; a x2 el botón se pinta de amarillo.
+- [ ] x1 / x2 cambia la velocidad: la cara del botón da una vuelta, a x2 se pinta de maíz y dos flechitas avanzan; con "Quitar animaciones", sin vuelta ni flechas moviéndose.
 - [ ] Las marcas de efectos se distinguen por la forma: lento = anillo punteado, quemadura = corona de puntas, aturdido = puntos girando sobre la cabeza.
 - [ ] Al aparecer el jefe: sonido propio, vibración fuerte y una sacudida corta de la cámara.
 - [ ] Cuando una plaga llega a la collca: sonido y vibración suave (espaciada, no continua).

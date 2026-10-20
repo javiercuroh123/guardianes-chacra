@@ -28,7 +28,7 @@ abstract final class ButtonRive {
   /// "No se puede": una sacudida corta.
   static const deny = 'deny';
 
-  /// Solo el redondo: cara roja (por ejemplo, cerrar o vender).
+  /// Cara terracota con el texto crema (por ejemplo, cerrar o vender).
   static const danger = 'danger';
 }
 
@@ -59,9 +59,9 @@ class RiveButton extends ConsumerStatefulWidget {
     this.icon,
     this.kind = RiveButtonKind.primary,
     this.onDenied,
+    this.danger = false,
     super.key,
-  }) : danger = false,
-       size = height;
+  }) : size = height;
 
   /// Redondo: [label] no se ve, pero lo lee TalkBack y es el tooltip.
   const new round({
@@ -79,6 +79,9 @@ class RiveButton extends ConsumerStatefulWidget {
   final VoidCallback? onPressed;
   final VoidCallback? onDenied;
   final RiveButtonKind kind;
+
+  /// Terracota: una acción que se pierde (vender). En el principal no se
+  /// nota (es de maíz).
   final bool danger;
 
   /// Lado del redondo a escala de letra 1 (los otros miden [height] de
@@ -222,11 +225,13 @@ class _RiveButtonState extends ConsumerState<RiveButton>
       RiveButtonKind.primary => FilledButton(onPressed: onTap, child: label),
       RiveButtonKind.secondary when icon != null => OutlinedButton.icon(
         onPressed: onTap,
+        style: _dangerStyle(context),
         icon: Icon(icon.fallback),
         label: label,
       ),
       RiveButtonKind.secondary => OutlinedButton(
         onPressed: onTap,
+        style: _dangerStyle(context),
         child: label,
       ),
       RiveButtonKind.round => _roundFallback(context, onTap, icon!),
@@ -236,6 +241,15 @@ class _RiveButtonState extends ConsumerState<RiveButton>
     return !_isEnabled && onTap != null
         ? Opacity(opacity: 0.55, child: button)
         : button;
+  }
+
+  ButtonStyle? _dangerStyle(BuildContext context) {
+    if (!widget.danger) return null;
+    final scheme = Theme.of(context).colorScheme;
+    return OutlinedButton.styleFrom(
+      backgroundColor: scheme.error,
+      foregroundColor: scheme.onError,
+    );
   }
 
   Widget _roundFallback(

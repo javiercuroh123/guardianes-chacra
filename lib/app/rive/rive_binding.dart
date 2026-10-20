@@ -57,6 +57,9 @@ class RiveBinding {
   rive.ViewModelInstanceEnum enumerator(String path) =>
       _need(viewModel.enumerator(path), path);
 
+  rive.ViewModelInstanceColor color(String path) =>
+      _need(viewModel.color(path), path);
+
   /// El ícono del `IconSet` anidado en la propiedad [path].
   rive.ViewModelInstanceEnum icon(String path) =>
       enumerator('$path/${IconSetRive.icon}');

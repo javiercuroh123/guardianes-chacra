@@ -147,6 +147,23 @@ class Simulation {
   /// en cuenta regresiva.
   int? get nextWaveCountdownTicks => _spawner.countdownTicks;
 
+  /// Lo que dura entera la cuenta regresiva en curso (el anillo lleno del
+  /// HUD), o `null` si no hay ninguna.
+  int? get nextWavePrepTicks => _spawner.countdownTicks == null
+      ? null
+      : secondsToTicks(_level.waves[_spawner.startedWaves].prepTime);
+
+  /// Las papas con las que empieza el nivel (el máximo que muestra el HUD).
+  int get startingPotatoes => _level.startingPotatoes;
+
+  /// Si la oleada [index] (desde 0) trae alguna plaga jefe.
+  bool waveHasBoss(int index) =>
+      index >= 0 &&
+      index < _level.waves.length &&
+      _level.waves[index].groups.any(
+        (group) => _pestDefs[group.pestId]?.boss ?? false,
+      );
+
   /// Maíz que daría llamar ahora la siguiente oleada (0 si no se puede).
   int get earlyCallBonus {
     final countdown = _spawner.countdownTicks;

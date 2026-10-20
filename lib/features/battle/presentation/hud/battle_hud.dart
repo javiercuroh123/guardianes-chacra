@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/rive/rive_banner.dart';
+import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_next_wave.dart';
+import 'package:guardianes_chacra/app/rive/rive_speed_button.dart';
+import 'package:guardianes_chacra/app/rive/rive_wave_bar.dart';
 import 'package:guardianes_chacra/app/text_scale.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/fixed_step_clock.dart';
 import 'package:guardianes_chacra/features/battle/presentation/hud/battle_hud_state.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
-/// La barra de arriba de la partida: maíz, papas y oleada a la izquierda;
-/// siguiente oleada, velocidad y pausa a la derecha.
+/// La barra de arriba de la partida: maíz, papas y oleadas a la izquierda;
+/// velocidad, desarrollo (solo en debug) y pausa a la derecha. La
+/// siguiente oleada va abajo a la derecha ([BattleNextWave]).
 ///
 /// Solo muestra `battleHudProvider` y avisa los toques: la pantalla decide
 /// qué hacer con ellos. Con letra grande crece hasta
 /// [TextScaleLimits.battle], para no tapar el mapa.
 class BattleHud extends ConsumerWidget {
   const new({
-    required this.onNextWave,
     required this.onToggleSpeed,
     required this.onPause,
     this.onDevTools,
     super.key,
   });
 
-  final VoidCallback onNextWave;
   final VoidCallback onToggleSpeed;
   final VoidCallback onPause;
 
@@ -35,16 +40,9 @@ class BattleHud extends ConsumerWidget {
     if (hud == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final colors = GameColors.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final fast = hud.speed == GameSpeed.fast;
-    final buttonStyle = IconButton.styleFrom(
-      backgroundColor: colors.hud,
-      foregroundColor: colors.onHud,
-    );
-    // A x2 el botón se pinta de maíz para que se note que está acelerado.
-    final (speedBackground, speedForeground) = fast
-        ? (scheme.secondary, scheme.onSecondary)
-        : (colors.hud, colors.onHud);
+    final waveLabel = l10n.hudWave(hud.wave, hud.totalWaves);
+    final potatoesLabel = l10n.hudPotatoesOf(hud.potatoes, hud.maxPotatoes);
 
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: TextScaleLimits.battle,
@@ -60,8 +58,6 @@ class BattleHud extends ConsumerWidget {
                 fit: BoxFit.scaleDown,
                 child: Row(
                   children: [
-                    // Prueba de la Fase 1 de la interfaz: el maíz ya es de
-                    // Rive; el resto del HUD llega en la Fase 4.
                     RiveCounter(
                       key: const ValueKey('hud-corn'),
                       value: hud.corn,
@@ -72,16 +68,29 @@ class BattleHud extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    _Chip(
+                    RiveCounter(
                       key: const ValueKey('hud-potatoes'),
-                      text: '🥔 ${hud.potatoes}',
-                      semanticsLabel: l10n.hudPotatoes(hud.potatoes),
+                      value: hud.potatoes,
+                      max: hud.maxPotatoes,
+                      icon: RiveIcon.potato,
+                      danger: hud.lowPotatoes,
+                      semanticsLabel: potatoesLabel,
+                      fallback: _Chip(
+                        text: '🥔 ${hud.potatoes}/${hud.maxPotatoes}',
+                        semanticsLabel: potatoesLabel,
+                      ),
                     ),
                     const SizedBox(width: 6),
-                    _Chip(
+                    RiveWaveBar(
                       key: const ValueKey('hud-wave'),
-                      text: l10n.hudWave(hud.wave, hud.totalWaves),
-                      semanticsLabel: l10n.hudWave(hud.wave, hud.totalWaves),
+                      wave: hud.wave,
+                      totalWaves: hud.totalWaves,
+                      label: waveLabel,
+                      boss: hud.boss,
+                      fallback: _Chip(
+                        text: waveLabel,
+                        semanticsLabel: waveLabel,
+                      ),
                     ),
                   ],
                 ),
@@ -89,46 +98,31 @@ class BattleHud extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 6),
-          if (hud.nextWaveSeconds case final seconds?) ...[
-            _NextWaveButton(
-              seconds: seconds,
-              bonus: hud.earlyCallBonus,
-              onTap: onNextWave,
-            ),
-            const SizedBox(width: 6),
-          ],
-          IconButton(
+          RiveSpeedButton(
             key: const ValueKey('hud-speed'),
-            tooltip: l10n.hudSpeedSemantics(fast ? '2' : '1'),
-            style: IconButton.styleFrom(
-              backgroundColor: speedBackground,
-              foregroundColor: speedForeground,
-            ),
+            fast: fast,
+            semanticsLabel: l10n.hudSpeedSemantics(fast ? '2' : '1'),
             onPressed: onToggleSpeed,
-            // `foregroundColor` solo colorea íconos: el texto lleva su color.
-            icon: Text(
-              fast ? 'x2' : 'x1',
-              style: TextStyle(
-                color: speedForeground,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
           ),
-          if (onDevTools case final onDevTools?)
+          const SizedBox(width: 6),
+          if (onDevTools case final onDevTools?) ...[
             IconButton(
               key: const ValueKey('hud-dev'),
               tooltip: 'Desarrollo',
-              style: buttonStyle,
+              style: IconButton.styleFrom(
+                backgroundColor: colors.hud,
+                foregroundColor: colors.onHud,
+              ),
               onPressed: onDevTools,
               icon: const Icon(Icons.bug_report_outlined),
             ),
-          IconButton(
+            const SizedBox(width: 6),
+          ],
+          RiveButton.round(
             key: const ValueKey('hud-pause'),
-            tooltip: l10n.hudPause,
-            style: buttonStyle,
+            label: l10n.hudPause,
+            icon: RiveIcon.pause,
             onPressed: onPause,
-            icon: const Icon(Icons.pause),
           ),
         ],
       ),
@@ -136,60 +130,65 @@ class BattleHud extends ConsumerWidget {
   }
 }
 
-/// "⏭ 12 s +18": llama ya la oleada que viene y da maíz por el tiempo que se
-/// salta.
-class _NextWaveButton extends StatelessWidget {
-  const new({required this.seconds, required this.bonus, required this.onTap});
+/// "Siguiente oleada", abajo a la derecha: llama ya la oleada que viene y
+/// da maíz por el tiempo que se salta. Solo está mientras hay una cuenta
+/// regresiva; al llamarla se queda un momento para que se vea el rebote.
+class BattleNextWave extends ConsumerStatefulWidget {
+  const new({required this.onNextWave, super.key});
 
-  final int seconds;
-  final int bonus;
-  final VoidCallback onTap;
+  final VoidCallback onNextWave;
+
+  /// Lo que tarda en desvanecerse al quedarse sin cuenta regresiva.
+  static const leave = Duration(milliseconds: 450);
+
+  @override
+  ConsumerState<BattleNextWave> createState() => _BattleNextWaveState();
+}
+
+class _BattleNextWaveState extends ConsumerState<BattleNextWave> {
+  /// Lo último que mostró: sigue a la vista mientras se desvanece.
+  ({int seconds, int total, int bonus})? _shown;
+  bool _leaving = false;
 
   @override
   Widget build(BuildContext context) {
+    final hud = ref.watch(battleHudProvider);
+    final seconds = hud?.nextWaveSeconds;
+    if (hud != null && seconds != null) {
+      _shown = (
+        seconds: seconds,
+        total: hud.nextWaveTotalSeconds ?? seconds,
+        bonus: hud.earlyCallBonus,
+      );
+      _leaving = false;
+    } else if (_shown != null) {
+      _leaving = true;
+    }
+    final shown = _shown;
+    if (shown == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final colors = GameColors.of(context);
-    return Semantics(
-      button: true,
-      label: l10n.hudNextWaveSemantics(seconds, bonus),
-      excludeSemantics: true,
-      child: Material(
-        color: colors.hud,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: const ValueKey('hud-next-wave'),
-          onTap: onTap,
-          child: ConstrainedBox(
-            // El mismo alto que tocan los demás botones del HUD.
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.skip_next, color: colors.onHud),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$seconds s',
-                    style: TextStyle(
-                      color: colors.onHud,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.hudNextWave(bonus),
-                    style: TextStyle(
-                      color: colors.hudAccent,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
+    // Aparece de una vez (se puede tocar enseguida); al irse se desvanece
+    // sin cambiar de lugar en el árbol, así se ve el rebote de "llamada".
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: TextScaleLimits.battle,
+      child: IgnorePointer(
+        ignoring: _leaving,
+        child: AnimatedOpacity(
+          opacity: _leaving ? 0 : 1,
+          duration: _leaving ? BattleNextWave.leave : Duration.zero,
+          onEnd: () {
+            if (_leaving && mounted) setState(() => _shown = null);
+          },
+          child: RiveNextWaveButton(
+            key: const ValueKey('hud-next-wave'),
+            seconds: shown.seconds,
+            totalSeconds: shown.total,
+            bonusLabel: l10n.hudNextWave(shown.bonus),
+            semanticsLabel: l10n.hudNextWaveSemantics(
+              shown.seconds,
+              shown.bonus,
             ),
+            onPressed: widget.onNextWave,
           ),
         ),
       ),
@@ -197,8 +196,27 @@ class _NextWaveButton extends StatelessWidget {
   }
 }
 
+/// El cartel "Oleada N" que cae al empezar cada oleada (rojo, con aviso,
+/// si trae al jefe). No recibe toques.
+class BattleWaveBanner extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hud = ref.watch(battleHudProvider);
+    if (hud == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return RiveWaveBanner(
+      title: l10n.hudBannerWave(hud.wave),
+      subtitle: l10n.hudBannerBoss,
+      boss: hud.boss,
+      showCount: hud.startedWaves,
+    );
+  }
+}
+
 class _Chip extends StatelessWidget {
-  const new({required this.text, required this.semanticsLabel, super.key});
+  const new({required this.text, required this.semanticsLabel});
 
   final String text;
   final String semanticsLabel;

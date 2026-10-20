@@ -2,14 +2,22 @@ import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_badge.dart';
+import 'package:guardianes_chacra/app/rive/rive_banner.dart';
 import 'package:guardianes_chacra/app/rive/rive_binding.dart';
+import 'package:guardianes_chacra/app/rive/rive_branch_card.dart';
+import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
+import 'package:guardianes_chacra/app/rive/rive_guardian_info.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_next_wave.dart';
 import 'package:guardianes_chacra/app/rive/rive_panel.dart';
+import 'package:guardianes_chacra/app/rive/rive_portrait.dart';
 import 'package:guardianes_chacra/app/rive/rive_segmented.dart';
+import 'package:guardianes_chacra/app/rive/rive_speed_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_star.dart';
 import 'package:guardianes_chacra/app/rive/rive_tab.dart';
+import 'package:guardianes_chacra/app/rive/rive_title_sign.dart';
 import 'package:guardianes_chacra/app/rive/rive_toggle.dart';
 import 'package:guardianes_chacra/app/rive/rive_tooltip.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
@@ -96,9 +104,9 @@ void main() {
 
   test('TitleSign: el texto del cartel', () {
     expectArtboard(
-      'TitleSign',
-      viewModel: 'TitleSign',
-      properties: {'title': rive.DataType.string},
+      TitleSignRive.artboard,
+      viewModel: TitleSignRive.viewModel,
+      properties: {TitleSignRive.title: rive.DataType.string},
     );
   });
 
@@ -193,6 +201,7 @@ void main() {
       properties: {
         TooltipRive.text: rive.DataType.string,
         TooltipRive.visible: rive.DataType.boolean,
+        TooltipRive.arrow: rive.DataType.boolean,
         ...reduceMotion,
       },
     );
@@ -211,6 +220,122 @@ void main() {
       PanelRive.artboard,
       viewModel: PanelRive.viewModel,
       properties: {PanelRive.visible: rive.DataType.boolean, ...reduceMotion},
+    );
+  });
+
+  test('Portrait: un enum elige el guardián, el primero es el respaldo', () {
+    expectArtboard(
+      PortraitRive.artboard,
+      viewModel: PortraitRive.viewModel,
+      properties: {PortraitRive.guardian: rive.DataType.enumType},
+    );
+    final ids = file.enums.where((e) => e.name == PortraitRive.enumName);
+    expect(ids, hasLength(1), reason: 'falta el enum ${PortraitRive.enumName}');
+    expect(ids.single.values, PortraitRive.ids);
+  });
+
+  test('SpeedButton: x1/x2, presionado y velocidad', () {
+    expectArtboard(
+      SpeedButtonRive.artboard,
+      viewModel: SpeedButtonRive.viewModel,
+      properties: {
+        SpeedButtonRive.label: rive.DataType.string,
+        SpeedButtonRive.fast: rive.DataType.boolean,
+        SpeedButtonRive.pressed: rive.DataType.boolean,
+        SpeedButtonRive.enabled: rive.DataType.boolean,
+        SpeedButtonRive.deny: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('NextWave: segundos, bono, anillo y llamada', () {
+    expectArtboard(
+      NextWaveRive.artboard,
+      viewModel: NextWaveRive.viewModel,
+      properties: {
+        NextWaveRive.label: rive.DataType.string,
+        NextWaveRive.bonus: rive.DataType.string,
+        NextWaveRive.progress: rive.DataType.number,
+        NextWaveRive.pressed: rive.DataType.boolean,
+        NextWaveRive.called: rive.DataType.trigger,
+        NextWaveRive.icon: rive.DataType.viewModel,
+        NextWaveRive.enabled: rive.DataType.boolean,
+        NextWaveRive.deny: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('Banner: título, aviso del jefe y "mostrar"', () {
+    expectArtboard(
+      BannerRive.artboard,
+      viewModel: BannerRive.viewModel,
+      properties: {
+        BannerRive.title: rive.DataType.string,
+        BannerRive.subtitle: rive.DataType.string,
+        BannerRive.boss: rive.DataType.boolean,
+        BannerRive.show: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('BuildOption: retrato, nombre, costo y sus estados', () {
+    expectArtboard(
+      BuildOptionRive.artboard,
+      viewModel: BuildOptionRive.viewModel,
+      properties: {
+        BuildOptionRive.name: rive.DataType.string,
+        BuildOptionRive.cost: rive.DataType.string,
+        BuildOptionRive.portrait: rive.DataType.viewModel,
+        BuildOptionRive.selected: rive.DataType.boolean,
+        BuildOptionRive.affordable: rive.DataType.boolean,
+        BuildOptionRive.locked: rive.DataType.boolean,
+        BuildOptionRive.confirm: rive.DataType.trigger,
+        BuildOptionRive.deny: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('GuardianInfo: título, ataque, retrato y dos estadísticas', () {
+    expectArtboard(
+      GuardianInfoRive.artboard,
+      viewModel: GuardianInfoRive.viewModel,
+      properties: {
+        GuardianInfoRive.title: rive.DataType.string,
+        GuardianInfoRive.attacks: rive.DataType.string,
+        GuardianInfoRive.attackIcon: rive.DataType.viewModel,
+        GuardianInfoRive.portrait: rive.DataType.viewModel,
+        for (var row = 1; row <= GuardianInfoRive.rows; row++) ...{
+          GuardianInfoRive.statLabel(row): rive.DataType.string,
+          GuardianInfoRive.statCurrent(row): rive.DataType.string,
+          GuardianInfoRive.statNext(row): rive.DataType.string,
+          GuardianInfoRive.statIcon(row): rive.DataType.viewModel,
+        },
+        GuardianInfoRive.hasNext: rive.DataType.boolean,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('BranchCard: rama, color, retrato, costo y estallido', () {
+    expectArtboard(
+      BranchCardRive.artboard,
+      viewModel: BranchCardRive.viewModel,
+      properties: {
+        BranchCardRive.name: rive.DataType.string,
+        BranchCardRive.description: rive.DataType.string,
+        BranchCardRive.cost: rive.DataType.string,
+        BranchCardRive.color: rive.DataType.color,
+        BranchCardRive.portrait: rive.DataType.viewModel,
+        BranchCardRive.selected: rive.DataType.boolean,
+        BranchCardRive.affordable: rive.DataType.boolean,
+        BranchCardRive.enter: rive.DataType.trigger,
+        BranchCardRive.choose: rive.DataType.trigger,
+        ...reduceMotion,
+      },
     );
   });
 

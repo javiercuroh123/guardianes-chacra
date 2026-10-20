@@ -28,7 +28,7 @@ Los nombres van en inglés, como el código, porque Dart los busca como texto. `
 
 ### `Counter` (Fases 1 y 3)
 
-Pastilla del HUD con ícono y número. 104 × 60: la pastilla ocupa los 35 de arriba y el "+N" flota en el resto, por debajo, sin empujar lo que haya alrededor (el widget mide solo la pastilla y deja que el dibujo se salga hacia abajo). Widget: `RiveCounter` (`lib/app/rive/rive_counter.dart`), hoy en el contador de maíz del HUD (clave `hud-corn`).
+Pastilla del HUD con ícono y número. 104 × 60: la pastilla ocupa los 35 de arriba y el "+N" flota en el resto, por debajo, sin empujar lo que haya alrededor (el widget mide solo la pastilla y deja que el dibujo se salga hacia abajo). Widget: `RiveCounter` (`lib/app/rive/rive_counter.dart`), en el HUD: maíz (clave `hud-corn`) y papas con máximo (clave `hud-potatoes`, Fase 4).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
@@ -167,12 +167,13 @@ State machine `Main`: `Unselected`, `Select`, `Selected` y `Deselect`.
 
 ### `Tooltip` (Fase 3)
 
-Globo crema con borde terracota y flecha abajo. 220 × 64 de diseño, `Fit.layout`: Flutter mide el texto (Fredoka 14, peso 600, en varias líneas si hace falta) y le da el tamaño (`RiveTooltip.sizeFor`). Widget: `RiveTooltip` (`lib/app/rive/rive_tooltip.dart`), que no tapa toques y TalkBack anuncia al aparecer. El "Toca otra vez para confirmar" del menú de construcción lo usará en la Fase 4.
+Globo crema con borde terracota y flecha abajo. 220 × 64 de diseño, `Fit.layout`: Flutter mide el texto (Fredoka 14, peso 600, en varias líneas si hace falta) y le da el tamaño (`RiveTooltip.sizeFor`). Widget: `RiveTooltip` (`lib/app/rive/rive_tooltip.dart`), que no tapa toques y TalkBack anuncia al aparecer. Sin flecha (`arrow`) es la etiqueta de abajo de los menús de la partida (Fase 4).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `text` | string | `RiveTooltip`, desde los ARB | El texto |
 | `visible` | boolean | `RiveTooltip` | Aparece subiendo 6 dp (0,22 s) y se va bajando y desvaneciéndose (0,15 s) |
+| `arrow` | boolean | `RiveTooltip` (`arrow`, por defecto `true`) | Sin flecha, una etiqueta (Fase 4) |
 | `reduceMotion` | boolean | `RiveBindingState` | Sin uso todavía |
 
 State machine `Main`: `Hidden`, `Show`, `Shown` y `Hide`.
@@ -194,6 +195,120 @@ Todos los componentes en todos sus estados, 1000 × 640: botones (normal, presio
 
 `MCP capture_artboard` lo muestra sin datos (los textos de diseño); con datos lo dibuja `test/app/rive/rive_catalog_test.dart`, que busca el color de cada estado y guarda la imagen con `--dart-define=CATALOG_PNG=build/catalog.png`. En el teléfono está en el panel de desarrollo (🐞 → "Catálogo de la interfaz"), con cada componente para tocarlo debajo.
 
+### `Portrait` y los retratos (Fase 4)
+
+Un artboard por guardián, 120 × 120, en el estilo de `PortraitHondero` (plano, contorno `#4A1302` de 2,4, fondo transparente): `PortraitHondero`, `PortraitLlama` (llama crema con borlas y manta a rayas), `PortraitTullpa` (fogón de piedra con llama), `PortraitCondor` (alas abiertas con banda blanca, gorguera, cabeza roja y pico marfil), `PortraitPututu` (caracola con cordón tejido, borlas y ondas de sonido) y `PortraitUnknown` (silueta con "?", el respaldo).
+
+`Portrait` los anida a los seis en un grupo y muestra uno: cada componente tiene la opacidad enlazada a `guardian` con los conversores `IsIcon00`…`IsIcon05` (los mismos del `IconSet`). Widget: `RivePortrait` (`lib/app/rive/rive_portrait.dart`); también va anidado en `BuildOption`, `GuardianInfo` y `BranchCard`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `guardian` | enum `GuardianId` | `RivePortrait` / los envoltorios que lo anidan | `unknown`, `hondero`, `llama`, `tullpa`, `condor` o `pututu` |
+
+El primer valor es el respaldo: un id que el enum no tiene (un guardián nuevo en los datos) deja el primero, y `PortraitRive.valueFor` ya lo cambia por `unknown`. Para sumar un guardián: dibujar su artboard, anidarlo en `Portrait`, agregar el valor al final del enum, enlazar su opacidad con `IsIconNN` y sumar el id a `PortraitRive.ids` (el test de contrato compara las dos listas).
+
+### `SpeedButton` (Fase 4)
+
+El botón redondo de velocidad del HUD, 56 × 56 (copia de `RoundButton` con su propio view model). Widget: `RiveSpeedButton` (`lib/app/rive/rive_speed_button.dart`), clave `hud-speed`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label` | string | `RiveSpeedButton` | "x1" o "x2" |
+| `fast` | boolean | `RiveSpeedButton` | Cara de maíz `#F2B33D` (enlazada) y, al cambiar, la cara da una vuelta con un pequeño rebote (0,4 s); en x2 dos flechitas avanzan y se apagan por turnos (0,8 s en bucle) |
+| `pressed` | boolean | `RiveSpeedButton` | Se hunde como los demás botones |
+| `enabled`, `deny` | boolean, trigger | — | Están, sin uso: el botón siempre se puede tocar |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin vuelta y con las flechas quietas |
+
+State machine `Main`, dos capas: `Press` (`Idle`, `Pressed`, `Release`) y `Speed` (`Slow`, `SpinUp`, `FastLoop`, `FastStill`, `SpinDown`). La entrada elige el estado según `fast`: al volver de la pausa el HUD se vuelve a montar y no hace la vuelta otra vez.
+
+### `NextWave` (Fase 4)
+
+"Siguiente oleada", abajo a la derecha: pastilla crema (copia de `SecondaryButton`) con un anillo de cuenta regresiva alrededor del ícono, los segundos y el bono en verde `#2F7A18`. `Fit.layout`, ancho medido por `RiveNextWaveButton.widthFor`. Widget: `RiveNextWaveButton` (`lib/app/rive/rive_next_wave.dart`), clave `hud-next-wave`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label` | string | `RiveNextWaveButton` | "12 s" |
+| `bonus` | string | `RiveNextWaveButton`, desde los ARB | "+18" |
+| `progress` | number | `RiveNextWaveButton`, con `RiveNumberTween` lineal de 1 s | El anillo: el final del *trim path* enlazado directo (0 a 1, sin conversor) |
+| `icon` | view model `IconSet` | `RiveNextWaveButton` (`nextWave`) | El ícono dentro del anillo |
+| `pressed` | boolean | `RiveNextWaveButton` | Se hunde |
+| `called` | trigger | `RiveNextWaveButton`, al tocarlo | El anillo y el bono rebotan (0,5 s); el "+N" que flota lo hace el contador de maíz |
+| `enabled`, `deny` | boolean, trigger | — | Están, sin uso: el botón solo se muestra si se puede llamar |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin rebote |
+
+State machine `Main`: `Press` (`Idle`, `Pressed`, `Release`) y `Call` (`Calm` ← cualquier estado → `Called` con `called`). Al llamar la oleada, la cuenta regresiva desaparece hasta que la oleada termina de salir: `BattleNextWave` deja el botón 0,45 s más, desvaneciéndose y sin recibir toques, para que se vea el rebote.
+
+### `Banner` (Fase 4)
+
+El cartel "Oleada N" que cae al empezar cada oleada, 360 × 150 (copia de `TitleSign` con un grupo `Content` que se anima entero). Con jefe, el tablero se pone rojo y aparece una cinta roja debajo. Widget: `RiveWaveBanner` (`lib/app/rive/rive_banner.dart`), que no recibe toques; en la partida lo pone `BattleWaveBanner` arriba al centro.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `title` | string | `RiveWaveBanner`, desde los ARB | "Oleada 3" |
+| `subtitle` | string | `RiveWaveBanner` | "¡Llega el jefe!" (la cinta) |
+| `boss` | boolean | `RiveWaveBanner` | Tablero `BossBoard` rojo y la cinta visibles (opacidad enlazada) |
+| `show` | trigger | `RiveWaveBanner`, cada vez que sube `showCount` | Cae desde arriba con rebote y escala (0,5 s), se queda y sube desvaneciéndose: 2,5 s en total; la cinta se menea |
+| `reduceMotion` | boolean | `RiveBindingState` | Solo aparece y se desvanece |
+
+State machine `Main`: `Hidden` (todo transparente), `Show` y `ShowCalm`, que vuelven solos a `Hidden`. `showCount` es `BattleHudState.startedWaves`: al montarse (por ejemplo, al volver de la pausa) no se muestra.
+
+### `BuildOption` (Fase 4)
+
+Una tarjeta del menú de construcción, 84 × 108: retrato, nombre y costo con un grano de maíz. En el abanico va al 80 %. Widget: `RiveBuildOption` (`lib/app/rive/rive_build_option.dart`), clave `build-<id>`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `name`, `cost` | string | `RiveBuildOption` | El nombre del guardián y su costo |
+| `portrait` | view model `Portrait` | `RiveBuildOption` (`portrait/guardian`) | El retrato |
+| `selected` | boolean | `RiveBuildOption` | Se levanta 8, crece 8 % y brilla de maíz (0,14 s de mezcla) |
+| `affordable` | boolean | `RiveBuildOption` | Sin maíz: velo gris y el costo en rojo `#C62D1F` |
+| `locked` | boolean | `RiveBuildOption` | Velo oscuro con candado; el costo se oculta |
+| `confirm` | trigger | `RiveBuildOption`, al pasar `confirmed` a `true` | "Pop" (124 %) y desaparece (0,3 s); se queda así |
+| `deny` | trigger | `RiveBuildOption`, al tocarla sin maíz o bloqueada | Se sacude ±7° (0,3 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin sacudida |
+
+State machine `Main`, cuatro capas: `Select`, `Afford`, `Lock` y `Action` (`Calm`, `Confirm`, `Deny`). `Card` (el todo) se levanta; `Pop` (adentro) hace el "pop" y la sacudida, para que las capas no pisen las mismas propiedades.
+
+### `GuardianInfo` (Fase 4)
+
+La parte de arriba de la ficha de un guardián construido, 224 × 118, sin toques: retrato, "Nombre · Nivel N", a qué ataca con su ícono y dos filas "actual → siguiente". Los textos van en cajas fijas que achican la letra si no entra (`fitFontSize`). Widget: `RiveGuardianInfo` (`lib/app/rive/rive_guardian_info.dart`), dentro de `GuardianCard`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `title`, `attacks` | string | `RiveGuardianInfo` | "Hondero · Nivel 2", "Ataca: tierra y aire" |
+| `attackIcon` | view model `IconSet` | `RiveGuardianInfo` | `ground`, `air`, `target` (los dos) o `shield` (apoyo) |
+| `portrait` | view model `Portrait` | `RiveGuardianInfo` | El retrato |
+| `stat1Label`, `stat1Current`, `stat1Next`, `stat1Icon` | string ×3, view model `IconSet` | `RiveGuardianInfo`, desde `GuardianStats` | La estadística principal: daño (`damage`), frena (`pause`, Llama) o brío (`fastForward`, Pututu) |
+| `stat2…` | ídem | ídem | El alcance (`target`) |
+| `hasNext` | boolean | `RiveGuardianInfo` | Muestra las flechas y los valores siguientes (opacidad enlazada), que laten (116 %, 1 s en bucle) |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin latido |
+
+Los tres íconos tienen su propia instancia en la instancia por defecto (`InfoAttack`, `InfoStat1`, `InfoStat2`): con una sola compartida, los tres mostraban el último que se escribió.
+
+### `BranchCard` (Fase 4)
+
+Una rama de la especialización, 156 × 210: encabezado del color del guardián con el nombre, retrato, descripción en varias líneas y costo. Entra girando sola al aparecer. Widget: `RiveBranchCard` (`lib/app/rive/rive_branch_card.dart`), clave `menu-branch-<id>`.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `name`, `description`, `cost` | string | `RiveBranchCard`, desde los textos del contenido | Lo de la tarjeta |
+| `color` | color | `RiveBranchCard` (el del guardián) | El encabezado |
+| `portrait` | view model `Portrait` | `RiveBranchCard` | El retrato |
+| `selected` | boolean | `RiveBranchCard` | Se levanta y brilla |
+| `affordable` | boolean | `RiveBranchCard` | Velo gris y costo en rojo |
+| `enter` | trigger | — | Repite la entrada (gira desde −200°, escala elástica, 0,6 s) |
+| `choose` | trigger | `RiveBranchCard`, al pasar `chosen` a `true` | Rebota y seis chispas salen disparadas (0,7 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Entra solo desvaneciéndose |
+
+State machine `Main`: `Show` (`Hidden`, `Enter`/`EnterCalm` según `reduceMotion`, `Shown`, `Chosen`), `Select` y `Afford`.
+
+### Cambios de la Fase 4 en el kit
+
+- `Counter`: con `RiveCounter(max:)` muestra "8/10" (las papas) y se dibuja con `Fit.layout` a un ancho medido (`RiveCounter.widthFor`): la pastilla se estira y el número no se corta.
+- `SecondaryButton`: capa `Danger` (cara `RedFace` terracota enlazada a `danger`, texto crema y bisel oscuro) para Vender; `RiveButton(danger: true)`.
+- `Tooltip`: propiedad `arrow` (boolean; la escribe `RiveTooltip`, por defecto `true`). Sin flecha es la etiqueta de abajo de los menús.
+- `TitleSign`: envoltorio `RiveTitleSign` (`lib/app/rive/rive_title_sign.dart`), en la ventana de especialización.
+
 ## El kit en Flutter (Fase 3)
 
 - `RiveBinding` (`lib/app/rive/rive_binding.dart`) crea el controlador de un artboard con la state machine `Main` y ata su view model por defecto (`DataBind.auto()`: cada widget tiene su propia instancia, también la del ícono anidado). Pide las propiedades por nombre y lanza `RiveContractException` si falta alguna.
@@ -201,7 +316,17 @@ Todos los componentes en todos sus estados, 1000 × 640: botones (normal, presio
 - Los toques los recibe Flutter: cada envoltorio tiene su `GestureDetector`, su `Semantics` (botón, interruptor, opción elegida) y la Key que le pase la pantalla. Rive dibuja con `RiveHitTestBehavior.none`.
 - `RiveNumberTween` (en el mismo archivo) lleva un número del view model a su valor nuevo cuadro a cuadro. Hace falta porque **Rive no anima los layouts cuando el valor llega por data binding**: en el Redmi la pastilla del selector y el relleno de la barra saltaban. Con menos movimiento, el valor cambia de golpe.
 - `UiFeedback` (`lib/app/ui_feedback.dart`) toca `Sfx.uiTap` o `Sfx.uiDeny` (sonidos sintetizados por `tool/generate_placeholder_audio.py`) y vibra `Haptic.tap` (`selectionClick`) o `Haptic.deny` (`lightImpact`), respetando los interruptores de Efectos y Vibración.
-- Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). Los demás componentes esperan su fase (HUD en la 4, overlays en la 5, menús en la 6, bestiario y ajustes en la 7).
+- Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). El HUD y los menús de la partida llegaron en la Fase 4 (abajo); los demás esperan su fase (overlays en la 5, menús en la 6, bestiario y ajustes en la 7).
+
+## La batalla en Flutter (Fase 4)
+
+- **HUD** (`lib/features/battle/presentation/hud/battle_hud.dart`): `BattleHud` arriba (maíz, papas "N/máx" con pulso rojo al 30 % o menos, barra de oleadas roja si la oleada trae jefe; velocidad, 🐞 solo en debug y pausa), `BattleNextWave` abajo a la derecha (se oculta mientras la ficha de un guardián ocupa ese rincón) y `BattleWaveBanner` arriba al centro. Todo sale de `BattleHudState`, que ahora también trae `maxPotatoes`, `startedWaves`, `boss` y `nextWaveTotalSeconds` (de `Simulation.startingPotatoes`, `waveHasBoss` y `nextWavePrepTicks`).
+- **Construcción** (`BuildMenu` en `menus/battle_menus.dart`): todos los guardianes en abanico alrededor del espacio, saliendo uno tras otro (Flutter mueve las tarjetas; Rive dibuja los estados). Los bloqueados se ven con candado y su regla ("Se abre al ganar Andenes"); tocarlos o tocar uno sin maíz los sacude y la etiqueta de abajo (`MenuLabel`, un `RiveTooltip` sin flecha) dice por qué. Primer toque: marca y muestra el alcance; segundo: "pop" y el menú se cierra a los 0,28 s.
+- **Ficha** (`GuardianCard`): un `RivePanel` del lado contrario al guardián con `RiveGuardianInfo` y los botones Mejorar · costo (o Especializar en el último nivel), Objetivo: … (un toque) y Vender +N (terracota), y cerrar. Mejorar y Vender piden dos toques; la etiqueta de abajo lo recuerda. `GuardianStats` saca las filas de los datos del guardián.
+- **Especialización** (`SpecializationWindow`): un velo con el cartel, el subtítulo, las dos `RiveBranchCard`, cerrar y Elegir. La simulación queda en pausa (`clock.paused`) pero Flame sigue dibujando, así se ve el alcance de la rama marcada. Elegir (o un segundo toque en la tarjeta) la confirma: estalla y la ventana se cierra a los 0,75 s.
+- **Alcance en el mapa** (`RangeComponent`): relleno turquesa suave y borde punteado turquesa sobre un contorno oscuro.
+- Claves para los tests: las de siempre (`hud-next-wave`, `hud-speed`, `hud-pause`, `hud-dev`, `build-<id>`, `menu-upgrade`, `menu-branch-<id>`, `menu-sell`, `menu-targeting`) y las nuevas `hud-corn`, `hud-potatoes`, `hud-wave`, `menu-specialize`, `menu-close`, `menu-branch-confirm`, `menu-branch-close` y `menu-label`.
+- `test/app/rive/rive_battle_ui_test.dart` dibuja todas estas piezas con el archivo real y falla si alguna cae a su respaldo; con `--dart-define=BATTLE_UI_PNG=build/battle_ui.png` guarda la imagen.
 
 ## Paleta
 
@@ -272,8 +397,19 @@ Las pruebas con varios contadores usan el panel de desarrollo ("Prueba de Rive",
 
 ### Peso
 
-`rive` agrega `librive_native.so`: en arm64 son 7,7 MB instalados y unos 2,8 MB comprimidos, que es más o menos lo que se descarga desde Google Play con un App Bundle (cada teléfono baja solo su arquitectura). En el APK universal hay tres copias (arm64, armeabi-v7a y x86_64: 22,5 MB sin comprimir). El `.riv` pesaba 199 KB en la Fase 1 (casi todo era la fuente Inter); con Lilita One y Fredoka recortada y el kit de la Fase 3 completo, pesa 164 KB. El código Dart de Rive, unos 70 KB.
+`rive` agrega `librive_native.so`: en arm64 son 7,7 MB instalados y unos 2,8 MB comprimidos, que es más o menos lo que se descarga desde Google Play con un App Bundle (cada teléfono baja solo su arquitectura). En el APK universal hay tres copias (arm64, armeabi-v7a y x86_64: 22,5 MB sin comprimir). El `.riv` pesaba 199 KB en la Fase 1 (casi todo era la fuente Inter); con Lilita One y Fredoka recortada y el kit de la Fase 3 completo, pesaba 164 KB; con los retratos y las piezas de batalla de la Fase 4, 189 KB. El código Dart de Rive, unos 70 KB.
 
 ### El error de la fuente
 
 La primera exportación recortó la fuente escribiendo los caracteres tal cual en "caracteres incluidos": el editor no lo entendió, el `.riv` quedó en 16 KB y **el número no se dibujaba** (la pastilla salía vacía en el teléfono). El campo espera rangos Unicode (`U+0020-007E,U+00A1,…`). `rive_counter_test.dart` ahora cuenta los píxeles del texto para que no vuelva a pasar sin que nadie lo note.
+
+## Mediciones de la Fase 4
+
+20 de octubre de 2026, el mismo Redmi y el mismo método (APK de profile, SurfaceFlinger, cinco muestras), Chacra del Valle sin guardianes, ahora con el HUD completo de Rive: contadores de maíz y de papas, barra de oleadas, velocidad, pausa, siguiente oleada (con el anillo animándose) y el cartel de cada oleada.
+
+| Situación | Fase 1 | Fase 4 |
+|---|---|---|
+| Partida normal a x1 | 119 FPS (un contador de Rive) | **116 FPS** (2 % de cuadros > 16,7 ms) |
+| Estrés a x2 | 118 FPS (un contador) · 114 FPS (6 contadores, 2 animándose) | **106 FPS** (7 % > 16,7 ms; p50 8,4 ms, p95 16,8 ms) |
+
+La única animación que no para es la de las flechitas del botón de velocidad a x2 (bucle de 0,8 s, como pide el diseño; con "menos movimiento" quedan quietas). Si en un teléfono más lento hiciera falta, se puede dejar que avancen unas vueltas al cambiar a x2 y después se queden quietas (`FastLoop` → `FastStill`). Los menús, la ficha y la especialización no corren durante el estrés.

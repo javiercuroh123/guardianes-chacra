@@ -12,6 +12,10 @@ abstract final class TooltipRive {
 
   /// Aparece subiendo un poco y se desvanece al ocultarse.
   static const visible = 'visible';
+
+  /// La flecha de abajo; sin ella es una etiqueta (la del menú de
+  /// construcción).
+  static const arrow = 'arrow';
 }
 
 /// Un globo con flecha abajo (por ejemplo, "Toca otra vez para
@@ -22,11 +26,15 @@ class RiveTooltip extends ConsumerStatefulWidget {
     required this.text,
     required this.visible,
     this.maxWidth = 240,
+    this.arrow = true,
     super.key,
   });
 
   final String text;
   final bool visible;
+
+  /// Con flecha abajo (un globo) o sin ella (una etiqueta).
+  final bool arrow;
 
   /// Ancho máximo a escala de letra 1; el texto largo se parte en líneas.
   final double maxWidth;
@@ -37,9 +45,9 @@ class RiveTooltip extends ConsumerStatefulWidget {
     fontWeight: FontWeight.w600,
   );
 
-  /// El tamaño a escala 1 para [text]: el globo (relleno 12 y 6) y la
-  /// flecha (10).
-  static Size sizeFor(String text, double maxWidth) {
+  /// El tamaño a escala 1 para [text]: el globo (relleno 12 y 6) y, si
+  /// hay, la flecha (10).
+  static Size sizeFor(String text, double maxWidth, {bool arrow = true}) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: _style),
       textDirection: TextDirection.ltr,
@@ -47,7 +55,7 @@ class RiveTooltip extends ConsumerStatefulWidget {
     )..layout(maxWidth: maxWidth - 28);
     final size = Size(
       (painter.width + 28).clamp(80, maxWidth).ceilToDouble(),
-      (painter.height + 12 + 10 + 6).ceilToDouble(),
+      (painter.height + 12 + (arrow ? 10 : 0) + 6).ceilToDouble(),
     );
     painter.dispose();
     return size;
@@ -66,6 +74,7 @@ class _RiveTooltipState extends ConsumerState<RiveTooltip>
   void bind(RiveBinding binding) {
     binding.string(TooltipRive.text).value = widget.text;
     binding.boolean(TooltipRive.visible).value = widget.visible;
+    binding.boolean(TooltipRive.arrow).value = widget.arrow;
   }
 
   @override
@@ -78,7 +87,9 @@ class _RiveTooltipState extends ConsumerState<RiveTooltip>
   Widget build(BuildContext context) {
     final binding = this.binding;
     final scale = MediaQuery.textScalerOf(context).scale(1);
-    final size = RiveTooltip.sizeFor(widget.text, widget.maxWidth) * scale;
+    final size =
+        RiveTooltip.sizeFor(widget.text, widget.maxWidth, arrow: widget.arrow) *
+        scale;
     final Widget child;
     if (binding == null) {
       final colors = GameColors.of(context);

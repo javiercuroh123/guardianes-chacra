@@ -49,9 +49,9 @@ import 'package:guardianes_chacra/l10n/app_localizations.dart';
 ///   qué menú mostrar y envía los comandos a la simulación.
 /// - El HUD lee `battleHudProvider`, que se actualiza cuando el juego avisa
 ///   un cambio.
-/// - Los menús ([BuildMenu], [GuardianMenu]) son widgets de Flutter
-///   ubicados sobre el mapa con [MapFit]; esta pantalla guarda qué está
-///   seleccionado y confirma sus opciones.
+/// - Los menús ([BuildMenu], [GuardianCard], [SpecializationWindow]) son
+///   widgets de Flutter ubicados sobre el mapa con [MapFit]; esta pantalla
+///   guarda qué está seleccionado y confirma sus opciones.
 /// - Pausa, victoria y derrota son overlays de Flame: widgets que el
 ///   `GameWidget` dibuja encima del juego cuando se activan por nombre
 ///   (`game.overlays.add(...)`).
@@ -138,6 +138,15 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   /// un tipo de guardián, `upgrade`, `sell` o `branch:<id>`.
   String? _preview;
 
+  /// La opción recién confirmada: hace su animación ("pop", estallido)
+  /// antes de que el menú se cierre. Mientras tanto no se aceptan toques.
+  String? _confirmed;
+
+  /// El guardián cuya ventana de especialización está abierta (la
+  /// simulación queda en pausa, pero el mapa se sigue dibujando para
+  /// mostrar el alcance de cada rama).
+  int? _specializing;
+
   @override
   void initState() {
     super.initState();
@@ -210,19 +219,33 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
                   },
                 ),
               ),
-              if (!covered)
+              if (!covered) ...[
                 Positioned(
                   top: 4,
                   left: 6,
                   right: 6,
                   child: BattleHud(
-                    onNextWave: _callNextWave,
                     onToggleSpeed: _toggleSpeed,
                     onPause: _pause,
                     onDevTools: devToolsEnabled ? _openDevTools : null,
                   ),
                 ),
-              if (_menu(fit, bounds) case final menu? when !covered)
+                const Positioned(
+                  top: 52,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: BattleWaveBanner()),
+                ),
+                // La ficha de un guardián ocupa ese rincón: mientras está
+                // abierta no hay siguiente oleada.
+                if (_selectedGuardian == null)
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: BattleNextWave(onNextWave: _callNextWave),
+                  ),
+              ],
+              if (_menu(context, fit, bounds) case final menu? when !covered)
                 Positioned.fill(child: menu),
               if (devToolsEnabled
                       ? ref.watch(
@@ -386,6 +409,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       _selectedSlot = null;
       _selectedGuardian = null;
       _preview = null;
+      _confirmed = null;
+      _specializing = null;
     });
   }
 
@@ -546,6 +571,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   // --- Selección
 
   void _onSlotTapped(String slotId) {
+    if (_confirmed != null || _specializing != null) return;
     final occupant = _guardianOnSlot(slotId);
     if (occupant != null) return _onGuardianTapped(occupant.id);
     setState(() {
@@ -560,6 +586,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   }
 
   void _onGuardianTapped(int guardianId) {
+    if (_confirmed != null || _specializing != null) return;
     final guardian = _guardian(guardianId);
     if (guardian == null) return;
     setState(() {
@@ -575,33 +602,81 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
 
   void _clearSelection() {
     if (_selectedSlot == null && _selectedGuardian == null) return;
+    final session = _session;
+    // Cerrar la especialización devuelve la partida a su ritmo.
+    if (_specializing != null) session?.game.clock.paused = false;
     setState(() {
       _selectedSlot = null;
       _selectedGuardian = null;
       _preview = null;
+      _confirmed = null;
+      _specializing = null;
     });
-    _session?.game
+    session?.game
       ?..highlightSlot(null)
       ..highlightGuardian(null)
       ..hideRange();
   }
 
   /// Primer toque: muestra el alcance de la opción (alrededor de [at]).
-  /// Segundo toque: la confirma.
+  /// Segundo toque: la confirma. Construir y especializar dejan ver su
+  /// animación (el "pop", el estallido) antes de cerrar el menú.
   void _previewOrConfirm(MenuChoice choice, {required Vec2 at}) {
+    if (_confirmed != null) return;
+    final session = _session!;
     if (_preview != choice.id) {
       setState(() => _preview = choice.id);
-      _session!.game.showRange(at: at, radius: choice.range);
+      session.game.showRange(at: at, radius: choice.range);
       return;
     }
-    _session!.simulation.enqueue(choice.command);
-    _clearSelection();
+    session.simulation.enqueue(choice.command);
+    final linger = switch (choice.command) {
+      BuildGuardian() => const Duration(milliseconds: 280),
+      SpecializeGuardian() => const Duration(milliseconds: 750),
+      _ => null,
+    };
+    if (linger == null || MediaQuery.disableAnimationsOf(context)) {
+      _clearSelection();
+      return;
+    }
+    setState(() => _confirmed = choice.id);
+    Future<void>.delayed(linger, () {
+      if (mounted && session == _session && _confirmed == choice.id) {
+        _clearSelection();
+      }
+    });
+  }
+
+  /// Abre las dos ramas del guardián [guardianId] con la simulación en
+  /// pausa.
+  void _openSpecialization(int guardianId) {
+    _session!.game
+      ..clock.paused = true
+      ..hideRange();
+    setState(() {
+      _specializing = guardianId;
+      _preview = null;
+    });
+  }
+
+  /// Cierra la ventana sin elegir y vuelve a la ficha.
+  void _closeSpecialization() {
+    final session = _session!;
+    session.game.clock.paused = false;
+    setState(() {
+      _specializing = null;
+      _preview = null;
+    });
+    if (_guardian(_selectedGuardian ?? -1) case final guardian?) {
+      session.game.showRange(at: guardian.position, radius: guardian.range);
+    }
   }
 
   // --- Menús
 
-  Widget? _menu(MapFit fit, Size bounds) {
+  Widget? _menu(BuildContext context, MapFit fit, Size bounds) {
     final session = _session!;
+    final l10n = AppLocalizations.of(context);
     Offset onScreen(Vec2 tiles) => fit.toScreen(
       Offset(tiles.x * BattleGame.tileSize, tiles.y * BattleGame.tileSize),
     );
@@ -614,10 +689,20 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         slotId: slotId,
         center: onScreen(slot.position),
         bounds: bounds,
-        guardians: session.guardians.values,
+        // Todos los guardianes: los bloqueados con candado y su regla.
+        entries: [
+          for (final def in _content.guardians.values)
+            BuildEntry(
+              def: def,
+              name: _guardianName(def.id),
+              lockRule: session.guardians.containsKey(def.id)
+                  ? null
+                  : _lockRule(def, l10n),
+            ),
+        ],
         canAfford: session.simulation.canAfford,
-        nameOf: _guardianName,
         preview: _preview,
+        confirmed: _confirmed,
         onChoose: (choice) => _previewOrConfirm(choice, at: slot.position),
       );
     }
@@ -625,7 +710,21 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     if (_selectedGuardian case final guardianId?) {
       final guardian = _guardian(guardianId);
       if (guardian == null) return null;
-      return GuardianMenu(
+      if (_specializing == guardianId) {
+        return SpecializationWindow(
+          guardian: guardian,
+          canAfford: session.simulation.canAfford,
+          branchNameOf: (branchId) => _branchName(guardian.def.id, branchId),
+          branchDescriptionOf: (branchId) =>
+              _branchDescription(guardian.def.id, branchId),
+          preview: _preview,
+          chosen: _confirmed,
+          onChoose: (choice) =>
+              _previewOrConfirm(choice, at: guardian.position),
+          onClose: _closeSpecialization,
+        );
+      }
+      return GuardianCard(
         guardian: guardian,
         center: onScreen(guardian.position),
         bounds: bounds,
@@ -634,11 +733,25 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
         nameOf: _guardianName,
         branchNameOf: (branchId) => _branchName(guardian.def.id, branchId),
         preview: _preview,
+        locale: _language,
         onChoose: (choice) => _previewOrConfirm(choice, at: guardian.position),
         onCommand: session.simulation.enqueue,
+        onSpecialize: () => _openSpecialization(guardianId),
+        onClose: _clearSelection,
       );
     }
     return null;
+  }
+
+  /// "Se abre al ganar Andenes": por qué [def] todavía no se puede
+  /// construir.
+  String _lockRule(GuardianDef def, AppLocalizations l10n) {
+    final rule = def.unlock;
+    if (rule.afterLevel case final level?) {
+      return l10n.unlockAfterLevel(_levelName(level));
+    }
+    if (rule.totalStars > 0) return l10n.unlockStars(rule.totalStars);
+    return l10n.rejectGeneric;
   }
 
   // --- Datos
@@ -673,6 +786,12 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
   String _branchName(String guardianType, String branchId) =>
       _content.texts.text(
         ContentTexts.branchName(guardianType, branchId),
+        language: _language,
+      );
+
+  String _branchDescription(String guardianType, String branchId) =>
+      _content.texts.text(
+        ContentTexts.branchDescription(guardianType, branchId),
         language: _language,
       );
 }

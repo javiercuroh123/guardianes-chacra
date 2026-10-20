@@ -18,7 +18,9 @@ abstract final class BattleColors {
   static const damageText = Color(0xFFFFFFFF);
   static const projectile = Color(0xFFF5F0E6);
   static const impact = Color(0xFFFFF3C4);
-  static const rangeFill = Color(0x26FFFFFF);
-  static const rangeStroke = Color(0x99FFFFFF);
+  // El alcance: turquesa de la paleta, relleno muy suave y borde punteado.
+  static const rangeFill = Color(0x2E2BA59A);
+  static const rangeStroke = Color(0xE62BA59A);
+  static const rangeOutline = Color(0x804A1302);
   static const selection = Color(0xFFFFFFFF);
 }
