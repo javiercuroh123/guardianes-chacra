@@ -173,7 +173,8 @@ void main() {
       expect(
         await errorOf(fixture),
         'audio.json → sfx.disparo: efecto desconocido (válidos: shot, impact, '
-        'pestDefeated, collcaDamaged, victory, defeat, boss, uiTap, uiDeny)',
+        'pestDefeated, collcaDamaged, victory, defeat, boss, uiTap, uiDeny, '
+        'star)',
       );
     });
 

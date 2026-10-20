@@ -9,6 +9,7 @@
     "defeat": "sfx/defeat.wav",
     "boss": "sfx/boss.wav",
     "uiTap": "sfx/ui_tap.wav",
-    "uiDeny": "sfx/ui_deny.wav"
+    "uiDeny": "sfx/ui_deny.wav",
+    "star": "sfx/star.wav"
   }
 }

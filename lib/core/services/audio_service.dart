@@ -13,6 +13,9 @@ enum Sfx {
   boss,
   uiTap,
   uiDeny,
+
+  /// Una estrella de la victoria.
+  star,
 }
 
 /// El sonido del juego, detrás de una interfaz: el resto del código no sabe

@@ -35,6 +35,10 @@ import '../../../helpers/fake_audio_service.dart';
 import '../../../helpers/fake_haptics_service.dart';
 import '../../../helpers/test_app.dart';
 
+/// Lo que tarda en caer el panel de una escena: antes, sus botones no
+/// reciben toques.
+const sceneEntry = Duration(milliseconds: 300);
+
 void main() {
   late GameContent content;
   late LevelDef level;
@@ -154,6 +158,7 @@ void main() {
     // El HUD se oculta: sus botones no deben responder bajo el velo.
     expect(key('hud-pause'), findsNothing);
 
+    await tester.pump(sceneEntry);
     await tester.tap(key('pause-resume'));
     await tester.pump();
     expect(game.paused, isFalse);
@@ -172,6 +177,7 @@ void main() {
     await tester.pump();
     expect(audio.musicPaused, isTrue);
 
+    await tester.pump(sceneEntry);
     await tester.tap(key('pause-resume'));
     await tester.pump();
     expect(audio.musicPaused, isFalse);
@@ -243,11 +249,12 @@ void main() {
           (sum, group) =>
               sum + group.count * content.pests[group.pestId]!.cornReward,
         );
-    expect(find.text('¡La cosecha está a salvo!'), findsOneWidget);
-    // La tarjeta se lee entera de una vez (título, estrellas y resumen).
+    expect(find.text('¡Cosecha a salvo!'), findsOneWidget);
+    // La coreografía (estrellas, conteo, desbloqueos) dura unos 3 s.
+    await tester.pump(const Duration(seconds: 4));
     expect(find.bySemanticsLabel(RegExp('3 de 3 estrellas')), findsOneWidget);
-    expect(find.text('Papas salvadas: 20'), findsOneWidget);
-    expect(find.text('Maíz cosechado: $harvested'), findsOneWidget);
+    expect(find.bySemanticsLabel('Papas restantes: 20/20'), findsOneWidget);
+    expect(find.bySemanticsLabel('Maíz cosechado: $harvested'), findsOneWidget);
     expect(key('hud-pause'), findsNothing);
 
     final progress = containerOf(tester, BattleScreen).read(progressProvider);
@@ -256,7 +263,16 @@ void main() {
     expect(progress.discoveredGuardians, {'hondero'});
     // Ganar el nivel 1 abre Andenes y el Pututu, y la victoria lo cuenta.
     expect(progress.unlockedLevels, contains('andenes'));
-    expect(find.text('¡Desbloqueaste: Andenes, Pututu!'), findsOneWidget);
+    final unlockedRow = key('victory-unlocked');
+    for (final name in ['Andenes', 'Pututu']) {
+      expect(
+        find.descendant(
+          of: unlockedRow,
+          matching: find.bySemanticsLabel('Desbloqueado: $name'),
+        ),
+        findsOneWidget,
+      );
+    }
 
     await tester.tap(key('victory-next'));
     await tester.pump();
@@ -538,22 +554,23 @@ void main() {
     expect(game.simulation.status, BattleStatus.lost);
     // Cada plaga que llega a la collca vibra (la vibración viene encendida).
     expect(haptics.vibrations, contains(Haptic.collcaDamaged));
-    expect(find.text('La collca quedó vacía'), findsOneWidget);
+    expect(find.text('La collca se quedó sin papas'), findsOneWidget);
     expect(find.text('Volver al valle'), findsOneWidget);
     expect(key('hud-pause'), findsNothing);
 
+    await tester.pump(sceneEntry);
     await tester.tap(key('battle-retry'));
     await tester.pump();
     final retried = await mountedGame(tester);
 
     expect(retried, isNot(same(game)));
-    expect(find.text('La collca quedó vacía'), findsNothing);
+    expect(find.text('La collca se quedó sin papas'), findsNothing);
     expect(find.text('🥔 20/20'), findsOneWidget);
   });
 
   group('anuncios', () {
     Finder revive() => key('battle-revive');
-    const lostTitle = 'La collca quedó vacía';
+    const lostTitle = 'La collca se quedó sin papas';
 
     /// El contenido real con otra frecuencia de intersticiales.
     GameContent everyLevel() => GameContent(
@@ -580,6 +597,7 @@ void main() {
       await advance(tester, game, seconds: 150);
       expect(find.text(lostTitle), findsOneWidget);
 
+      await tester.pump(sceneEntry);
       await tester.tap(revive());
       await tester.pump();
 
@@ -623,6 +641,7 @@ void main() {
       );
       await advance(tester, game, seconds: 150);
 
+      await tester.pump(sceneEntry);
       await tester.tap(key('battle-retry'));
       await tester.pump();
 
@@ -641,10 +660,12 @@ void main() {
         ads: ads,
       );
       await advance(tester, game, seconds: 150);
+      await tester.pump(sceneEntry);
       await tester.tap(revive());
       await tester.pump();
       await advance(tester, game, seconds: 150);
 
+      await tester.pump(sceneEntry);
       await tester.tap(key('battle-retry'));
       await tester.pump();
 

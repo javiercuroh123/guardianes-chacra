@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent / "assets" / "audio"
 A2, C3, D3, E3, G3 = 110.0, 130.81, 146.83, 164.81, 196.0
 A3, C4, D4, E4, G4 = 220.0, 261.63, 293.66, 329.63, 392.0
 A4, C5, D5, E5, G5, A5 = 440.0, 523.25, 587.33, 659.25, 783.99, 880.0
+E6, B6 = 1318.51, 1975.53
 
 
 def silence(seconds):
@@ -155,6 +156,13 @@ def ui_deny():
     return mix(out, tone(150, 0.12, shape="square", decay=12, amp=0.2), 0.1)
 
 
+def star():
+    """Una estrella de la victoria: dos notas agudas que suben, con brillo."""
+    out = pluck(E6, 0.25, amp=0.35)
+    out = mix(out, pluck(B6, 0.45, amp=0.4), 0.07)
+    return mix(out, noise(0.12, decay=40, amp=0.06, seed=5, smooth=0.3), 0.07)
+
+
 # --- Música (bucles: la última nota termina antes del final)
 
 def melody_loop(beat, notes, bass, drums_every=None):
@@ -208,7 +216,7 @@ def main():
                        ("collca_damaged", collca_damaged),
                        ("victory", victory), ("defeat", defeat),
                        ("boss", boss), ("ui_tap", ui_tap),
-                       ("ui_deny", ui_deny)):
+                       ("ui_deny", ui_deny), ("star", star)):
         write(ROOT / "sfx" / f"{name}.wav", make())
     write(ROOT / "music" / "menu.wav", music_menu())
     write(ROOT / "music" / "batalla.wav", music_battle())

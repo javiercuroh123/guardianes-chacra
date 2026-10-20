@@ -19,6 +19,9 @@ class UiFeedback {
   /// Se tocó algo que no se puede hacer (no alcanza el maíz).
   void deny() => _play(Sfx.uiDeny, Haptic.deny);
 
+  /// Se llenó una estrella de la victoria.
+  void star() => _play(Sfx.star, Haptic.star);
+
   void _play(Sfx sfx, Haptic haptic) {
     _ref.read(audioServiceProvider).playSfx(sfx);
     if (_ref.read(settingsProvider).vibration) {

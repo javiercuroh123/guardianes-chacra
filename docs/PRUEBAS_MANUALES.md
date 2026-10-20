@@ -45,12 +45,14 @@ flutter run --release
 - [ ] Las marcas de efectos se distinguen por la forma: lento = anillo punteado, quemadura = corona de puntas, aturdido = puntos girando sobre la cabeza.
 - [ ] Al aparecer el jefe: sonido propio, vibración fuerte y una sacudida corta de la cámara.
 - [ ] Cuando una plaga llega a la collca: sonido y vibración suave (espaciada, no continua).
-- [ ] Pausa detiene todo (también la música); Continuar sigue donde estaba.
+- [ ] Pausa detiene todo (también la música): el mapa se oscurece, cae el panel con el cartel "Pausa" y el sol con espiral gira despacio; debajo "La chacra puede esperar", Continuar (grande, de maíz) y Reintentar y Salir del nivel (terracota). Continuar sigue donde estaba.
 - [ ] El botón de inicio de Android pausa la partida; al volver sigue pausada hasta tocar Continuar.
 
 ## Fin de partida y progreso
 
-- [ ] Victoria: estrellas según las papas que quedan, resumen y lo que se desbloqueó.
+- [ ] Victoria: cae el cartel "¡Cosecha a salvo!" con el sol que sonríe; las estrellas se llenan una a una, cada una con su sonido y una vibración; "Papas restantes" y "Maíz cosechado" cuentan desde 0 y hacen "pop"; entran las tarjetas de lo desbloqueado (un guardián con su retrato, un nivel con la bandera) con su destello; al final llueve maíz y la llama salta. Los botones se pueden tocar enseguida (antes de 0,3 s).
+- [ ] Un toque fuera de los botones durante la victoria lleva al final de una vez, sin más sonidos de estrella. Con "Quitar animaciones" se ve el final directamente, sin lluvia ni salto.
+- [ ] Derrota: el panel entra temblando con "La collca se quedó sin papas" (sin sol), la llama triste junto a la collca vacía, "Papas restantes 0/20", "Prueba otra combinación de guardianes.", Reintentar (de maíz) y Volver al valle; "Ver anuncio…" abajo, solo si hay un anuncio cargado.
 - [ ] "Siguiente nivel" lleva a la vista previa del nivel siguiente.
 - [ ] Derrota: Reintentar empieza de nuevo con el maíz y las papas iniciales.
 - [ ] Cerrar la app desde recientes y abrirla otra vez: siguen las estrellas, los niveles abiertos y el Bestiario.

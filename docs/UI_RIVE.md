@@ -309,14 +309,81 @@ State machine `Main`: `Show` (`Hidden`, `Enter`/`EnterCalm` según `reduceMotion
 - `Tooltip`: propiedad `arrow` (boolean; la escribe `RiveTooltip`, por defecto `true`). Sin flecha es la etiqueta de abajo de los menús.
 - `TitleSign`: envoltorio `RiveTitleSign` (`lib/app/rive/rive_title_sign.dart`), en la ventana de especialización.
 
+### `Llama` (Fase 5)
+
+La mascota de cuerpo entero, 240 × 270, en vectores: manta turquesa con guarda, collar con borlas. Respira y parpadea siempre; feliz (sonrisa con lengua) o triste (cabeza gacha, orejas caídas, ceño). Widget: `RiveLlama` (`lib/app/rive/rive_llama.dart`), decoración (TalkBack no la lee).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `mood` | enum `LlamaMood` (`happy`, `sad`) | `RiveLlama` | La pose y la cara (mezcla de 350 ms) |
+| `celebrate` | trigger | `RiveLlama`, cada vez que sube `celebrations` | Un saltito y vuelve |
+| `reduceMotion` | boolean | `RiveBindingState` | Quieta: sin respirar ni parpadear |
+
+State machine `Main`: capas `Breath` (`Idle` en bucle / `Still`), `Mood` (`Happy` / `Sad`) y `Action` (`Calm` / `Celebrate`, que vuelve sola).
+
+### `SceneSign` (Fase 5)
+
+El cartel de las escenas, 380 × 150: la tabla de `TitleSign` más ancha (300), hojas y dos mazorcas, con el adorno arriba. Cae con un rebote al aparecer (0,67 s). Widget: `RiveSceneSign` (`lib/app/rive/rive_scene_sign.dart`); el panel se apoya en el 70 % de su alto (`RiveSceneSign.panelTop`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `title` | string | `RiveSceneSign` | El título (se achica y pasa a dos líneas si no entra) |
+| `variant` | enum `SceneVariant` (`pause`, `victory`, `defeat`) | `RiveSceneSign` | Pausa: sol con espiral; victoria: sol que sonríe; derrota: sin sol, madera y hojas más apagadas |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin caída ni sol girando |
+
+State machine `Main`: `Layer 1` (`Drop` o `Shown` según `reduceMotion`), `Variant` (`Pause`/`Victory`/`Defeat`) y `Ambient` (`Spin`: los rayos y la espiral dan una vuelta cada 12 s / `Still`).
+
+### `StatPill` (Fase 5)
+
+Una estadística del resultado, 232 × 60: insignia con ícono, etiqueta chica y número grande. El conteo lo hace Flutter (cambia `value` cuadro a cuadro). Widget: `RiveStatPill` (`lib/app/rive/rive_stat_pill.dart`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label`, `value` | string | `RiveStatPill` | "Papas restantes", "14/20" |
+| `icon` | view model `IconSet` | `RiveStatPill` | El ícono de la insignia (instancia propia `PillIcon`) |
+| `pop` | trigger | `RiveStatPill`, cada vez que sube `pops` | El número crece y la insignia se mece (0,37 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin "pop" |
+
+### `UnlockCard` (Fase 5)
+
+Lo que abrió una victoria, 280 × 96 (horizontal, como la referencia): a la izquierda el retrato del guardián o el ícono del nivel sobre un destello dorado que gira; a la derecha "Desbloqueado:" y el nombre. No se ve hasta `enter`. Widget: `RiveUnlockCard` (`lib/app/rive/rive_unlock_card.dart`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label`, `name` | string | `RiveUnlockCard` | "Desbloqueado:", "Andenes" |
+| `portrait` | view model `Portrait` | `RiveUnlockCard` | El guardián (instancia propia `UnlockPortrait`) |
+| `icon` | view model `IconSet` | `RiveUnlockCard` (bandera) | El nivel, hasta la ilustración de la Fase 6 (instancia `UnlockIcon`) |
+| `isLevel` | boolean | `RiveUnlockCard` | Muestra el ícono en vez del retrato |
+| `enter` | trigger | `RiveUnlockCard`, al pasar `shown` a `true` | Entra con un "pop" (de 30 % a 112 % y 100 %, 0,47 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Entra desvaneciéndose y el destello no gira |
+
+State machine `Main`: `Layer 1` (`Hidden`, `Enter`/`EnterCalm`, que se quedan en su último cuadro), `Glow` (`Spin` en bucle de 8 s / `Still`) y `Kind` (`Guardian`/`Level`).
+
+### `CornRain` (Fase 5)
+
+Catorce granos de maíz que caen girando, 360 × 320, en 2,8 s, y se detiene (la máquina se asienta). Widget: `RiveCornRain` (`lib/app/rive/rive_corn_rain.dart`, `Fit.fitWidth` desde arriba); la victoria pone dos, la segunda espejada, para que los granos no salgan enormes a todo el ancho.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `rain` | trigger | `RiveCornRain`, cada vez que sube `showers` | Una lluvia |
+| `reduceMotion` | boolean | `RiveBindingState` | No llueve |
+
+### `Collca` (Fase 5)
+
+La collca vacía de la derrota, 120 × 120: silo de adobe con techo de paja y la puerta abierta, sin papas; un poco de polvo sube. Widget: `RiveCollca` (`lib/app/rive/rive_collca.dart`), decoración.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `reduceMotion` | boolean | `RiveBindingState` | El polvo quieto |
+
 ## El kit en Flutter (Fase 3)
 
 - `RiveBinding` (`lib/app/rive/rive_binding.dart`) crea el controlador de un artboard con la state machine `Main` y ata su view model por defecto (`DataBind.auto()`: cada widget tiene su propia instancia, también la del ícono anidado). Pide las propiedades por nombre y lanza `RiveContractException` si falta alguna.
 - `RiveBindingState` es la base de cada envoltorio: crea el binding si el archivo está cargado, le pone los valores iniciales (`bind`), llena `reduceMotion` desde `MediaQuery.disableAnimations` y lo libera al final. Sin archivo, o si falta una propiedad, el widget dibuja su respaldo del tema.
 - Los toques los recibe Flutter: cada envoltorio tiene su `GestureDetector`, su `Semantics` (botón, interruptor, opción elegida) y la Key que le pase la pantalla. Rive dibuja con `RiveHitTestBehavior.none`.
 - `RiveNumberTween` (en el mismo archivo) lleva un número del view model a su valor nuevo cuadro a cuadro. Hace falta porque **Rive no anima los layouts cuando el valor llega por data binding**: en el Redmi la pastilla del selector y el relleno de la barra saltaban. Con menos movimiento, el valor cambia de golpe.
-- `UiFeedback` (`lib/app/ui_feedback.dart`) toca `Sfx.uiTap` o `Sfx.uiDeny` (sonidos sintetizados por `tool/generate_placeholder_audio.py`) y vibra `Haptic.tap` (`selectionClick`) o `Haptic.deny` (`lightImpact`), respetando los interruptores de Efectos y Vibración.
-- Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). El HUD y los menús de la partida llegaron en la Fase 4 (abajo); los demás esperan su fase (overlays en la 5, menús en la 6, bestiario y ajustes en la 7).
+- `UiFeedback` (`lib/app/ui_feedback.dart`) toca `Sfx.uiTap` o `Sfx.uiDeny` (sonidos sintetizados por `tool/generate_placeholder_audio.py`) y vibra `Haptic.tap` (`selectionClick`) o `Haptic.deny` (`lightImpact`), respetando los interruptores de Efectos y Vibración. Desde la Fase 5, `star()`: `Sfx.star` y `Haptic.star` (`mediumImpact`) para cada estrella de la victoria.
+- Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). El HUD y los menús de la partida llegaron en la Fase 4 y las escenas de pausa, victoria y derrota en la 5 (abajo); los demás esperan su fase (menús en la 6, bestiario y ajustes en la 7).
 
 ## La batalla en Flutter (Fase 4)
 
@@ -327,6 +394,17 @@ State machine `Main`: `Show` (`Hidden`, `Enter`/`EnterCalm` según `reduceMotion
 - **Alcance en el mapa** (`RangeComponent`): relleno turquesa suave y borde punteado turquesa sobre un contorno oscuro.
 - Claves para los tests: las de siempre (`hud-next-wave`, `hud-speed`, `hud-pause`, `hud-dev`, `build-<id>`, `menu-upgrade`, `menu-branch-<id>`, `menu-sell`, `menu-targeting`) y las nuevas `hud-corn`, `hud-potatoes`, `hud-wave`, `menu-specialize`, `menu-close`, `menu-branch-confirm`, `menu-branch-close` y `menu-label`.
 - `test/app/rive/rive_battle_ui_test.dart` dibuja todas estas piezas con el archivo real y falla si alguna cae a su respaldo; con `--dart-define=BATTLE_UI_PNG=build/battle_ui.png` guarda la imagen.
+
+## Las escenas en Flutter (Fase 5)
+
+`lib/features/battle/presentation/overlays/battle_overlays.dart`. Las tres comparten el armado: un velo que se oscurece en 250 ms, un `RivePanel` que cae y un `RiveSceneSign` apoyado en su borde de arriba (`_Scene`). Todo va dentro de un `FittedBox(scaleDown)`: si no entra (teléfono bajo, letra grande) se achica entero en vez de cortarse. Los botones (`_DelayedButtons`) aparecen a los 280 ms, al terminar de caer el panel; antes no reciben toques.
+
+- **Pausa** (`PauseOverlay`): cartel "Pausa" con el sol que gira, "La chacra puede esperar", Continuar ancho (de maíz) y debajo Reintentar y Salir del nivel (terracota, `danger`). Sin X, como se decidió.
+- **Victoria** (`VictoryOverlay`): la llama parada a la izquierda tapando el borde del panel, estrellas, `RiveStatPill` de papas ("14/20") y maíz, hasta dos `RiveUnlockCard` (`UnlockedItem.level` o `.guardian`) y los botones. La coreografía la marca `VictoryTimeline` (en ms): estrellas a los 520, 900 y 1280 (cada una con `UiFeedback.star()`), el conteo 460 ms después de la última y durante 700 ms (al terminar, "pop"), los desbloqueos 200 ms después, cada 260 ms, y al final la lluvia y el salto de la llama. Un `AnimationController` recorre la línea y el estado solo cambia cuando cambia algo visible. Un toque fuera de los botones (o menos movimiento) salta al final sin más sonidos.
+- **Derrota** (`DefeatOverlay`): entra temblando (`_Shake`, 600 ms; quieto con menos movimiento); la llama triste junto a la `RiveCollca`, la pastilla "0/20", "Prueba otra combinación de guardianes.", Reintentar (principal) y Volver al valle; "Ver anuncio…" (`battle-revive`) apoyado en el borde de abajo, solo si hay anuncio cargado y no se revivió.
+- Datos: `BattleScreen` pasa las estrellas, `Simulation.potatoes` y `startingPotatoes`, `BattleStats.cornHarvested`, `Unlocked` (niveles con su nombre y color, guardianes con su id para el retrato) y `AdsStatus`.
+- Claves: `pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive` y `victory-unlocked` (la fila de tarjetas).
+- `test/app/rive/rive_scenes_test.dart` dibuja las tres en un teléfono apaisado con el archivo real y las letras del juego (sin ellas los botones miden de más) y falla si algo cae a su respaldo; con `--dart-define=SCENES_PNG=build/scene` guarda `build/scene_pausa.png`, etc. `test/features/battle/presentation/overlays/battle_overlays_test.dart` prueba la coreografía con y sin Rive.
 
 ## Paleta
 
@@ -413,3 +491,15 @@ La primera exportación recortó la fuente escribiendo los caracteres tal cual e
 | Estrés a x2 | 118 FPS (un contador) · 114 FPS (6 contadores, 2 animándose) | **106 FPS** (7 % > 16,7 ms; p50 8,4 ms, p95 16,8 ms) |
 
 La única animación que no para es la de las flechitas del botón de velocidad a x2 (bucle de 0,8 s, como pide el diseño; con "menos movimiento" quedan quietas). Si en un teléfono más lento hiciera falta, se puede dejar que avancen unas vueltas al cambiar a x2 y después se queden quietas (`FastLoop` → `FastStill`). Los menús, la ficha y la especialización no corren durante el estrés.
+
+## Mediciones de la Fase 5
+
+20 de octubre de 2026, el mismo Redmi y SurfaceFlinger (cinco muestras), esta vez con el APK de **debug** (en profile serían iguales o mejores), Chacra del Valle.
+
+| Escena | FPS | Cuadros > 16,7 ms |
+|---|---|---|
+| Pausa (el sol gira, la partida quieta) | **119** | 0 % |
+| Victoria ya terminada (la llama respira) | **116** | 2 % |
+| Derrota tras la prueba de estrés (llama, polvo y 150 plagas detrás) | 107 | 11 % (p95 16,8 ms) |
+
+La derrota se midió con las 150 plagas del estrés todavía dibujadas detrás del velo; la victoria, con la misma llama y sin plagas, da 116, así que la diferencia es de Flame y no de las escenas. La coreografía de la victoria dura unos 3 s y la lluvia se detiene sola (sus máquinas se asientan).

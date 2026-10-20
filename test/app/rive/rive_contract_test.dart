@@ -7,20 +7,26 @@ import 'package:guardianes_chacra/app/rive/rive_binding.dart';
 import 'package:guardianes_chacra/app/rive/rive_branch_card.dart';
 import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
+import 'package:guardianes_chacra/app/rive/rive_collca.dart';
+import 'package:guardianes_chacra/app/rive/rive_corn_rain.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
 import 'package:guardianes_chacra/app/rive/rive_guardian_info.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_llama.dart';
 import 'package:guardianes_chacra/app/rive/rive_next_wave.dart';
 import 'package:guardianes_chacra/app/rive/rive_panel.dart';
 import 'package:guardianes_chacra/app/rive/rive_portrait.dart';
+import 'package:guardianes_chacra/app/rive/rive_scene_sign.dart';
 import 'package:guardianes_chacra/app/rive/rive_segmented.dart';
 import 'package:guardianes_chacra/app/rive/rive_speed_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_star.dart';
+import 'package:guardianes_chacra/app/rive/rive_stat_pill.dart';
 import 'package:guardianes_chacra/app/rive/rive_tab.dart';
 import 'package:guardianes_chacra/app/rive/rive_title_sign.dart';
 import 'package:guardianes_chacra/app/rive/rive_toggle.dart';
 import 'package:guardianes_chacra/app/rive/rive_tooltip.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
+import 'package:guardianes_chacra/app/rive/rive_unlock_card.dart';
 import 'package:guardianes_chacra/app/rive/rive_wave_bar.dart';
 import 'package:rive/rive.dart' as rive;
 
@@ -336,6 +342,86 @@ void main() {
         BranchCardRive.choose: rive.DataType.trigger,
         ...reduceMotion,
       },
+    );
+  });
+
+  test('SceneSign: título y adorno (pausa, victoria o derrota)', () {
+    expectArtboard(
+      SceneSignRive.artboard,
+      viewModel: SceneSignRive.viewModel,
+      properties: {
+        SceneSignRive.title: rive.DataType.string,
+        SceneSignRive.variant: rive.DataType.enumType,
+        ...reduceMotion,
+      },
+    );
+    final variants = file.enums.where((e) => e.name == SceneSignRive.enumName);
+    expect(variants, hasLength(1));
+    expect(variants.single.values, [
+      for (final variant in SceneSignVariant.values) variant.name,
+    ]);
+  });
+
+  test('Llama: cara feliz o triste y salto de festejo', () {
+    expectArtboard(
+      LlamaRive.artboard,
+      viewModel: LlamaRive.viewModel,
+      properties: {
+        LlamaRive.mood: rive.DataType.enumType,
+        LlamaRive.celebrate: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+    final moods = file.enums.where((e) => e.name == LlamaRive.enumName);
+    expect(moods, hasLength(1));
+    expect(moods.single.values, [
+      for (final mood in LlamaMood.values) mood.name,
+    ]);
+  });
+
+  test('StatPill: ícono, etiqueta, número y "pop"', () {
+    expectArtboard(
+      StatPillRive.artboard,
+      viewModel: StatPillRive.viewModel,
+      properties: {
+        StatPillRive.label: rive.DataType.string,
+        StatPillRive.value: rive.DataType.string,
+        StatPillRive.icon: rive.DataType.viewModel,
+        StatPillRive.pop: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('UnlockCard: retrato o ícono, nombre y entrada', () {
+    expectArtboard(
+      UnlockCardRive.artboard,
+      viewModel: UnlockCardRive.viewModel,
+      properties: {
+        UnlockCardRive.label: rive.DataType.string,
+        UnlockCardRive.name: rive.DataType.string,
+        UnlockCardRive.portrait: rive.DataType.viewModel,
+        UnlockCardRive.icon: rive.DataType.viewModel,
+        UnlockCardRive.isLevel: rive.DataType.boolean,
+        UnlockCardRive.enter: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('CornRain: la lluvia de maíz', () {
+    expectArtboard(
+      CornRainRive.artboard,
+      viewModel: CornRainRive.viewModel,
+      properties: {CornRainRive.rain: rive.DataType.trigger, ...reduceMotion},
+    );
+  });
+
+  test('Collca: solo menos movimiento', () {
+    expectArtboard(
+      CollcaRive.artboard,
+      viewModel: CollcaRive.viewModel,
+      properties: reduceMotion,
     );
   });
 

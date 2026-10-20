@@ -32,6 +32,7 @@ import 'package:guardianes_chacra/features/battle/presentation/layout/map_fit.da
 import 'package:guardianes_chacra/features/battle/presentation/menus/battle_menus.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
 import 'package:guardianes_chacra/features/battle/presentation/style/battle_colors.dart';
+import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
 import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
@@ -281,12 +282,19 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     return VictoryOverlay(
       unlocked: [
         if (unlocked != null) ...[
-          for (final id in unlocked.levels) _levelName(id),
-          for (final id in unlocked.guardians) _guardianName(id),
+          for (final id in unlocked.levels)
+            UnlockedItem.level(name: _levelName(id), color: colorForId(id)),
+          for (final id in unlocked.guardians)
+            UnlockedItem.guardian(
+              guardianId: id,
+              name: _guardianName(id),
+              color: colorFor(id, _content.guardians[id]?.color),
+            ),
         ],
       ],
       stars: _starsFor(session, session.simulation.potatoes),
       potatoes: session.simulation.potatoes,
+      maxPotatoes: session.simulation.startingPotatoes,
       cornHarvested: session.stats.cornHarvested,
       onNext: next == null
           ? null
@@ -310,6 +318,8 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
     return ValueListenableBuilder<AdsStatus>(
       valueListenable: _ads.status,
       builder: (context, status, _) => DefeatOverlay(
+        potatoes: session.simulation.potatoes,
+        maxPotatoes: session.simulation.startingPotatoes,
         revivePotatoes: potatoes,
         onRevive:
             status.rewardedReady && potatoes > 0 && session.simulation.canRevive

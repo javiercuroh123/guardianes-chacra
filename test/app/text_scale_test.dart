@@ -84,8 +84,16 @@ void main() {
           body: VictoryOverlay(
             stars: 3,
             potatoes: 20,
+            maxPotatoes: 20,
             cornHarvested: 1234,
-            unlocked: const ['Orilla del Lago', 'Cóndor'],
+            unlocked: const [
+              UnlockedItem.level(name: 'Orilla del Lago', color: Colors.teal),
+              UnlockedItem.guardian(
+                guardianId: 'condor',
+                name: 'Cóndor',
+                color: Colors.brown,
+              ),
+            ],
             onNext: () {},
             onRetry: () {},
             onExit: () {},
@@ -93,6 +101,8 @@ void main() {
         ),
         'derrota': () => Scaffold(
           body: DefeatOverlay(
+            potatoes: 0,
+            maxPotatoes: 20,
             onRetry: () {},
             onExit: () {},
             onRevive: () {},

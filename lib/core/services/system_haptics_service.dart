@@ -14,5 +14,6 @@ class SystemHapticsService implements HapticsService {
     Haptic.boss => HapticFeedback.heavyImpact(),
     Haptic.tap => HapticFeedback.selectionClick(),
     Haptic.deny => HapticFeedback.lightImpact(),
+    Haptic.star => HapticFeedback.mediumImpact(),
   });
 }

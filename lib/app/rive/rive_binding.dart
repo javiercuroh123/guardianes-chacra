@@ -69,13 +69,17 @@ class RiveBinding {
 
   /// El widget que lo dibuja. Los toques los recibe Flutter (el envoltorio),
   /// no Rive.
-  Widget widget({rive.Fit fit = rive.Fit.contain, double layoutScale = 1}) =>
-      rive.RiveWidget(
-        controller: controller,
-        fit: fit,
-        layoutScaleFactor: layoutScale,
-        hitTestBehavior: rive.RiveHitTestBehavior.none,
-      );
+  Widget widget({
+    rive.Fit fit = rive.Fit.contain,
+    Alignment alignment = Alignment.center,
+    double layoutScale = 1,
+  }) => rive.RiveWidget(
+    controller: controller,
+    fit: fit,
+    alignment: alignment,
+    layoutScaleFactor: layoutScale,
+    hitTestBehavior: rive.RiveHitTestBehavior.none,
+  );
 
   void dispose() {
     viewModel.dispose();

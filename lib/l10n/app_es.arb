@@ -51,11 +51,11 @@
       }
     }
   },
-  "battleWon": "¡La cosecha está a salvo!",
+  "battleWon": "¡Cosecha a salvo!",
   "@battleWon": {
     "description": "Aviso de victoria al terminar el nivel."
   },
-  "battleLost": "La collca quedó vacía",
+  "battleLost": "La collca se quedó sin papas",
   "@battleLost": {
     "description": "Aviso de derrota: las plagas se comieron todas las papas."
   },
@@ -255,32 +255,25 @@
   "@pauseExit": {
     "description": "Vuelve al valle desde la pausa."
   },
-  "victoryPotatoes": "Papas salvadas: {count}",
-  "@victoryPotatoes": {
-    "description": "Resultado de la victoria.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
+  "pauseSubtitle": "La chacra puede esperar",
+  "@pauseSubtitle": {
+    "description": "Subtítulo de la pausa, bajo el cartel."
   },
-  "victoryCorn": "Maíz cosechado: {amount}",
-  "@victoryCorn": {
-    "description": "Maíz ganado durante el nivel.",
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      }
-    }
+  "resultPotatoes": "Papas restantes",
+  "@resultPotatoes": {
+    "description": "Etiqueta de las papas que quedaron en la collca, en la victoria y la derrota."
   },
-  "victoryUnlocked": "¡Desbloqueaste: {names}!",
-  "@victoryUnlocked": {
-    "description": "Lo que abrió esta victoria (niveles y guardianes, separados por comas).",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
+  "resultCorn": "Maíz cosechado",
+  "@resultCorn": {
+    "description": "Etiqueta del maíz ganado durante el nivel, en la victoria."
+  },
+  "unlockedLabel": "Desbloqueado:",
+  "@unlockedLabel": {
+    "description": "Encabezado de la tarjeta de lo que abrió la victoria (un nivel o un guardián)."
+  },
+  "defeatHint": "Prueba otra combinación de guardianes.",
+  "@defeatHint": {
+    "description": "Consejo de la derrota."
   },
   "victoryNext": "Siguiente nivel",
   "@victoryNext": {
