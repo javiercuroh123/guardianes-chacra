@@ -136,7 +136,7 @@ Cada oleada:
 | Campo | Tipo | Notas |
 |---|---|---|
 | `menuMusic` | texto | Música de los menús (ruta dentro de `assets/audio/`). |
-| `sfx` | objeto | Efecto → archivo. Efectos: `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat`, `boss`. Uno que falta no suena. |
+| `sfx` | objeto | Efecto → archivo. Efectos: `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat`, `boss`, `uiTap` (tocar un botón) y `uiDeny` ("no se puede"). Uno que falta no suena. |
 
 ## ads.json
 

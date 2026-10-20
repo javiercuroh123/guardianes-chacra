@@ -22,7 +22,7 @@ Para reemplazarlos basta con poner el archivo nuevo y apuntar a él desde los da
 - Un guardián puede tener un `"sprite"` general y otro en cada nivel o rama (se usa el más específico). La "honda" que apunta al objetivo se sigue dibujando encima.
 - Cada carpeta nueva dentro de `assets/images/` (por ejemplo `assets/images/guardians/`) se agrega a `pubspec.yaml`.
 
-**Audio** (`assets/content/audio.json` y `"music"` en cada nivel): rutas dentro de `assets/audio/` con extensión `.wav`, `.ogg`, `.mp3` o `.m4a`. Los efectos son `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat` y `boss`.
+**Audio** (`assets/content/audio.json` y `"music"` en cada nivel): rutas dentro de `assets/audio/` con extensión `.wav`, `.ogg`, `.mp3` o `.m4a`. Los efectos son `shot`, `impact`, `pestDefeated`, `collcaDamaged`, `victory`, `defeat`, `boss`, `uiTap` y `uiDeny`.
 
 ## Lista de lo que hace falta
 
@@ -52,6 +52,8 @@ Formato: **PNG con transparencia (RGBA)**, sin bordes alrededor de cada cuadro.
 | `pestDefeated` (plaga derrotada) | `sfx/pest_defeated.wav` | < 0,3 s | |
 | `collcaDamaged` (la collca pierde papas) | `sfx/collca_damaged.wav` | < 0,5 s | Debe distinguirse: es una alerta. |
 | `boss` (aparece el jefe) | `sfx/boss.wav` | 1–2 s | Un pututu (caracola) sería ideal. |
+| `uiTap` (tocar un botón) | `sfx/ui_tap.wav` | < 0,1 s | Un clic suave de madera o semilla; suena muchísimo. |
+| `uiDeny` (no se puede, no alcanza el maíz) | `sfx/ui_deny.wav` | < 0,3 s | Claro pero sin regañar. |
 | `victory` / `defeat` | `sfx/victory.wav`, `sfx/defeat.wav` | 1,5–3 s | |
 
 Formatos:

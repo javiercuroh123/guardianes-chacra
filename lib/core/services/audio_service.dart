@@ -1,6 +1,19 @@
 /// Los efectos de sonido del juego. Qué archivo suena para cada uno lo dice
 /// `assets/content/audio.json` (ver `docs/CONTENIDO.md`).
-enum Sfx { shot, impact, pestDefeated, collcaDamaged, victory, defeat, boss }
+///
+/// [uiTap] y [uiDeny] son de los controles de la interfaz: tocar un botón y
+/// "no se puede" (por ejemplo, no alcanza el maíz).
+enum Sfx {
+  shot,
+  impact,
+  pestDefeated,
+  collcaDamaged,
+  victory,
+  defeat,
+  boss,
+  uiTap,
+  uiDeny,
+}
 
 /// El sonido del juego, detrás de una interfaz: el resto del código no sabe
 /// qué paquete lo reproduce. La app usa `FlameAudioService`; los tests y

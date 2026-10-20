@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:rive/rive.dart' as rive;
 
@@ -113,7 +114,7 @@ void main() {
     expect(textPixels, greaterThan(200));
   });
 
-  testWidgets('crece con la letra grande', (tester) async {
+  testWidgets('crece con la letra grande y el "+N" no empuja', (tester) async {
     tester.platformDispatcher.textScaleFactorTestValue = 1.3;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpWidget(
@@ -123,7 +124,37 @@ void main() {
       ),
     );
 
-    final size = tester.getSize(find.byType(rive.RiveWidget));
+    // Lo que ocupa en el HUD es la pastilla; el dibujo de Rive es más alto
+    // porque el "+N" flota debajo.
+    final size = tester.getSize(find.byType(RiveCounter));
     expect(size.height, closeTo(RiveCounter.height * 1.3, 0.01));
+    expect(
+      tester.getSize(find.byType(rive.RiveWidget)).height,
+      greaterThan(size.height),
+    );
+  });
+
+  testWidgets('con otro ícono y en peligro, sin romperse', (tester) async {
+    Widget potatoes(int value) => testApp(
+      Center(
+        child: RiveCounter(
+          value: value,
+          icon: RiveIcon.potato,
+          danger: value <= 3,
+          semanticsLabel: 'Papas: $value',
+          fallback: Text('🥔 $value'),
+        ),
+      ),
+      overrides: [riveFileProvider.overrideWithValue(file)],
+    );
+
+    await tester.pumpWidget(potatoes(5));
+    await tester.pumpWidget(potatoes(3));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpWidget(potatoes(4));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(tester.takeException(), isNull);
+    expect(find.bySemanticsLabel('Papas: 4'), findsOneWidget);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/app/rive/rive_button.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
@@ -104,21 +106,25 @@ class LevelPreviewScreen extends ConsumerWidget {
                   spacing: 12,
                   runSpacing: 8,
                   children: [
-                    OutlinedButton(
+                    RiveButton(
+                      kind: RiveButtonKind.secondary,
+                      label: l10n.back,
+                      icon: RiveIcon.back,
                       onPressed: () => Navigator.of(context).maybePop(),
-                      child: Text(l10n.back),
                     ),
                     if (status.rewardedReady && extraCorn > 0)
-                      OutlinedButton.icon(
+                      RiveButton(
                         key: const ValueKey('preview-rewarded'),
-                        icon: const Icon(Icons.ondemand_video),
+                        kind: RiveButtonKind.secondary,
+                        label: l10n.adStartCorn(extraCorn),
+                        icon: RiveIcon.ad,
                         onPressed: () => _startWithAd(context, ads, extraCorn),
-                        label: Text(l10n.adStartCorn(extraCorn)),
                       ),
-                    FilledButton(
+                    RiveButton(
                       key: const ValueKey('preview-start'),
+                      label: l10n.previewStart,
+                      icon: RiveIcon.play,
                       onPressed: () => _start(context),
-                      child: Text(l10n.previewStart),
                     ),
                   ],
                 ),

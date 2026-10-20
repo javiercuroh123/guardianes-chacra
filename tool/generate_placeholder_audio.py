@@ -143,6 +143,18 @@ def boss():
                          attack=0.15, amp=0.5), 0.1)
 
 
+def ui_tap():
+    """El toque de un botón de la interfaz: un clic corto y suave."""
+    return mix(tone(1320, 0.05, freq_to=990, decay=55, amp=0.3),
+               noise(0.015, decay=150, amp=0.15, seed=3, smooth=0.6), 0)
+
+
+def ui_deny():
+    """"No se puede" (no alcanza el maíz): dos notas graves y cortas."""
+    out = tone(200, 0.09, shape="square", decay=14, amp=0.2)
+    return mix(out, tone(150, 0.12, shape="square", decay=12, amp=0.2), 0.1)
+
+
 # --- Música (bucles: la última nota termina antes del final)
 
 def melody_loop(beat, notes, bass, drums_every=None):
@@ -195,7 +207,8 @@ def main():
                        ("pest_defeated", pest_defeated),
                        ("collca_damaged", collca_damaged),
                        ("victory", victory), ("defeat", defeat),
-                       ("boss", boss)):
+                       ("boss", boss), ("ui_tap", ui_tap),
+                       ("ui_deny", ui_deny)):
         write(ROOT / "sfx" / f"{name}.wav", make())
     write(ROOT / "music" / "menu.wav", music_menu())
     write(ROOT / "music" / "batalla.wav", music_battle())

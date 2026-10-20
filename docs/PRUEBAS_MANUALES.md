@@ -35,7 +35,9 @@ flutter run --release
 - [ ] Tocar un guardián abre su menú: mejorar, vender, cambiar a quién apunta; en el último nivel ofrece las dos ramas.
 - [ ] Tocar fuera cierra el menú.
 - [ ] "⏭ … s +N" llama la oleada antes y suma ese maíz.
-- [ ] El contador de maíz (hecho en Rive) muestra el número; al ganar maíz el ícono rebota y el número destella en verde, al gastarlo destella en rojo. Con "Quitar animaciones" de Android solo cambia el número.
+- [ ] El contador de maíz (hecho en Rive) muestra el número; al ganar maíz el ícono rebota, el número destella en verde y flota un "+N" debajo; al gastarlo destella en rojo. Con "Quitar animaciones" de Android solo cambia el número.
+- [ ] Los botones de Rive (título, preparación, pausa, victoria y derrota): se hunden al apoyar el dedo, rebotan al soltar, suenan y vibran (si la vibración está encendida en Ajustes). El principal tiene un brillo que lo cruza cada ~4 s; con "Quitar animaciones", no. Con letra al 200 % crecen sin cortarse.
+- [ ] Panel 🐞 → "Catálogo de la interfaz": arriba todos los estados quietos; abajo, cada componente responde ("Mejorar" se sacude y avisa que no alcanza el maíz, las estrellas se llenan una por una, el interruptor cruza con squash, la pastilla del selector se desliza, el tooltip y el panel entran y salen).
 - [ ] x1 / x2 cambia la velocidad; a x2 el botón se pinta de amarillo.
 - [ ] Las marcas de efectos se distinguen por la forma: lento = anillo punteado, quemadura = corona de puntas, aturdido = puntos girando sobre la cabeza.
 - [ ] Al aparecer el jefe: sonido propio, vibración fuerte y una sacudida corta de la cámara.
@@ -54,7 +56,7 @@ flutter run --release
 ## Ajustes
 
 - [ ] Música y Efectos se apagan y prenden al momento; la música retoma la pista correcta.
-- [ ] Vibración apagada: el jefe y la collca ya no vibran.
+- [ ] Vibración apagada: el jefe, la collca y los botones ya no vibran.
 - [ ] Números de daño (apagados por defecto): al prenderlos, los números se leen sobre el pasto, la tierra y el agua.
 - [ ] Idioma: español / inglés cambia todos los textos, también los del contenido (nombres de plagas y guardianes).
 - [ ] Los ajustes siguen igual después de cerrar y abrir la app.

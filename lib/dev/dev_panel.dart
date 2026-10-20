@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/dev/dev_options.dart';
+import 'package:guardianes_chacra/dev/ui_catalog_screen.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/simulation_cheats.dart';
 
 /// El panel de desarrollo de la partida (debug y profile, nunca en
-/// release): trucos, superposición de depuración, saltar oleada y prueba
-/// de estrés.
+/// release): trucos, superposición de depuración, saltar oleada, prueba
+/// de estrés y el catálogo de la interfaz.
 ///
 /// Sus textos no van en los ARB: son para quien desarrolla, no para el
 /// jugador, y no existen en la versión publicada.
@@ -119,6 +120,15 @@ class _DevPanelState extends ConsumerState<DevPanel> {
                   key: const ValueKey('dev-stress'),
                   onPressed: widget.onStressTest,
                   child: const Text('Prueba de estrés (150 plagas)'),
+                ),
+                OutlinedButton(
+                  key: const ValueKey('dev-ui-catalog'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const UiCatalogScreen(),
+                    ),
+                  ),
+                  child: const Text('Catálogo de la interfaz'),
                 ),
               ],
             ),

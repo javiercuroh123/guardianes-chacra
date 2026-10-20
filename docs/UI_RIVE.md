@@ -26,29 +26,44 @@ La interfaz del juego se dibuja y anima con [Rive](https://rive.app). El plan po
 
 Los nombres van en inglés, como el código, porque Dart los busca como texto. `test/app/rive/rive_contract_test.dart` carga el `.riv` real y falla si falta algo.
 
-### `Counter` (Fase 1)
+### `Counter` (Fases 1 y 3)
 
-Pastilla del HUD con ícono de maíz y número. 104 × 38. Widget: `RiveCounter` (`lib/app/rive/rive_counter.dart`), hoy en el contador de maíz del HUD (clave `hud-corn`).
+Pastilla del HUD con ícono y número. 104 × 60: la pastilla ocupa los 35 de arriba y el "+N" flota en el resto, por debajo, sin empujar lo que haya alrededor (el widget mide solo la pastilla y deja que el dibujo se salga hacia abajo). Widget: `RiveCounter` (`lib/app/rive/rive_counter.dart`), hoy en el contador de maíz del HUD (clave `hud-corn`).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `value` | string | `RiveCounter`, con el número formateado por Dart | El texto del número |
-| `gain` | trigger | `RiveCounter`, cuando el número sube | El ícono rebota (escala 135 %, rebote elástico) y el número destella en verde `#117D16`: 0,4 s |
+| `icon` | view model `IconSet` | `RiveCounter` (`icon`, por defecto `corn`) | El ícono de la pastilla |
+| `gain` | trigger | `RiveCounter`, cuando el número sube | El ícono rebota (escala 135 %, rebote elástico), el número destella en verde `#117D16` (0,4 s) y flota `delta` (0,9 s) |
+| `delta` | string | `RiveCounter`, antes de `gain` ("+25") | La etiqueta verde que sube y se desvanece |
 | `loss` | trigger | `RiveCounter`, cuando el número baja | El número y el borde destellan en rojo `#C43403` y el ícono tiembla: 0,4 s |
+| `danger` | boolean | `RiveCounter` (`danger`; pocas papas en la Fase 4) | Un anillo rojo late sobre la pastilla (1 s, en bucle) |
+| `reduceMotion` | boolean | `RiveBindingState`, desde `MediaQuery.disableAnimations` | El aviso de peligro queda fijo, sin latir |
 
-State machine `Main`: `Idle` ← cualquier estado → `Gain` o `Loss` con su trigger → vuelven a `Idle` al terminar. Con "quitar animaciones" del teléfono (`MediaQuery.disableAnimations`) solo cambia el número.
+State machine `Main`, tres capas: `Layer 1` (`Idle` ← cualquier estado → `Gain` o `Loss` con su trigger → vuelven a `Idle`), `Delta` (`DeltaHidden` → `DeltaFloat` con `gain` → vuelve al terminar) y `Danger` (`Calm`, `Pulse` y `Steady`). Con "quitar animaciones" del teléfono solo cambia el número.
 
-### `Button` (Fase 1, todavía sin usar)
+### `PrimaryButton`, `SecondaryButton` y `RoundButton` (Fase 3)
 
-Botón principal de maíz dorado con bisel. 200 × 56. Lo usará el kit de componentes de la Fase 3.
+Los botones del juego. Los tres comparten el view model `Button`. Widget: `RiveButton` (`lib/app/rive/rive_button.dart`); `RiveButton.round` para el redondo.
+
+- `PrimaryButton`: maíz con degradado y bisel, 200 × 56 de diseño. Un brillo lo cruza cada ~4 s.
+- `SecondaryButton`: crema `#FBD7A5`, sin brillo.
+- `RoundButton`: 56 × 56, solo con ícono (pausa, velocidad, atrás, cerrar). Con `danger`, la cara pasa a roja.
+
+Los de texto se estiran con `Fit.layout`: Flutter mide el texto con la misma letra (Fredoka 20, peso 700) y le pasa el ancho (`RiveButton.widthFor`, mínimo 140); con letra grande, todo crece con `layoutScaleFactor`.
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
-| `label` | string | El widget, desde los ARB | El texto del botón |
-| `pressed` | boolean | El widget, al apoyar y levantar el dedo | La cara baja 4 dp (5 cuadros) y al soltar vuelve con rebote elástico (0,3 s) |
-| `enabled` | boolean | El widget | Apagado: todo pasa a grises en 150 ms y no reacciona a `pressed` |
+| `label` | string | `RiveButton`, desde los ARB | El texto (el redondo no lo muestra: es su tooltip y lo que lee TalkBack) |
+| `icon` | view model `IconSet` | `RiveButton` | El ícono a la izquierda del texto |
+| `hasIcon` | boolean | `RiveButton` | Sin ícono, su lugar desaparece (`display` ligado con el convertidor `HiddenUnless`) |
+| `pressed` | boolean | `RiveButton`, al apoyar y levantar el dedo | Se hunde: escala 0,94 y bisel bajo en ~80 ms; al soltar, rebote (0,3 s) |
+| `enabled` | boolean | `RiveButton` (`onPressed` no nulo) | Apagado: grises y no reacciona a `pressed` |
+| `deny` | trigger | `RiveButton`, al tocarlo deshabilitado si tiene `onDenied` | "No se puede" (no alcanza el maíz): una sacudida corta de 0,3 s |
+| `danger` | boolean | `RiveButton.round` | Cara roja (opacidad de `RedFace` ligada con `BoolToNumber`) |
+| `reduceMotion` | boolean | `RiveBindingState` | Apaga el brillo del principal |
 
-State machine `Main`: `Idle`, `Pressed`, `Release` y `Disabled`.
+State machine `Main`: capa `Layer 1` con `Idle`, `Pressed`, `Release`, `Disabled` y `Deny`; el principal tiene además la capa `Shine` (`ShineLoop` y `ShineOff`), separada para que el brillo no se mezcle con el estado.
 
 ### `IconSet` (Fase 2)
 
@@ -70,9 +85,16 @@ Cartel de madera para los títulos: tabla con degradado, vetas, borde claro inte
 |---|---|---|---|
 | `title` | string | La pantalla, desde los ARB | El texto del cartel |
 
-### `Panel` (Fase 2)
+### `Panel` (Fases 2 y 3)
 
-Marco de los paneles y tarjetas: borde terracota `#AF5212` con contorno oscuro, interior crema, guarda naranja `#F59950` y un rombo tejido en cada esquina. Hecho con layouts, así que se estira a cualquier tamaño (`Fit.layout`). Sin datos: el contenido lo pone Flutter (o el artboard que lo use como componente).
+Marco de los paneles y tarjetas: borde terracota `#AF5212` con contorno oscuro, interior crema, guarda naranja `#F59950` y un rombo tejido en cada esquina. Hecho con layouts, así que se estira a cualquier tamaño (`Fit.layout`). El contenido lo pone Flutter encima. Widget: `RivePanel` (`lib/app/rive/rive_panel.dart`), que mueve el contenido junto con el marco.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `visible` | boolean | `RivePanel` | `true`: el marco cae 40 dp con rebote y aparece (0,42 s). `false`: baja 24 dp y se desvanece (0,2 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Entra solo desvaneciéndose (`EnterCalm`, 0,15 s) |
+
+State machine `Main`: `Hidden`, `Enter`, `EnterCalm`, `Shown` y `Exit`. Los overlays (pausa, victoria, derrota) lo usarán en la Fase 5.
 
 ### `PortraitHondero` (Fase 2, prueba de estilo)
 
@@ -80,7 +102,105 @@ Retrato *sticker* del Hondero, 120 × 120: chullo rojo con guarda en zigzag y po
 
 ### `StyleGuide` (Fase 2, solo para revisar)
 
-La guía de estilo en el editor: los 19 colores con su uso, el contraste de cada combinación de texto, las dos fuentes y una fila con las formas base (panel, cartel, botones dorado y crema, retrato). Va en el `.riv` pero el juego no lo usa.
+La guía de estilo en el editor: los 19 colores con su uso, el contraste de cada combinación de texto, las dos fuentes y una fila con las formas base (panel, cartel, botones dorado y crema, retrato). No va en el `.riv`: la exportación solo incluye los artboards marcados como componente (el `Catalog` lo está para poder dibujarlo en los tests y en el teléfono). La exportación también trae tres artboards de Rive (`Watermark`, `NuRiveBrandmark01`, `NuRiveWordmark01`), por el plan de la cuenta: el juego no los dibuja.
+
+### `WaveBar` (Fase 3)
+
+"Oleada 3/10" con una bandera y una barra que se llena. 200 × 44 de diseño, `Fit.layout`. Widget: `RiveWaveBar` (`lib/app/rive/rive_wave_bar.dart`); el HUD la usa en la Fase 4. Es una barra continua y no por segmentos: los niveles tienen hasta 15 oleadas y los segmentos quedarían muy finos en un teléfono.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label` | string | `RiveWaveBar`, desde los ARB | El texto |
+| `progress` | number (0–1) | `RiveWaveBar` (oleada / total) | El ancho del relleno (`ProgressToPercent`); el layout lo anima en 0,45 s |
+| `boss` | boolean | `RiveWaveBar` | La barra pasa a terracota y aparece un círculo ciruela con "!" que late (0,8 s, en bucle) |
+| `waveStarted` | trigger | `RiveWaveBar`, al subir la oleada | El texto rebota y la pastilla destella (0,5 s) |
+| `icon` | view model `IconSet` | `RiveWaveBar` (siempre `flag`) | El ícono |
+| `reduceMotion` | boolean | `RiveBindingState` | El aviso del jefe queda fijo |
+
+State machine `Main`: `Layer 1` (`Idle`, `WaveStart`) y `Boss` (`Normal`, `BossAlert`, `BossSteady`).
+
+### `Star` (Fase 3)
+
+Estrella de puntuación, 56 × 56: vacía `#E7D9BD` con contorno `#8A6A4A`; llena `#FECE18` con contorno oscuro. Widget: `RiveStar` (`lib/app/rive/rive_star.dart`); la victoria la usa en la Fase 5 (quien cambia `filled` toca el sonido de cada estrella).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `filled` | boolean | `RiveStar` | `true`: la estrella llena crece girando hasta 125 % y se asienta, con un anillo que se abre y seis chispas (0,6 s). `false`: se encoge (0,15 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Se llena de golpe, sin estallido |
+
+State machine `Main`: `Empty`, `Fill`, `Filled` y `Unfill`.
+
+### `Toggle` (Fase 3)
+
+Interruptor, 68 × 40: riel gris `#D8DBCF` (apagado) o verde `#36901D` (encendido) y perilla crema. Widget: `RiveToggle` (`lib/app/rive/rive_toggle.dart`), con Semantics de interruptor; Ajustes lo usará en la Fase 7.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `on` | boolean | `RiveToggle` | La perilla cruza con squash (128 % × 82 %) y rebote, y el riel cambia de color (0,25 s) |
+| `enabled` | boolean | `RiveToggle` (`onChanged` no nulo) | Apagado: 45 % de opacidad |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin uso todavía (el movimiento es corto) |
+
+State machine `Main`: `Layer 1` (`Off`, `TurnOn`, `On`, `TurnOff`) y `Enabled` (`Enabled`, `Disabled`).
+
+### `Segmented` (Fase 3)
+
+Tres opciones con una pastilla de maíz que se desliza hasta la elegida (Sistema / Español / English). 300 × 44 de diseño, `Fit.layout`. Widget: `RiveSegmented` (`lib/app/rive/rive_segmented.dart`): Flutter pone tres zonas tocables, cada una con su Semantics y su Key (`optionKeys`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label0`, `label1`, `label2` | string | `RiveSegmented`, desde los ARB | Los textos |
+| `selected` | number (0–2) | `RiveSegmented` | La posición de la pastilla (`positionLeft` en %, con el convertidor `ThirdToPercent`); el layout la desliza en 0,25 s |
+
+No tiene animaciones propias: el deslizamiento es una animación de layout.
+
+### `Tab` (Fase 3)
+
+Pestaña con esquinas de arriba redondeadas, 140 × 46 de diseño, `Fit.layout` (Flutter mide el texto: Fredoka 15, peso 700). Widget: `RiveTab` (`lib/app/rive/rive_tab.dart`); el bestiario la usará en la Fase 7.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label` | string | `RiveTab`, desde los ARB | El texto |
+| `selected` | boolean | `RiveTab` | Sube 6 dp con rebote y pasa de crema a maíz (0,25 s) |
+| `icon`, `hasIcon` | view model `IconSet`, boolean | `RiveTab` | El ícono opcional |
+
+State machine `Main`: `Unselected`, `Select`, `Selected` y `Deselect`.
+
+### `Tooltip` (Fase 3)
+
+Globo crema con borde terracota y flecha abajo. 220 × 64 de diseño, `Fit.layout`: Flutter mide el texto (Fredoka 14, peso 600, en varias líneas si hace falta) y le da el tamaño (`RiveTooltip.sizeFor`). Widget: `RiveTooltip` (`lib/app/rive/rive_tooltip.dart`), que no tapa toques y TalkBack anuncia al aparecer. El "Toca otra vez para confirmar" del menú de construcción lo usará en la Fase 4.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `text` | string | `RiveTooltip`, desde los ARB | El texto |
+| `visible` | boolean | `RiveTooltip` | Aparece subiendo 6 dp (0,22 s) y se va bajando y desvaneciéndose (0,15 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin uso todavía |
+
+State machine `Main`: `Hidden`, `Show`, `Shown` y `Hide`.
+
+### `Badge` (Fase 3)
+
+Etiqueta ciruela `#8B2055` con texto crema, 84 × 32. Widget: `RiveBadge` (`lib/app/rive/rive_badge.dart`); la preparación del nivel la usará en la Fase 6.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `label` | string | `RiveBadge`, desde los ARB ("¡Nuevo!") | El texto (centrado en una caja fija: "New!" también cabe) |
+| `reduceMotion` | boolean | `RiveBindingState` | Quieta (`Still`) en vez de menearse |
+
+State machine `Main`: `Wiggle` (3 s en bucle: quieta 2 s, después se menea ±8° y crece 10 %) y `Still`.
+
+### `Catalog` (Fase 3, para revisar)
+
+Todos los componentes en todos sus estados, 1000 × 640: botones (normal, presionado, deshabilitado, secundario, redondo, redondo en peligro), contadores (maíz y papas en peligro), barras de oleadas (normal y jefe), estrellas, interruptores (apagado, encendido, deshabilitado), la etiqueta, el selector, las pestañas, el tooltip y el panel. Su view model `Catalog` tiene una propiedad por componente que apunta a una instancia con los datos de ese estado (`PrimaryPressed`, `WaveBoss`, `IcoFlagBoss`…). Una instancia anidada solo puede estar en un lugar a la vez: cada uno tiene la suya, también los íconos.
+
+`MCP capture_artboard` lo muestra sin datos (los textos de diseño); con datos lo dibuja `test/app/rive/rive_catalog_test.dart`, que busca el color de cada estado y guarda la imagen con `--dart-define=CATALOG_PNG=build/catalog.png`. En el teléfono está en el panel de desarrollo (🐞 → "Catálogo de la interfaz"), con cada componente para tocarlo debajo.
+
+## El kit en Flutter (Fase 3)
+
+- `RiveBinding` (`lib/app/rive/rive_binding.dart`) crea el controlador de un artboard con la state machine `Main` y ata su view model por defecto (`DataBind.auto()`: cada widget tiene su propia instancia, también la del ícono anidado). Pide las propiedades por nombre y lanza `RiveContractException` si falta alguna.
+- `RiveBindingState` es la base de cada envoltorio: crea el binding si el archivo está cargado, le pone los valores iniciales (`bind`), llena `reduceMotion` desde `MediaQuery.disableAnimations` y lo libera al final. Sin archivo, o si falta una propiedad, el widget dibuja su respaldo del tema.
+- Los toques los recibe Flutter: cada envoltorio tiene su `GestureDetector`, su `Semantics` (botón, interruptor, opción elegida) y la Key que le pase la pantalla. Rive dibuja con `RiveHitTestBehavior.none`.
+- `UiFeedback` (`lib/app/ui_feedback.dart`) toca `Sfx.uiTap` o `Sfx.uiDeny` (sonidos sintetizados por `tool/generate_placeholder_audio.py`) y vibra `Haptic.tap` (`selectionClick`) o `Haptic.deny` (`lightImpact`), respetando los interruptores de Efectos y Vibración.
+- Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). Los demás componentes esperan su fase (HUD en la 4, overlays en la 5, menús en la 6, bestiario y ajustes en la 7).
 
 ## Paleta
 
@@ -119,7 +239,7 @@ Es ASCII más `¡ ¿ Á É Í Ñ Ó Ú Ü á é í ñ ó ú ü · × – — ‘
 
 ## Tests y librerías nativas
 
-Rive usa código nativo (`rive_native`). Para compilar la app no hay que hacer nada: el build lo descarga. Para `flutter test` (el test de contrato y el de `RiveCounter` cargan el archivo real) hay que bajarlo una vez por PC:
+Rive usa código nativo (`rive_native`). Para compilar la app no hay que hacer nada: el build lo descarga. Para `flutter test` (los tests de `test/app/rive/` y el del catálogo de desarrollo cargan el archivo real) hay que bajarlo una vez por PC:
 
 ```powershell
 dart run tool/setup_rive_native.dart
@@ -151,7 +271,7 @@ Las pruebas con varios contadores usan el panel de desarrollo ("Prueba de Rive",
 
 ### Peso
 
-`rive` agrega `librive_native.so`: en arm64 son 7,7 MB instalados y unos 2,8 MB comprimidos, que es más o menos lo que se descarga desde Google Play con un App Bundle (cada teléfono baja solo su arquitectura). En el APK universal hay tres copias (arm64, armeabi-v7a y x86_64: 22,5 MB sin comprimir). El `.riv` pesa 199 KB (casi todo es la fuente: Inter es variable; una fuente estática pesará menos) y el código Dart de Rive, unos 70 KB.
+`rive` agrega `librive_native.so`: en arm64 son 7,7 MB instalados y unos 2,8 MB comprimidos, que es más o menos lo que se descarga desde Google Play con un App Bundle (cada teléfono baja solo su arquitectura). En el APK universal hay tres copias (arm64, armeabi-v7a y x86_64: 22,5 MB sin comprimir). El `.riv` pesaba 199 KB en la Fase 1 (casi todo era la fuente Inter); con Lilita One y Fredoka recortada y el kit de la Fase 3 completo, pesa 164 KB. El código Dart de Rive, unos 70 KB.
 
 ### El error de la fuente
 

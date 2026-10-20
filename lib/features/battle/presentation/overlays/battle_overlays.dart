@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/rive/rive_button.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/widgets/stars_row.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
 
@@ -29,20 +31,25 @@ class PauseOverlay extends StatelessWidget {
     return _OverlayCard(
       title: l10n.hudPause,
       actions: [
-        OutlinedButton(
+        RiveButton(
           key: const ValueKey('battle-exit'),
+          kind: RiveButtonKind.secondary,
+          label: l10n.pauseExit,
+          icon: RiveIcon.home,
           onPressed: onExit,
-          child: Text(l10n.pauseExit),
         ),
-        OutlinedButton(
+        RiveButton(
           key: const ValueKey('battle-retry'),
+          kind: RiveButtonKind.secondary,
+          label: l10n.battleRetry,
+          icon: RiveIcon.retry,
           onPressed: onRetry,
-          child: Text(l10n.battleRetry),
         ),
-        FilledButton(
+        RiveButton(
           key: const ValueKey('pause-resume'),
+          label: l10n.pauseResume,
+          icon: RiveIcon.play,
           onPressed: onResume,
-          child: Text(l10n.pauseResume),
         ),
       ],
     );
@@ -101,28 +108,32 @@ class VictoryOverlay extends StatelessWidget {
         ],
       ),
       actions: [
-        _exitButton(l10n, primary: onNext == null),
-        OutlinedButton(
+        // En el último nivel, volver al valle es la acción principal.
+        RiveButton(
+          key: const ValueKey('battle-exit'),
+          kind: onNext == null
+              ? RiveButtonKind.primary
+              : RiveButtonKind.secondary,
+          label: l10n.toValley,
+          icon: RiveIcon.home,
+          onPressed: onExit,
+        ),
+        RiveButton(
           key: const ValueKey('battle-retry'),
+          kind: RiveButtonKind.secondary,
+          label: l10n.battleRetry,
+          icon: RiveIcon.retry,
           onPressed: onRetry,
-          child: Text(l10n.battleRetry),
         ),
         if (onNext != null)
-          FilledButton(
+          RiveButton(
             key: const ValueKey('victory-next'),
+            label: l10n.victoryNext,
+            icon: RiveIcon.play,
             onPressed: onNext,
-            child: Text(l10n.victoryNext),
           ),
       ],
     );
-  }
-
-  Widget _exitButton(AppLocalizations l10n, {required bool primary}) {
-    const key = ValueKey('battle-exit');
-    final label = Text(l10n.toValley);
-    return primary
-        ? FilledButton(key: key, onPressed: onExit, child: label)
-        : OutlinedButton(key: key, onPressed: onExit, child: label);
   }
 }
 
@@ -150,21 +161,25 @@ class DefeatOverlay extends StatelessWidget {
       title: l10n.battleLost,
       actions: [
         if (onRevive case final onRevive?)
-          OutlinedButton.icon(
+          RiveButton(
             key: const ValueKey('battle-revive'),
-            icon: const Icon(Icons.ondemand_video),
+            kind: RiveButtonKind.secondary,
+            label: l10n.adRevive(revivePotatoes),
+            icon: RiveIcon.ad,
             onPressed: onRevive,
-            label: Text(l10n.adRevive(revivePotatoes)),
           ),
-        OutlinedButton(
+        RiveButton(
           key: const ValueKey('battle-exit'),
+          kind: RiveButtonKind.secondary,
+          label: l10n.toValley,
+          icon: RiveIcon.home,
           onPressed: onExit,
-          child: Text(l10n.toValley),
         ),
-        FilledButton(
+        RiveButton(
           key: const ValueKey('battle-retry'),
+          label: l10n.battleRetry,
+          icon: RiveIcon.retry,
           onPressed: onRetry,
-          child: Text(l10n.battleRetry),
         ),
       ],
     );

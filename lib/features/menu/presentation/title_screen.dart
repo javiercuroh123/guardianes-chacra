@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/rive/rive_button.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/features/bestiary/presentation/bestiary_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
@@ -47,30 +49,25 @@ class TitleScreen extends StatelessWidget {
                   spacing: 16,
                   runSpacing: 12,
                   children: [
-                    FilledButton(
+                    RiveButton(
                       key: const ValueKey('menu-play'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .secondary,
-                        foregroundColor: Theme.of(context)
-                            .colorScheme
-                            .onSecondary,
-                      ),
+                      label: l10n.titlePlay,
+                      icon: RiveIcon.play,
                       onPressed: () => open(const LevelSelectScreen()),
-                      child: Text(l10n.titlePlay),
                     ),
-                    // Botones secundarios del tema: crema con contorno
-                    // oscuro, se leen igual sobre el verde.
-                    OutlinedButton(
+                    RiveButton(
                       key: const ValueKey('menu-bestiary'),
+                      kind: RiveButtonKind.secondary,
+                      label: l10n.menuBestiary,
+                      icon: RiveIcon.book,
                       onPressed: () => open(const BestiaryScreen()),
-                      child: Text(l10n.menuBestiary),
                     ),
-                    OutlinedButton(
+                    RiveButton(
                       key: const ValueKey('menu-settings'),
+                      kind: RiveButtonKind.secondary,
+                      label: l10n.menuSettings,
+                      icon: RiveIcon.gear,
                       onPressed: () => open(const SettingsScreen()),
-                      child: Text(l10n.menuSettings),
                     ),
                   ],
                 ),
