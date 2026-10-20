@@ -9,8 +9,11 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  final scheme = AppTheme.light.colorScheme;
-  final game = AppTheme.light.extension<GameColors>()!;
+  final theme = AppTheme.light;
+  final scheme = theme.colorScheme;
+  final game = theme.extension<GameColors>()!;
+  final appBar = theme.appBarTheme;
+  final outlined = theme.outlinedButtonTheme.style!;
 
   // WCAG AA: 4,5:1 para texto normal; 3:1 para íconos y texto grande.
   for (final (name, foreground, background, minimum) in [
@@ -22,8 +25,20 @@ void main() {
     ('texto del HUD', game.onHud, game.hud.withValues(alpha: 1), 4.5),
     (
       'bono de maíz en el HUD',
-      scheme.secondary,
+      game.hudAccent,
       game.hud.withValues(alpha: 1),
+      4.5,
+    ),
+    (
+      'título de la barra de arriba',
+      appBar.foregroundColor!,
+      appBar.backgroundColor!,
+      4.5,
+    ),
+    (
+      'texto de los botones secundarios',
+      outlined.foregroundColor!.resolve({})!,
+      outlined.backgroundColor!.resolve({})!,
       4.5,
     ),
     ('estrella ganada sobre el fondo', game.star, scheme.surface, 3.0),

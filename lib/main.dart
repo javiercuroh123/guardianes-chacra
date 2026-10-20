@@ -23,6 +23,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Las fuentes (OFL) piden viajar con su licencia: aparecen en la
+  // pantalla de licencias junto a las de los paquetes.
+  LicenseRegistry.addLicense(() async* {
+    for (final (font, file) in [
+      ('Lilita One', 'LilitaOne-OFL.txt'),
+      ('Fredoka', 'Fredoka-OFL.txt'),
+    ]) {
+      yield LicenseEntryWithLineBreaks([
+        font,
+      ], await rootBundle.loadString('assets/fonts/$file'));
+    }
+  });
+
   // Juego horizontal: se puede girar el teléfono entre las dos posiciones
   // horizontales, nunca a vertical. AndroidManifest.xml pide lo mismo para
   // que la app arranque ya en horizontal. En la web no tiene efecto.

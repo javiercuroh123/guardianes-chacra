@@ -60,15 +60,15 @@ class TitleScreen extends StatelessWidget {
                       onPressed: () => open(const LevelSelectScreen()),
                       child: Text(l10n.titlePlay),
                     ),
+                    // Botones secundarios del tema: crema con contorno
+                    // oscuro, se leen igual sobre el verde.
                     OutlinedButton(
                       key: const ValueKey('menu-bestiary'),
-                      style: _outlinedOnGreen,
                       onPressed: () => open(const BestiaryScreen()),
                       child: Text(l10n.menuBestiary),
                     ),
                     OutlinedButton(
                       key: const ValueKey('menu-settings'),
-                      style: _outlinedOnGreen,
                       onPressed: () => open(const SettingsScreen()),
                       child: Text(l10n.menuSettings),
                     ),
@@ -81,9 +81,4 @@ class TitleScreen extends StatelessWidget {
       ),
     );
   }
-
-  static final ButtonStyle _outlinedOnGreen = OutlinedButton.styleFrom(
-    foregroundColor: Colors.white,
-    side: const BorderSide(color: Colors.white, width: 2),
-  );
 }

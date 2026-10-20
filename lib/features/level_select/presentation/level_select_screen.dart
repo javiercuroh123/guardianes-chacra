@@ -179,14 +179,15 @@ class _LevelNode extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: unlocked ? scheme.primary : colors.locked,
-                  border: Border.all(color: Colors.white, width: 3),
+                  // Contorno oscuro, como en los dibujos de la interfaz.
+                  border: Border.all(color: scheme.onSurface, width: 3),
                 ),
                 alignment: Alignment.center,
                 child: unlocked
                     ? Text(
                         '$number',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: scheme.onPrimary,
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
                         ),

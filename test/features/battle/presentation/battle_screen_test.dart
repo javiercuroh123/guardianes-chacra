@@ -104,8 +104,8 @@ void main() {
     // La primera oleada llega en 15 s; llamarla ya da 15 × 1,5 = 22 de maíz.
     expect(find.text('15 s'), findsOneWidget);
     expect(find.text('+22'), findsOneWidget);
-    // Texto claro sobre el fondo oscuro del HUD (`foregroundColor` de
-    // IconButton no colorea un Text).
+    // El texto del HUD lleva su color (`foregroundColor` de IconButton no
+    // colorea un Text).
     expect(
       tester.widget<Text>(find.text('x1')).style?.color,
       AppTheme.light.extension<GameColors>()!.onHud,

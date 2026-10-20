@@ -2,6 +2,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
+import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:rive/rive.dart' as rive;
 
@@ -58,6 +59,42 @@ void main() {
       },
     );
   });
+
+  test('IconSet: un enum elige el ícono, en el orden de RiveIcon', () {
+    expectArtboard(
+      IconSetRive.artboard,
+      viewModel: IconSetRive.viewModel,
+      properties: {IconSetRive.icon: rive.DataType.enumType},
+    );
+    final icons = file.enums.where((e) => e.name == IconSetRive.enumName);
+    expect(
+      icons,
+      hasLength(1),
+      reason: 'falta el enum ${IconSetRive.enumName}',
+    );
+    // Cada ícono se elige por su posición: mismo orden, no solo los mismos.
+    expect(icons.single.values, [
+      for (final icon in RiveIcon.values) icon.name,
+    ]);
+  });
+
+  test('TitleSign: el texto del cartel', () {
+    expectArtboard(
+      'TitleSign',
+      viewModel: 'TitleSign',
+      properties: {'title': rive.DataType.string},
+    );
+  });
+
+  // Sin datos: solo tienen que existir con su state machine.
+  for (final name in ['Panel', 'PortraitHondero']) {
+    test('$name existe', () {
+      final artboard = file.artboard(name);
+      expect(artboard, isNotNull, reason: 'falta el artboard $name');
+      expect(artboard!.stateMachine(RiveUi.stateMachine), isNotNull);
+      artboard.dispose();
+    });
+  }
 
   // El botón todavía no se usa en el juego (llega en la Fase 3), pero ya
   // está en el archivo: se revisa desde ahora.

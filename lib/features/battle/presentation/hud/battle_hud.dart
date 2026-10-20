@@ -182,7 +182,7 @@ class _NextWaveButton extends StatelessWidget {
                   Text(
                     l10n.hudNextWave(bonus),
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.secondary,
+                      color: colors.hudAccent,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                     ),

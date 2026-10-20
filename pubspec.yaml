@@ -63,3 +63,17 @@ flutter:
     - assets/images/pests/
     # La interfaz hecha en Rive: un solo archivo (ver docs/UI_RIVE.md).
     - assets/rive/
+    # Licencias de las fuentes (la OFL pide distribuirlas con la fuente;
+    # main.dart las agrega a la pantalla de licencias).
+    - assets/fonts/LilitaOne-OFL.txt
+    - assets/fonts/Fredoka-OFL.txt
+
+  # Las mismas fuentes que la interfaz de Rive (ver AppTheme). Fredoka es
+  # variable: FontWeight elige el peso (300–700) sin más configuración.
+  fonts:
+    - family: LilitaOne
+      fonts:
+        - asset: assets/fonts/LilitaOne-Regular.ttf
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-Variable.ttf

@@ -50,17 +50,72 @@ Botón principal de maíz dorado con bisel. 200 × 56. Lo usará el kit de compo
 
 State machine `Main`: `Idle`, `Pressed`, `Release` y `Disabled`.
 
+### `IconSet` (Fase 2)
+
+Los 29 íconos de la interfaz en un solo artboard de 48 × 48, todos con el mismo estilo: contorno `#4A1302` de 2,2 dp con puntas redondeadas y los colores de la paleta. Dart: `RiveIcon` (`lib/app/rive/rive_icons.dart`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `icon` | enum `IconName` | El componente que lo usa, con un valor de `RiveIcon` (su `name`) | Muestra ese ícono |
+
+Valores, en este orden: `corn`, `potato`, `star`, `starEmpty`, `play`, `pause`, `fastForward`, `nextWave`, `gear`, `book`, `home`, `retry`, `back`, `close`, `lock`, `upgrade`, `sell`, `target`, `ground`, `air`, `music`, `sound`, `vibration`, `language`, `ad`, `check`, `flag`, `shield`, `damage`.
+
+Cómo está hecho: cada ícono es un grupo (`icon_<nombre>`) cuya opacidad se liga a `icon` con un convertidor de grupo: `EnumToIndex` (enum → número) y una fórmula `max(0, 1 - pow({Input} - k, 2))`, que da 1 solo cuando el índice es `k`. **El orden importa**: un ícono nuevo va al final del enum (y de `RiveIcon`), con su grupo y su convertidor `IsIconNN`. Un valor que no está en el enum no se aplica y queda el que había (el primero, `corn`). `rive_contract_test.dart` compara el enum con `RiveIcon`, y `rive_icons_test.dart` dibuja los 29 y comprueba que cada uno pinte algo.
+
+### `TitleSign` (Fase 2)
+
+Cartel de madera para los títulos: tabla con degradado, vetas, borde claro interior y hojas a los lados. 360 × 96. El título va en Lilita One crema con contorno oscuro de 5 dp y se achica solo si no cabe (*fit font size*).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `title` | string | La pantalla, desde los ARB | El texto del cartel |
+
+### `Panel` (Fase 2)
+
+Marco de los paneles y tarjetas: borde terracota `#AF5212` con contorno oscuro, interior crema, guarda naranja `#F59950` y un rombo tejido en cada esquina. Hecho con layouts, así que se estira a cualquier tamaño (`Fit.layout`). Sin datos: el contenido lo pone Flutter (o el artboard que lo use como componente).
+
+### `PortraitHondero` (Fase 2, prueba de estilo)
+
+Retrato *sticker* del Hondero, 120 × 120: chullo rojo con guarda en zigzag y pompón, orejeras con borlas, poncho con franjas turquesa y amarilla. Es la prueba de estilo de los retratos; en las fases siguientes se hacen los otros guardianes y las plagas, y se juntan en un `Portrait` con un enum (como `IconSet`).
+
+### `StyleGuide` (Fase 2, solo para revisar)
+
+La guía de estilo en el editor: los 19 colores con su uso, el contraste de cada combinación de texto, las dos fuentes y una fila con las formas base (panel, cartel, botones dorado y crema, retrato). Va en el `.riv` pero el juego no lo usa.
+
+## Paleta
+
+La misma de CLAUDE.md ("Decisiones (UI)") y de `AppTheme` en Flutter. Combinaciones de texto (WCAG):
+
+| Texto sobre | Contraste | Uso |
+|---|---|---|
+| `#4A1302` sobre crema `#FEF3D7` | 13,7:1 | Texto normal |
+| `#4A1302` sobre maíz `#FDB119` | 8,3:1 | Botón principal |
+| Crema sobre madera `#9E430B` | 5,8:1 | Carteles, barra de arriba |
+| Crema sobre terracota `#B5452A` | 4,9:1 | Vender |
+| Verde `#117D16` sobre crema | 4,8:1 | Números que suben |
+| Verde `#0E6B12` sobre crema HUD `#FDEAC5` | 5,7:1 | Bono del HUD |
+| Crema sobre ciruela `#8B2055` | 7,8:1 | Jefe |
+| Crema sobre turquesa `#0B889F` | 3,8:1 | Solo texto grande o íconos |
+| Crema sobre verde `#36901D` | 3,7:1 | Solo íconos (el visto del interruptor) |
+
+La estrella amarilla `#FECE18` sobre crema da 1,35:1: siempre lleva su contorno oscuro (10:1).
+
 ## Fuentes
 
-Por ahora los textos usan Inter (la fuente por defecto del editor, licencia OFL). El archivo incluye solo los caracteres del español y el inglés: con la fuente completa el `.riv` pesaba 890 KB; recortada, 199 KB. En la Fase 2 se elige la fuente definitiva, con el mismo recorte.
+| Fuente | Para qué | En Rive | En Flutter |
+|---|---|---|---|
+| Lilita One | Títulos y carteles | Completa (28 KB): no se recorta porque su licencia reserva el nombre "Lilita" para versiones modificadas | `AppTheme.titleFont`: `displayMedium`, `headlineSmall` y la barra de arriba |
+| Fredoka (variable, 300–700) | Todo lo demás | Recortada a los caracteres del español y el inglés | `AppTheme.bodyFont`, la fuente por defecto; `FontWeight` elige el peso sin `fontVariations` |
 
-El recorte se escribe en el asset de la fuente ("caracteres incluidos" en modo personalizado) como **rangos Unicode**, no como los caracteres sueltos (ver "El error de la fuente" más abajo):
+Las dos tienen licencia SIL OFL 1.1 y están en `assets/fonts/` con su `OFL.txt` (que `main.dart` suma a la pantalla de licencias). En el editor de Rive no se pueden subir fuentes por el MCP (no permite `.ttf`): se agregaron desde el selector de fuentes del editor (catálogo de Google Fonts) y después se asignaron a cada texto con `fontassetid`.
+
+El recorte de Fredoka se escribe en su asset ("caracteres incluidos" en modo personalizado) como **rangos Unicode**, no como los caracteres sueltos (ver "El error de la fuente" más abajo):
 
 ```
-U+0020-007E,U+00A1,U+00BF,U+00C1,U+00C9,U+00CD,U+00D1,U+00D3,U+00DA,U+00DC,U+00E1,U+00E9,U+00ED,U+00F1,U+00F3,U+00FA,U+00FC,U+00B7,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2026,U+2192
+U+0020-007E,U+00A1,U+00BF,U+00C1,U+00C9,U+00CD,U+00D1,U+00D3,U+00DA,U+00DC,U+00E1,U+00E9,U+00ED,U+00F1,U+00F3,U+00FA,U+00FC,U+00B7,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2026,U+2192,U+2265
 ```
 
-Es ASCII más `¡ ¿ Á É Í Ñ Ó Ú Ü á é í ñ ó ú ü · × – — ‘ ’ “ ” … →`. Si un texto nuevo usa otro carácter, hay que sumarlo a la lista.
+Es ASCII más `¡ ¿ Á É Í Ñ Ó Ú Ü á é í ñ ó ú ü · × – — ‘ ’ “ ” … → ≥`. Si un texto nuevo usa otro carácter, hay que sumarlo a la lista. Con Inter (Fase 1) el `.riv` pesaba 199 KB; con Lilita One completa y Fredoka recortada, 144 KB.
 
 ## Tests y librerías nativas
 
