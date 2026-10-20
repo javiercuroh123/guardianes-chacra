@@ -80,6 +80,52 @@ class RiveBinding {
   }
 }
 
+/// Lleva un número del view model a su valor nuevo poco a poco, cuadro a
+/// cuadro. Rive no anima los layouts cuando el valor llega por data binding
+/// (la pastilla del selector y el relleno de la barra saltaban), así que el
+/// movimiento lo hace Flutter y Rive solo dibuja cada paso.
+class RiveNumberTween {
+  new({
+    required TickerProvider vsync,
+    required Duration duration,
+    this.curve = Curves.easeOutCubic,
+  }) : _controller = AnimationController(vsync: vsync, duration: duration) {
+    _controller.addListener(_tick);
+  }
+
+  final Curve curve;
+  final AnimationController _controller;
+  rive.ViewModelInstanceNumber? _number;
+  double _from = 0;
+  double _to = 0;
+
+  /// Empieza en [value], sin animar.
+  void attach(rive.ViewModelInstanceNumber number, double value) {
+    _number = number..value = value;
+    _from = value;
+    _to = value;
+  }
+
+  /// Va hasta [value]; con [instant] (menos movimiento), de golpe.
+  void animateTo(double value, {required bool instant}) {
+    final number = _number;
+    if (number == null || value == _to) return;
+    _to = value;
+    if (instant) {
+      _controller.stop();
+      number.value = value;
+      return;
+    }
+    _from = number.value;
+    _controller.forward(from: 0);
+  }
+
+  void _tick() => _number?.value =
+      _from + (_to - _from) * curve.transform(_controller.value);
+
+  void dispose() => _controller.dispose();
+}
+
 /// Al archivo de Rive le falta algo que el código busca por nombre.
 class RiveContractException implements Exception {
   const new(this.message);

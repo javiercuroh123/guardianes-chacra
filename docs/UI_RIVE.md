@@ -111,7 +111,7 @@ La guía de estilo en el editor: los 19 colores con su uso, el contraste de cada
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `label` | string | `RiveWaveBar`, desde los ARB | El texto |
-| `progress` | number (0–1) | `RiveWaveBar` (oleada / total) | El ancho del relleno (`ProgressToPercent`); el layout lo anima en 0,45 s |
+| `progress` | number (0–1) | `RiveWaveBar` (oleada / total), paso a paso durante 0,45 s | El ancho del relleno (`ProgressToPercent`) |
 | `boss` | boolean | `RiveWaveBar` | La barra pasa a terracota y aparece un círculo ciruela con "!" que late (0,8 s, en bucle) |
 | `waveStarted` | trigger | `RiveWaveBar`, al subir la oleada | El texto rebota y la pastilla destella (0,5 s) |
 | `icon` | view model `IconSet` | `RiveWaveBar` (siempre `flag`) | El ícono |
@@ -149,9 +149,9 @@ Tres opciones con una pastilla de maíz que se desliza hasta la elegida (Sistema
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `label0`, `label1`, `label2` | string | `RiveSegmented`, desde los ARB | Los textos |
-| `selected` | number (0–2) | `RiveSegmented` | La posición de la pastilla (`positionLeft` en %, con el convertidor `ThirdToPercent`); el layout la desliza en 0,25 s |
+| `selected` | number (0–2) | `RiveSegmented`, paso a paso durante 0,25 s | La posición de la pastilla (`positionLeft` en %, con el convertidor `ThirdToPercent`) |
 
-No tiene animaciones propias: el deslizamiento es una animación de layout.
+No tiene animaciones propias: el deslizamiento lo hace Flutter (ver `RiveNumberTween` más abajo).
 
 ### `Tab` (Fase 3)
 
@@ -199,6 +199,7 @@ Todos los componentes en todos sus estados, 1000 × 640: botones (normal, presio
 - `RiveBinding` (`lib/app/rive/rive_binding.dart`) crea el controlador de un artboard con la state machine `Main` y ata su view model por defecto (`DataBind.auto()`: cada widget tiene su propia instancia, también la del ícono anidado). Pide las propiedades por nombre y lanza `RiveContractException` si falta alguna.
 - `RiveBindingState` es la base de cada envoltorio: crea el binding si el archivo está cargado, le pone los valores iniciales (`bind`), llena `reduceMotion` desde `MediaQuery.disableAnimations` y lo libera al final. Sin archivo, o si falta una propiedad, el widget dibuja su respaldo del tema.
 - Los toques los recibe Flutter: cada envoltorio tiene su `GestureDetector`, su `Semantics` (botón, interruptor, opción elegida) y la Key que le pase la pantalla. Rive dibuja con `RiveHitTestBehavior.none`.
+- `RiveNumberTween` (en el mismo archivo) lleva un número del view model a su valor nuevo cuadro a cuadro. Hace falta porque **Rive no anima los layouts cuando el valor llega por data binding**: en el Redmi la pastilla del selector y el relleno de la barra saltaban. Con menos movimiento, el valor cambia de golpe.
 - `UiFeedback` (`lib/app/ui_feedback.dart`) toca `Sfx.uiTap` o `Sfx.uiDeny` (sonidos sintetizados por `tool/generate_placeholder_audio.py`) y vibra `Haptic.tap` (`selectionClick`) o `Haptic.deny` (`lightImpact`), respetando los interruptores de Efectos y Vibración.
 - Dónde se usa ya: los botones del título (`menu-play`, `menu-bestiary`, `menu-settings`), de la preparación (`preview-start`, `preview-rewarded`) y de los overlays de la partida (`pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive`). Los demás componentes esperan su fase (HUD en la 4, overlays en la 5, menús en la 6, bestiario y ajustes en la 7).
 

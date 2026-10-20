@@ -58,9 +58,11 @@ class RiveWaveBar extends ConsumerStatefulWidget {
 }
 
 class _RiveWaveBarState extends ConsumerState<RiveWaveBar>
-    with RiveBindingState<RiveWaveBar> {
+    with RiveBindingState<RiveWaveBar>, SingleTickerProviderStateMixin {
   rive.ViewModelInstanceString? _label;
-  rive.ViewModelInstanceNumber? _progress;
+
+  /// El relleno avanza en 450 ms.
+  RiveNumberTween? _progress;
   rive.ViewModelInstanceBoolean? _boss;
   rive.ViewModelInstanceTrigger? _waveStarted;
 
@@ -74,7 +76,10 @@ class _RiveWaveBarState extends ConsumerState<RiveWaveBar>
   void bind(RiveBinding binding) {
     binding.icon(WaveBarRive.icon).value = RiveIcon.flag.name;
     _label = binding.string(WaveBarRive.label)..value = widget.label;
-    _progress = binding.number(WaveBarRive.progress)..value = _fill;
+    _progress = RiveNumberTween(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    )..attach(binding.number(WaveBarRive.progress), _fill);
     _boss = binding.boolean(WaveBarRive.boss)..value = widget.boss;
     _waveStarted = binding.trigger(WaveBarRive.waveStarted);
   }
@@ -83,13 +88,17 @@ class _RiveWaveBarState extends ConsumerState<RiveWaveBar>
   void didUpdateWidget(RiveWaveBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (binding == null) return;
+    final calm = MediaQuery.disableAnimationsOf(context);
     _label?.value = widget.label;
-    _progress?.value = _fill;
+    _progress?.animateTo(_fill, instant: calm);
     _boss?.value = widget.boss;
-    if (widget.wave > oldWidget.wave &&
-        !MediaQuery.disableAnimationsOf(context)) {
-      _waveStarted?.trigger();
-    }
+    if (widget.wave > oldWidget.wave && !calm) _waveStarted?.trigger();
+  }
+
+  @override
+  void dispose() {
+    _progress?.dispose();
+    super.dispose();
   }
 
   @override

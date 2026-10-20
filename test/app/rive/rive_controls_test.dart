@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/audio.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
 import 'package:guardianes_chacra/app/rive/rive_badge.dart';
+import 'package:guardianes_chacra/app/rive/rive_binding.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_panel.dart';
 import 'package:guardianes_chacra/app/rive/rive_segmented.dart';
@@ -261,6 +262,72 @@ void main() {
       expect(find.byType(rive.RiveWidget), riveWidgets(withRive: withRive));
     });
   }
+
+  // En el Redmi, al volver a entrar, el contenido subía desde abajo
+  // mientras el marco caía desde arriba.
+  testWidgets('el contenido del panel vuelve a entrar desde arriba', (
+    tester,
+  ) async {
+    var taps = 0;
+    Widget panel({required bool visible}) => testApp(
+      Center(
+        child: SizedBox(
+          width: 400,
+          height: 220,
+          child: RivePanel(
+            visible: visible,
+            child: Center(
+              child: TextButton(
+                onPressed: () => taps++,
+                child: const Text('Contenido'),
+              ),
+            ),
+          ),
+        ),
+      ),
+      overrides: services(withRive: true),
+    );
+    double top() => tester.getTopLeft(find.text('Contenido')).dy;
+
+    await tester.pumpWidget(panel(visible: true));
+    await tester.pump(RivePanel.enter);
+    final rest = top();
+    await tester.pumpWidget(panel(visible: false));
+    await tester.pump(RivePanel.exit);
+    // Oculto, no responde.
+    await tester.tap(find.text('Contenido'), warnIfMissed: false);
+    expect(taps, 0);
+
+    await tester.pumpWidget(panel(visible: true));
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(top(), lessThan(rest));
+    await tester.pump(RivePanel.enter);
+    expect(top(), closeTo(rest, 0.5));
+  });
+
+  // Rive no anima los layouts cuando el valor llega por data binding: lo
+  // anima Flutter. En el Redmi la pastilla del selector saltaba.
+  testWidgets('la pastilla del selector se desliza, no salta', (tester) async {
+    final binding = RiveBinding.tryCreate(file, SegmentedRive.artboard)!;
+    addTearDown(binding.dispose);
+    final selected = binding.number(SegmentedRive.selected);
+    final slide = RiveNumberTween(
+      vsync: const TestVSync(),
+      duration: const Duration(milliseconds: 250),
+    )..attach(selected, 0);
+    addTearDown(slide.dispose);
+
+    slide.animateTo(2, instant: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(selected.value, inExclusiveRange(0, 2));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(selected.value, 2);
+
+    // Con menos movimiento, de golpe.
+    slide.animateTo(0, instant: true);
+    expect(selected.value, 0);
+  });
 
   testWidgets('con menos movimiento, la oleada no anima pero sí cambia', (
     tester,

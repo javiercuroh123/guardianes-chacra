@@ -46,22 +46,48 @@ class RiveSegmented extends ConsumerStatefulWidget {
 }
 
 class _RiveSegmentedState extends ConsumerState<RiveSegmented>
-    with RiveBindingState<RiveSegmented> {
+    with RiveBindingState<RiveSegmented>, SingleTickerProviderStateMixin {
+  /// La pastilla se desliza en 250 ms.
+  RiveNumberTween? _slide;
+
   @override
   String get artboardName => SegmentedRive.artboard;
 
   @override
   void bind(RiveBinding binding) {
+    _labels(binding);
+    _slide =
+        RiveNumberTween(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..attach(
+          binding.number(SegmentedRive.selected),
+          widget.selected.toDouble(),
+        );
+  }
+
+  void _labels(RiveBinding binding) {
     for (var i = 0; i < SegmentedRive.options; i++) {
       binding.string(SegmentedRive.label(i)).value = widget.labels[i];
     }
-    binding.number(SegmentedRive.selected).value = widget.selected.toDouble();
   }
 
   @override
   void didUpdateWidget(RiveSegmented oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (binding case final binding?) bind(binding);
+    final binding = this.binding;
+    if (binding == null) return;
+    _labels(binding);
+    _slide?.animateTo(
+      widget.selected.toDouble(),
+      instant: MediaQuery.disableAnimationsOf(context),
+    );
+  }
+
+  @override
+  void dispose() {
+    _slide?.dispose();
+    super.dispose();
   }
 
   void _choose(int index) {

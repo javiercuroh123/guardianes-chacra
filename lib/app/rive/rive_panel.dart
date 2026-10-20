@@ -76,8 +76,10 @@ class _RivePanelState extends ConsumerState<RivePanel>
   }
 }
 
-/// Mueve y desvanece su hijo como el marco de Rive (`Enter` y `Exit`).
-class _Follow extends StatelessWidget {
+/// Mueve y desvanece su hijo como el marco de Rive (`Enter` y `Exit`):
+/// cada entrada empieza 40 dp arriba y cada salida termina 24 dp abajo,
+/// aunque la anterior no haya terminado. Oculto, no recibe toques.
+class _Follow extends StatefulWidget {
   const new({required this.visible, required this.calm, required this.child});
 
   final bool visible;
@@ -85,23 +87,73 @@ class _Follow extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    final offset = visible || calm ? 0.0 : 24.0;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: calm ? 0 : -40, end: offset),
-      duration: visible ? RivePanel.enter : RivePanel.exit,
-      curve: visible ? Curves.easeOutBack : Curves.easeIn,
-      builder: (context, dy, child) => Transform.translate(
-        offset: Offset(0, dy),
-        child: AnimatedOpacity(
-          opacity: visible ? 1 : 0,
-          duration: visible
-              ? const Duration(milliseconds: 130)
-              : RivePanel.exit,
-          child: child,
-        ),
-      ),
-      child: child,
-    );
+  State<_Follow> createState() => _FollowState();
+}
+
+class _FollowState extends State<_Follow> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(vsync: this);
+  late bool _entering = widget.visible;
+
+  /// La entrada se ve del todo a los 130 ms, como el marco.
+  static const _fadeIn = 130;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.visible) {
+      _play(enter: true);
+    } else {
+      _controller.value = 1; // Ya salió.
+    }
   }
+
+  @override
+  void didUpdateWidget(_Follow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible != oldWidget.visible) _play(enter: widget.visible);
+  }
+
+  void _play({required bool enter}) {
+    _entering = enter;
+    _controller
+      ..duration = enter ? RivePanel.enter : RivePanel.exit
+      ..forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    ignoring: !widget.visible,
+    child: AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final progress = _controller.value;
+        final double dy;
+        final double opacity;
+        if (_entering) {
+          // easeOutBack pasa de 1: el contenido rebota hacia abajo.
+          dy = widget.calm
+              ? 0
+              : -40 * (1 - Curves.easeOutBack.transform(progress));
+          opacity = (progress * RivePanel.enter.inMilliseconds / _fadeIn).clamp(
+            0.0,
+            1.0,
+          );
+        } else {
+          dy = widget.calm ? 0 : 24 * Curves.easeIn.transform(progress);
+          opacity = 1 - progress;
+        }
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Opacity(opacity: opacity, child: child),
+        );
+      },
+      child: widget.child,
+    ),
+  );
 }

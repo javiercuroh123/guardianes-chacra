@@ -87,7 +87,9 @@ class _UiCatalogScreenState extends ConsumerState<UiCatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final catalog = _catalog;
-    final title = Theme.of(context).textTheme.titleMedium;
+    // Crema sobre el verde, como el título del juego.
+    final title = Theme.of(context).textTheme.titleMedium
+        ?.copyWith(color: const Color(0xFFFEF3D7));
     Widget section(String text) => Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 8),
       child: Text(text, style: title),
@@ -159,7 +161,7 @@ class _UiCatalogScreenState extends ConsumerState<UiCatalogScreen> {
             ),
             RiveButton(
               kind: RiveButtonKind.secondary,
-              label: '−40',
+              label: '-40',
               onPressed: () => setState(() => _corn -= 40),
             ),
             RiveToggle(
