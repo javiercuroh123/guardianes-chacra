@@ -224,3 +224,71 @@ class _RivePestCardState extends ConsumerState<RivePestCard>
     );
   }
 }
+
+/// El retrato de una plaga dibujado en Rive (en el detalle del Bestiario).
+/// Con [pestId] desconocido, la silueta con "?". Sin el archivo de Rive, un
+/// círculo de [color] con la inicial de [name].
+class RivePestPortrait extends ConsumerStatefulWidget {
+  const new({
+    required this.pestId,
+    required this.name,
+    required this.color,
+    this.size = 96,
+    super.key,
+  });
+
+  final String pestId;
+
+  /// Para el respaldo y para TalkBack.
+  final String name;
+  final Color color;
+
+  /// Lado (el artboard mide 120 × 120). No crece con la letra.
+  final double size;
+
+  @override
+  ConsumerState<RivePestPortrait> createState() => _RivePestPortraitState();
+}
+
+class _RivePestPortraitState extends ConsumerState<RivePestPortrait>
+    with RiveBindingState<RivePestPortrait> {
+  @override
+  String get artboardName => PestPortraitRive.artboard;
+
+  @override
+  void bind(RiveBinding binding) =>
+      binding.enumerator(PestPortraitRive.pest).value =
+          PestPortraitRive.valueFor(widget.pestId);
+
+  @override
+  void didUpdateWidget(RivePestPortrait oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    binding?.viewModel.enumerator(PestPortraitRive.pest)?.value =
+        PestPortraitRive.valueFor(widget.pestId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final binding = this.binding;
+    return Semantics(
+      label: widget.name,
+      excludeSemantics: true,
+      child: SizedBox.square(
+        dimension: widget.size,
+        child: binding != null
+            ? binding.widget()
+            : CircleAvatar(
+                backgroundColor: widget.color,
+                child: Text(
+                  widget.name.characters.first.toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: widget.size * 0.4,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}

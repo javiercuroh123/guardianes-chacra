@@ -28,6 +28,11 @@ class ProgressController extends Notifier<Progress> {
   void discoverPest(String id) => state = state.discoverPest(id);
 
   void discoverGuardian(String id) => state = state.discoverGuardian(id);
+
+  /// Se abrió la ficha de esa plaga o de ese guardián en el Bestiario.
+  void seePest(String id) => state = state.seePest(id);
+
+  void seeGuardian(String id) => state = state.seeGuardian(id);
 }
 
 final progressProvider = NotifierProvider<ProgressController, Progress>(

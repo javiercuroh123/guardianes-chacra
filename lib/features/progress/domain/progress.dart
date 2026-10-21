@@ -1,7 +1,8 @@
 import 'package:meta/meta.dart';
 
 /// El avance del jugador: las mejores estrellas de cada nivel, lo que
-/// descubrió para el Bestiario y lo que ya desbloqueó. Es inmutable: cada
+/// descubrió para el Bestiario (y qué fichas ya abrió) y lo que ya
+/// desbloqueó. Es inmutable: cada
 /// cambio devuelve uno nuevo (o el mismo, si no cambió nada).
 @immutable
 class Progress {
@@ -11,6 +12,8 @@ class Progress {
     this.discoveredGuardians = const {},
     this.unlockedLevels = const {},
     this.unlockedGuardians = const {},
+    this.seenPests = const {},
+    this.seenGuardians = const {},
   });
 
   /// Mejores estrellas por id de nivel (solo los niveles ganados).
@@ -22,6 +25,11 @@ class Progress {
   /// abiertos aunque una actualización cambie sus reglas.
   final Set<String> unlockedLevels;
   final Set<String> unlockedGuardians;
+
+  /// Las fichas del Bestiario que el jugador ya abrió: una descubierta que
+  /// todavía no está aquí se voltea y muestra "¡Nuevo!" al tocarla.
+  final Set<String> seenPests;
+  final Set<String> seenGuardians;
 
   int starsOf(String levelId) => stars[levelId] ?? 0;
 
@@ -41,6 +49,13 @@ class Progress {
   Progress discoverGuardian(String id) => discoveredGuardians.contains(id)
       ? this
       : _copy(discoveredGuardians: {...discoveredGuardians, id});
+
+  Progress seePest(String id) =>
+      seenPests.contains(id) ? this : _copy(seenPests: {...seenPests, id});
+
+  Progress seeGuardian(String id) => seenGuardians.contains(id)
+      ? this
+      : _copy(seenGuardians: {...seenGuardians, id});
 
   /// Suma [levels] y [guardians] a lo desbloqueado.
   Progress withUnlocked({
@@ -63,12 +78,16 @@ class Progress {
     Set<String>? discoveredGuardians,
     Set<String>? unlockedLevels,
     Set<String>? unlockedGuardians,
+    Set<String>? seenPests,
+    Set<String>? seenGuardians,
   }) => Progress(
     stars: stars ?? this.stars,
     discoveredPests: discoveredPests ?? this.discoveredPests,
     discoveredGuardians: discoveredGuardians ?? this.discoveredGuardians,
     unlockedLevels: unlockedLevels ?? this.unlockedLevels,
     unlockedGuardians: unlockedGuardians ?? this.unlockedGuardians,
+    seenPests: seenPests ?? this.seenPests,
+    seenGuardians: seenGuardians ?? this.seenGuardians,
   );
 
   @override
@@ -78,7 +97,9 @@ class Progress {
       _sameSet(other.discoveredPests, discoveredPests) &&
       _sameSet(other.discoveredGuardians, discoveredGuardians) &&
       _sameSet(other.unlockedLevels, unlockedLevels) &&
-      _sameSet(other.unlockedGuardians, unlockedGuardians);
+      _sameSet(other.unlockedGuardians, unlockedGuardians) &&
+      _sameSet(other.seenPests, seenPests) &&
+      _sameSet(other.seenGuardians, seenGuardians);
 
   @override
   int get hashCode => Object.hash(
@@ -87,6 +108,8 @@ class Progress {
     Object.hashAllUnordered(discoveredGuardians),
     Object.hashAllUnordered(unlockedLevels),
     Object.hashAllUnordered(unlockedGuardians),
+    Object.hashAllUnordered(seenPests),
+    Object.hashAllUnordered(seenGuardians),
   );
 
   @override
@@ -94,7 +117,8 @@ class Progress {
       'Progress(stars: $stars, discoveredPests: $discoveredPests, '
       'discoveredGuardians: $discoveredGuardians, '
       'unlockedLevels: $unlockedLevels, '
-      'unlockedGuardians: $unlockedGuardians)';
+      'unlockedGuardians: $unlockedGuardians, '
+      'seenPests: $seenPests, seenGuardians: $seenGuardians)';
 
   static bool _sameSet(Set<String> a, Set<String> b) =>
       a.length == b.length && a.containsAll(b);

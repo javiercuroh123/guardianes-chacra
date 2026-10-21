@@ -49,8 +49,8 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Music'), findsOneWidget);
 
-    // "El del teléfono" vuelve al idioma del sistema (aquí, español).
-    await tester.tap(find.text("Phone's language"));
+    // "System" vuelve al idioma del teléfono (aquí, español).
+    await tester.tap(find.text('System'));
     await tester.pumpAndSettle();
     expect(find.text('Ajustes'), findsOneWidget);
   });

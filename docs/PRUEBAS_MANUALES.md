@@ -31,7 +31,8 @@ flutter run --release
 - [ ] Preparación: de fondo el valle; arriba las oleadas, el cartel con el nombre del nivel, el maíz inicial y las papas; a la izquierda la ilustración del nivel; a la derecha las tarjetas de las plagas en el orden en que llegan, que entran una tras otra (en Andenes y la Orilla se ven cinco y asoma la sexta; la fila se desliza). Las que no viste llevan "Nueva"; el Rey Gorgojo, marco ciruela, la cinta "Jefe final" y un brillo que late detrás de la corona.
 - [ ] Preparación: tocar una plaga muestra un globo con lo que hace; se va solo, al tocar fuera o al deslizar. Volver regresa al valle; Comenzar empieza; "Ver anuncio: +50 de maíz" aparece solo con un anuncio cargado.
 - [ ] Victoria que abre un nivel: la tarjeta "Desbloqueado" muestra la escena de ese nivel (postal inclinada) en vez de la bandera.
-- [ ] Bestiario: lo no descubierto aparece como "Sin descubrir"; después de jugar, con su ficha.
+- [ ] Bestiario: pestañas Plagas y Guardianes (tocándolas o deslizando). Lo no descubierto es una silueta "?" con "???"; su detalle dice cómo conocerlo. Lo recién descubierto queda boca abajo: al tocarlo se da vuelta, suena la estrella y lleva "¡Nuevo!" hasta salir; la próxima vez ya está boca arriba.
+- [ ] Bestiario: el detalle de una plaga muestra su retrato, la descripción y sus números (vida, velocidad, maíz, papas, cómo se mueve, armadura y resistencias si tiene); el de un guardián, los niveles I‑II‑III (al tocar uno cambian el costo y el alcance) y sus dos especializaciones.
 
 ## Partida
 
@@ -65,6 +66,7 @@ flutter run --release
 
 ## Ajustes
 
+- [ ] Pantalla: el valle de fondo y la llama a la izquierda; dos columnas (Sonido y respuesta / Pantalla e idioma) con un ícono por fila e interruptores de Rive; el idioma con Sistema / Español / English; Volver arriba a la izquierda.
 - [ ] Música y Efectos se apagan y prenden al momento; la música retoma la pista correcta.
 - [ ] Vibración apagada: el jefe, la collca y los botones ya no vibran.
 - [ ] Números de daño (apagados por defecto): al prenderlos, los números se leen sobre el pasto, la tierra y el agua.

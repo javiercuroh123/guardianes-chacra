@@ -16,6 +16,8 @@ void main() {
         .discoverPest('gorgojo')
         .discoverPest('polilla')
         .discoverGuardian('hondero')
+        .seePest('gorgojo')
+        .seeGuardian('hondero')
         .withUnlocked(levels: ['valle', 'andenes'], guardians: ['hondero']),
     settings: const Settings(
       music: false,
@@ -55,6 +57,16 @@ void main() {
       codec.decode('{"version": 1, "settings": {"music": false}}').settings,
       const Settings(music: false),
     );
+  });
+
+  test('un guardado de antes del Bestiario nuevo no tiene fichas vistas: '
+      'lo descubierto muestra "¡Nuevo!" una vez', () {
+    final data = codec.decode(
+      '{"version": 1, "progress": {"discoveredPests": ["gorgojo"]}}',
+    );
+    expect(data.progress.discoveredPests, {'gorgojo'});
+    expect(data.progress.seenPests, isEmpty);
+    expect(data.progress.seenGuardians, isEmpty);
   });
 
   test('un guardado de antes de la Fase 8 tiene los números de daño '

@@ -52,6 +52,8 @@ class SaveCodec {
       'discoveredGuardians': _sorted(data.progress.discoveredGuardians),
       'unlockedLevels': _sorted(data.progress.unlockedLevels),
       'unlockedGuardians': _sorted(data.progress.unlockedGuardians),
+      'seenPests': _sorted(data.progress.seenPests),
+      'seenGuardians': _sorted(data.progress.seenGuardians),
     },
     'settings': {
       'music': data.settings.music,
@@ -85,6 +87,11 @@ class SaveCodec {
         discoveredGuardians: _ids(progress, 'discoveredGuardians'),
         unlockedLevels: _ids(progress, 'unlockedLevels'),
         unlockedGuardians: _ids(progress, 'unlockedGuardians'),
+        // Agregados en la Fase 7 de la interfaz: un guardado anterior no los
+        // tiene y quedan vacíos, así lo ya descubierto muestra "¡Nuevo!"
+        // una vez (no hace falta migración).
+        seenPests: _ids(progress, 'seenPests'),
+        seenGuardians: _ids(progress, 'seenGuardians'),
       ),
       settings: Settings(
         music: _bool(settings, 'music'),

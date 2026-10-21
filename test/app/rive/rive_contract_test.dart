@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_badge.dart';
 import 'package:guardianes_chacra/app/rive/rive_banner.dart';
+import 'package:guardianes_chacra/app/rive/rive_bestiary_grid.dart';
 import 'package:guardianes_chacra/app/rive/rive_binding.dart';
 import 'package:guardianes_chacra/app/rive/rive_branch_card.dart';
 import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
@@ -499,6 +500,34 @@ void main() {
         PestCardRive.color: rive.DataType.color,
         PestCardRive.portrait: rive.DataType.viewModel,
         PestCardRive.enter: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  test('BestiaryGrid: la lista del Component List', () {
+    expectArtboard(
+      BestiaryGridRive.artboard,
+      viewModel: BestiaryGridRive.viewModel,
+      properties: {BestiaryGridRive.entries: rive.DataType.list},
+    );
+  });
+
+  test('BestiaryEntry: nombre, color, retratos, marco, "¡Nuevo!" y vuelta', () {
+    expectArtboard(
+      BestiaryGridRive.entryArtboard,
+      viewModel: BestiaryGridRive.entryViewModel,
+      properties: {
+        BestiaryGridRive.name: rive.DataType.string,
+        BestiaryGridRive.color: rive.DataType.color,
+        BestiaryGridRive.isGuardian: rive.DataType.boolean,
+        BestiaryGridRive.pest: rive.DataType.viewModel,
+        BestiaryGridRive.guardian: rive.DataType.viewModel,
+        BestiaryGridRive.selected: rive.DataType.boolean,
+        BestiaryGridRive.isNew: rive.DataType.boolean,
+        BestiaryGridRive.newLabel: rive.DataType.string,
+        BestiaryGridRive.faceDown: rive.DataType.boolean,
+        BestiaryGridRive.reveal: rive.DataType.trigger,
         ...reduceMotion,
       },
     );

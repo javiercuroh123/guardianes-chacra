@@ -67,15 +67,15 @@ State machine `Main`: capa `Layer 1` con `Idle`, `Pressed`, `Release`, `Disabled
 
 ### `IconSet` (Fase 2)
 
-Los 29 íconos de la interfaz en un solo artboard de 48 × 48, todos con el mismo estilo: contorno `#4A1302` de 2,2 dp con puntas redondeadas y los colores de la paleta. Dart: `RiveIcon` (`lib/app/rive/rive_icons.dart`).
+Los 32 íconos de la interfaz en un solo artboard de 48 × 48, todos con el mismo estilo: contorno `#4A1302` de 2,2 dp con puntas redondeadas y los colores de la paleta. Dart: `RiveIcon` (`lib/app/rive/rive_icons.dart`).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `icon` | enum `IconName` | El componente que lo usa, con un valor de `RiveIcon` (su `name`) | Muestra ese ícono |
 
-Valores, en este orden: `corn`, `potato`, `star`, `starEmpty`, `play`, `pause`, `fastForward`, `nextWave`, `gear`, `book`, `home`, `retry`, `back`, `close`, `lock`, `upgrade`, `sell`, `target`, `ground`, `air`, `music`, `sound`, `vibration`, `language`, `ad`, `check`, `flag`, `shield`, `damage`.
+Valores, en este orden: `corn`, `potato`, `star`, `starEmpty`, `play`, `pause`, `fastForward`, `nextWave`, `gear`, `book`, `home`, `retry`, `back`, `close`, `lock`, `upgrade`, `sell`, `target`, `ground`, `air`, `music`, `sound`, `vibration`, `language`, `ad`, `check`, `flag`, `shield`, `damage`, `bug`, `paw` y `heart` (los tres últimos, de la Fase 7: las pestañas del Bestiario y la vida de las plagas).
 
-Cómo está hecho: cada ícono es un grupo (`icon_<nombre>`) cuya opacidad se liga a `icon` con un convertidor de grupo: `EnumToIndex` (enum → número) y una fórmula `max(0, 1 - pow({Input} - k, 2))`, que da 1 solo cuando el índice es `k`. **El orden importa**: un ícono nuevo va al final del enum (y de `RiveIcon`), con su grupo y su convertidor `IsIconNN`. Un valor que no está en el enum no se aplica y queda el que había (el primero, `corn`). `rive_contract_test.dart` compara el enum con `RiveIcon`, y `rive_icons_test.dart` dibuja los 29 y comprueba que cada uno pinte algo.
+Cómo está hecho: cada ícono es un grupo (`icon_<nombre>`) cuya opacidad se liga a `icon` con un convertidor de grupo: `EnumToIndex` (enum → número) y una fórmula `max(0, 1 - pow({Input} - k, 2))`, que da 1 solo cuando el índice es `k`. **El orden importa**: un ícono nuevo va al final del enum (y de `RiveIcon`), con su grupo y su convertidor `IsIconNN`. Un valor que no está en el enum no se aplica y queda el que había (el primero, `corn`). `rive_contract_test.dart` compara el enum con `RiveIcon`, y `rive_icons_test.dart` los dibuja y comprueba que cada uno pinte algo.
 
 ### `TitleSign` (Fase 2)
 
@@ -471,6 +471,30 @@ La tarjeta de una plaga en la preparación, 132 × 180: marco crema (ciruela, el
 
 Lo que depende de `boss` e `isNew` se muestra enlazando la opacidad con `BoolToNumber`. State machine `Main`: `Enter` (`Hidden` → `Enter` o `EnterCalm`, que se quedan en su último cuadro) y `Glow` (`Shine`: el resplandor late en 1,6 s si es el jefe / `Calm`).
 
+### `BestiaryEntry` y `BestiaryGrid` (Fase 7)
+
+`BestiaryEntry`, 112 × 136, es una ficha del Bestiario: marco crema (dorado si es la elegida), ventana de color con el retrato (`PestPortrait` o `Portrait` anidados, según `isGuardian`), el nombre, la insignia turquesa "¡Nuevo!" y un dorso de madera con "?" para cuando está boca abajo.
+
+| Propiedad | Tipo | Qué hace |
+|---|---|---|
+| `name` | string | El nombre ("???" sin descubrir) |
+| `color` | color | El fondo de la ventana |
+| `isGuardian` | boolean | Muestra el retrato del guardián en vez del de la plaga |
+| `pest`, `guardian` | view models `PestPortrait`, `Portrait` | Qué retrato (`unknown`, la silueta "?", sin descubrir) |
+| `selected` | boolean | El marco dorado |
+| `isNew`, `newLabel` | boolean, string | La insignia "¡Nuevo!" |
+| `faceDown` | boolean | Boca abajo: descubierta pero sin abrir |
+| `reveal` | trigger | Se da vuelta (0,55 s: el dorso se angosta, aparece el frente con un rebote y la insignia hace "pop") |
+| `reduceMotion` | boolean | Se da vuelta sin animación |
+
+State machine `Main`, capa `Face`: `FaceUp` y `FaceDown` (según `faceDown`, también desde el inicio), `Flip` o `FlipCalm` al dispararse `reveal` y de vuelta a `FaceUp`.
+
+`BestiaryGrid` es la grilla: un layout que acomoda en filas (8 de separación) un **Component List** (`ArtboardComponentList`) atado a la lista `entries`. El runtime dibuja una `BestiaryEntry` por cada instancia de su view model que haya en la lista. Widget: `RiveBestiaryGrid` (`lib/app/rive/rive_bestiary_grid.dart`): crea las instancias con `file.viewModelByName('BestiaryEntry').createInstance()`, las agrega con `list.add` y les cambia las propiedades; cuando una ficha pasa de boca abajo a boca arriba, dispara `reveal`. El ancho del widget es el justo para N columnas (con `Fit.layout` y la escala), así que Flutter sabe dónde cae cada ficha y pone encima un toque con su Semantics y su Key (`bestiary-pest-<id>`, `bestiary-guardian-<id>`).
+
+| Propiedad (`BestiaryGrid`) | Tipo | Qué hace |
+|---|---|---|
+| `entries` | lista (de `BestiaryEntry`) | Las fichas, en orden |
+
 ### Cambios de la Fase 6 en piezas anteriores
 
 - `Llama`: propiedad `chewing` (boolean; `RiveLlama(chewing:)`) y capa `Chew` (tres mordiscos y una pausa, bucle de 2 s; no con menos movimiento). La masca en el título.
@@ -529,6 +553,16 @@ Lo que depende de `boss` e `isNew` se muestra enlazando la opacidad con `BoolToN
 - Tocar una tarjeta muestra encima un globo (`RiveTooltip`) con la descripción de la plaga del Bestiario; se va a los 4 s, al tocar fuera o al deslizar la fila. TalkBack lee "Nombre, Nueva, Jefe final" y el globo al aparecer.
 - Abajo: Volver (`preview-back`), "Ver anuncio: +50 de maíz" solo si hay uno cargado (`preview-rewarded`) y Comenzar (`preview-start`). Claves de las tarjetas: `preview-pest-<id>`; de las pastillas, `preview-waves`, `preview-corn` y `preview-potatoes`.
 - El toque que cierra el globo (en el valle y aquí) lleva `excludeFromSemantics`: si no, TalkBack juntaba toda la pantalla en un nodo con el título.
+
+## El bestiario y los ajustes en Flutter (Fase 7)
+
+`lib/features/bestiary/presentation/bestiary_screen.dart`, sobre el valle: Volver redondo (`bestiary-back`), el `TitleSign` y dos `RiveTab` (Plagas con el bicho, Guardianes con la huella: `bestiary-tab-pests` / `-guardians`); el contenido es un `PageView`, así las pestañas también se deslizan con el dedo. Cada pestaña: a la izquierda la `RiveBestiaryGrid` en un `RivePanel` (4 columnas las plagas, 3 los guardianes, a lo alto que haya) y a la derecha el detalle en otro panel que se desplaza.
+
+- Una ficha descubierta que no está en `Progress.seenPests` / `seenGuardians` queda boca abajo; al tocarla se da vuelta, suena la estrella, queda guardada como vista y lleva "¡Nuevo!" hasta salir. Los guardados de antes no tienen esos campos: lo ya descubierto se voltea una vez.
+- Detalle de una plaga: el retrato (`RivePestPortrait`), el nombre, la descripción y `RiveStatPill` al 55 %: vida (corazón), velocidad, maíz al derrotarla, papas que se come, cómo se mueve, armadura y resistencias si tiene. De un guardián: el retrato, el nombre, la descripción, los niveles I‑II‑III en un `RiveSegmented` (`bestiary-levels`: costo o mejora, alcance y a qué ataca de ese nivel) y las dos especializaciones. Sin descubrir: la silueta y cómo conocerla.
+- **Los textos largos van en Flutter** (la descripción, los nombres del detalle, las especializaciones): el texto de Rive tiene un tamaño fijo en el artboard (no sigue la letra grande del teléfono salvo escalando el artboard entero, que en un panel con texto que se parte en líneas y se desplaza no sirve) y TalkBack no lo lee. En Rive quedan los nombres cortos de las fichas (achican la letra si no entran), los retratos, los íconos y las pastillas.
+
+`lib/features/settings/presentation/settings_screen.dart`, sobre el valle y con la llama a la izquierda: Volver redondo (`settings-back`), el `TitleSign` y un `RivePanel` con dos columnas, "Sonido y respuesta" (Música, Efectos, Vibración) y "Pantalla e idioma" (Números de daño, Idioma con el `RiveSegmented`: Sistema / Español / English). Cada fila lleva un azulejo con su ícono (`RiveIconView`, `lib/app/rive/rive_icon_view.dart`) y un `RiveToggle` (`settings-music`, `settings-effects`, `settings-vibration`, `settings-damage-numbers`). "Opciones de privacidad" (`settings-privacy`) aparece abajo solo si la ley lo pide; "Desarrollo: todo desbloqueado" (`settings-dev-unlock`), solo en debug. "El del teléfono" pasó a llamarse "Sistema" ("System"), como la referencia: entra en el selector.
 
 ## Paleta
 
@@ -647,3 +681,14 @@ El límite es el hilo de raster: el valle cubre toda la pantalla y se mueve sin 
 ## Mediciones de la Fase 6 (parte C)
 
 21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger, la preparación de Andenes con las siete tarjetas ya entradas (el valle de fondo sigue animándose y el brillo del jefe late): **77 FPS** (50 % de cuadros > 16,7 ms; p50 16,7 ms, p95 16,9 ms, máx. 25 ms). Más que en el valle porque hay más Rive en pantalla (siete tarjetas con su retrato anidado y una segunda copia del valle en la escena del nivel), pero ningún cuadro tarda más de 25 ms y el 95 % no pasa de 16,9 ms (60 FPS). Si hiciera falta margen: las tarjetas ya asentadas no repintan; lo caro sigue siendo el valle de fondo.
+
+## Mediciones de la Fase 7
+
+21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger:
+
+| Pantalla | FPS | Cuadros > 16,7 ms |
+|---|---|---|
+| Bestiario, pestaña Plagas (ocho fichas, dos dándose vuelta) | **83 FPS** | 42 % (p50 8,4 ms, p95 16,8 ms, máx. 25 ms) |
+| Ajustes asentados (el valle y la llama) | **91 FPS** | 27 % (p50 8,4 ms, p95 16,9 ms; un tirón suelto de 109 ms) |
+
+Como en el valle y la preparación, el límite es el raster del valle de fondo; la grilla (un solo artboard con su Component List) y los interruptores no suman casi nada. El 95 % de los cuadros no pasa de 16,9 ms (60 FPS).

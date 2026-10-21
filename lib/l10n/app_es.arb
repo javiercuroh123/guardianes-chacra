@@ -471,7 +471,7 @@
   "@settingsLanguage": {
     "description": "Ajuste."
   },
-  "languageSystem": "El del teléfono",
+  "languageSystem": "Sistema",
   "@languageSystem": {
     "description": "Opción de idioma."
   },
@@ -687,5 +687,97 @@
   "specializeChoose": "Elegir",
   "@specializeChoose": {
     "description": "Confirma la rama marcada."
+  },
+  "statLabelHealth": "Vida",
+  "@statLabelHealth": {
+    "description": "Etiqueta de la vida de una plaga en el Bestiario."
+  },
+  "statLabelSpeed": "Velocidad",
+  "@statLabelSpeed": {
+    "description": "Etiqueta de la velocidad (casillas por segundo)."
+  },
+  "statLabelArmor": "Armadura",
+  "@statLabelArmor": {
+    "description": "Etiqueta de la armadura de una plaga."
+  },
+  "statLabelReward": "Maíz al derrotarla",
+  "@statLabelReward": {
+    "description": "Etiqueta del maíz que da una plaga al caer."
+  },
+  "statLabelDamage": "Papas que se come",
+  "@statLabelDamage": {
+    "description": "Etiqueta de las papas que se come una plaga."
+  },
+  "statLabelResistance": "Resistencia",
+  "@statLabelResistance": {
+    "description": "Etiqueta de una resistencia de una plaga."
+  },
+  "statLabelMoves": "Se mueve",
+  "@statLabelMoves": {
+    "description": "Etiqueta de cómo se mueve una plaga."
+  },
+  "movesGround": "Por tierra",
+  "@movesGround": {
+    "description": "Una plaga que camina."
+  },
+  "movesFlying": "Volando",
+  "@movesFlying": {
+    "description": "Una plaga que vuela."
+  },
+  "statLabelCost": "Costo",
+  "@statLabelCost": {
+    "description": "Etiqueta del costo de construir un guardián."
+  },
+  "statLabelUpgrade": "Mejora",
+  "@statLabelUpgrade": {
+    "description": "Etiqueta del costo de mejorar un guardián."
+  },
+  "statLabelRange": "Alcance",
+  "@statLabelRange": {
+    "description": "Etiqueta del alcance de un guardián (casillas)."
+  },
+  "statLabelTargets": "Ataca",
+  "@statLabelTargets": {
+    "description": "Etiqueta de a qué ataca un guardián."
+  },
+  "targetsFlying": "Aire",
+  "@targetsFlying": {
+    "description": "Un guardián que ataca solo en el aire."
+  },
+  "targetsSupport": "Ayuda",
+  "@targetsSupport": {
+    "description": "Un guardián que no ataca: ayuda a los cercanos."
+  },
+  "bestiaryLevels": "Niveles",
+  "@bestiaryLevels": {
+    "description": "Título de los niveles de un guardián en el Bestiario."
+  },
+  "bestiaryBranches": "Al nivel III, una de estas:",
+  "@bestiaryBranches": {
+    "description": "Título de las especializaciones de un guardián."
+  },
+  "bestiaryHiddenPest": "Aparece en una partida para conocerla.",
+  "@bestiaryHiddenPest": {
+    "description": "Ficha de una plaga sin descubrir."
+  },
+  "bestiaryHiddenGuardian": "Constrúyelo en una partida para conocerlo.",
+  "@bestiaryHiddenGuardian": {
+    "description": "Ficha de un guardián sin descubrir."
+  },
+  "bestiaryNew": "¡Nuevo!",
+  "@bestiaryNew": {
+    "description": "Insignia de una ficha recién descubierta."
+  },
+  "settingsSoundSection": "Sonido y respuesta",
+  "@settingsSoundSection": {
+    "description": "Título de la columna de sonido de los ajustes."
+  },
+  "settingsDisplaySection": "Pantalla e idioma",
+  "@settingsDisplaySection": {
+    "description": "Título de la columna de pantalla de los ajustes."
+  },
+  "bestiaryTapToReveal": "¡Descubriste algo nuevo! Toca la ficha para darla vuelta.",
+  "@bestiaryTapToReveal": {
+    "description": "Detalle de una ficha descubierta que todavía no se abrió."
   }
 }

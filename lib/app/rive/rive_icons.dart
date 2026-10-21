@@ -36,6 +36,9 @@ enum RiveIcon {
   flag,
   shield,
   damage,
+  bug,
+  paw,
+  heart,
 }
 
 /// El ícono de Material más parecido, para los respaldos de Flutter (sin el
@@ -71,6 +74,9 @@ extension RiveIconFallback on RiveIcon {
     RiveIcon.flag => Icons.flag,
     RiveIcon.shield => Icons.shield,
     RiveIcon.damage => Icons.flash_on,
+    RiveIcon.bug => Icons.bug_report,
+    RiveIcon.paw => Icons.pets,
+    RiveIcon.heart => Icons.favorite,
   };
 }
 

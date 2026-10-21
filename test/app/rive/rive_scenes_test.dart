@@ -8,13 +8,16 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
+import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
+import 'package:guardianes_chacra/features/bestiary/presentation/bestiary_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/menu/presentation/title_screen.dart';
 import 'package:guardianes_chacra/features/progress/domain/progress.dart';
 import 'package:guardianes_chacra/features/progress/domain/progress_repository.dart';
 import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
+import 'package:guardianes_chacra/features/settings/presentation/settings_screen.dart';
 import 'package:rive/rive.dart' as rive;
 
 import '../../helpers/fake_ads_service.dart';
@@ -178,6 +181,52 @@ void main() {
         adsServiceProvider.overrideWithValue(FakeAdsService()),
         savedGameProvider.overrideWithValue(
           const SaveData(progress: Progress(discoveredPests: {'gorgojo'})),
+        ),
+      ],
+    );
+  });
+
+  // Cuatro plagas vistas (el gorgojo, la elegida), una recién descubierta
+  // boca abajo y el resto sin descubrir.
+  testWidgets('bestiario se dibuja con Rive, sin respaldos', (tester) async {
+    await drawScene(
+      tester,
+      'bestiario',
+      const BestiaryScreen(),
+      const Duration(milliseconds: 1000),
+      overrides: [
+        contentOverride(content()),
+        savedGameProvider.overrideWithValue(
+          const SaveData(
+            progress: Progress(
+              discoveredPests: {
+                'gorgojo',
+                'polilla',
+                'langosta',
+                'escarabajo',
+                'granizo',
+              },
+              seenPests: {'gorgojo', 'polilla', 'langosta', 'escarabajo'},
+              discoveredGuardians: {'hondero', 'llama'},
+              seenGuardians: {'hondero', 'llama'},
+            ),
+          ),
+        ),
+      ],
+    );
+  });
+
+  testWidgets('ajustes se dibuja con Rive, sin respaldos', (tester) async {
+    await drawScene(
+      tester,
+      'ajustes',
+      const SettingsScreen(),
+      const Duration(milliseconds: 1000),
+      overrides: [
+        // Con las opciones de privacidad (donde la ley las pide).
+        adsServiceProvider.overrideWithValue(
+          FakeAdsService()
+            ..status.value = const AdsStatus(privacyOptionsRequired: true),
         ),
       ],
     );
