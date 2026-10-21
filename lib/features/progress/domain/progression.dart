@@ -32,6 +32,24 @@ class Progression {
       progress.unlockedLevels.contains(levelId) ||
       (levels[levelId]?.isMetBy(progress.stars) ?? false);
 
+  /// El nivel que conviene jugar ahora: el primero abierto sin estrellas;
+  /// si todos los abiertos están ganados, el que tiene menos (el primero
+  /// si empatan), para juntar las que faltan; con todos en 3 estrellas, el
+  /// último abierto. Con [unlockAll] cuenta todos como abiertos. `null` si
+  /// no hay ninguno abierto.
+  String? suggested(Progress progress, {bool unlockAll = false}) {
+    final open = [
+      for (final id in levels.keys)
+        if (unlockAll || canPlay(progress, id)) id,
+    ];
+    if (open.isEmpty) return null;
+    var best = open.first;
+    for (final id in open) {
+      if (progress.starsOf(id) < progress.starsOf(best)) best = id;
+    }
+    return progress.starsOf(best) >= 3 ? open.last : best;
+  }
+
   bool canBuild(Progress progress, String guardianId) =>
       progress.unlockedGuardians.contains(guardianId) ||
       (guardians[guardianId]?.isMetBy(progress.stars) ?? false);

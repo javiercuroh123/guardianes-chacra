@@ -378,7 +378,7 @@ La collca vacía de la derrota, 120 × 120: silo de adobe con techo de paja y la
 
 ### `Valley` (Fase 6)
 
-El paisaje del valle, 960 × 432, en capas: cielo degradado, cuatro nubes, cordillera con nieve, colinas con árboles, lago con isla de totora y un bote, andenes de piedra con la `Collca` llena encima, la chacra (campo, matas de maíz y dos casitas de techo rojo), el camino y delante hojas grandes, quínoa, piedras y dos mazorcas. Fondo del título (y del mapa en la parte B). Widget: `RiveValley` (`lib/app/rive/rive_valley.dart`), cubre a su padre (`Fit.cover`).
+El paisaje del valle, 960 × 432, en capas: cielo degradado, cuatro nubes, cordillera con nieve, colinas con árboles, lago con isla de totora y un bote, andenes de piedra con la `Collca` llena encima, la chacra (campo, matas de maíz y dos casitas de techo rojo), el camino y delante hojas grandes, quínoa, piedras y dos mazorcas. Fondo del título y del mapa. Widget: `RiveValley` (`lib/app/rive/rive_valley.dart`), cubre a su padre (`Fit.cover`; en el mapa, `Fit.fitWidth` en pantallas más angostas que 2:1).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
@@ -416,6 +416,32 @@ Un gorgojo gruñón que se asoma entre tres hojas, 140 × 110: cada 8 s sube, mi
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `reduceMotion` | boolean | `RiveBindingState` | No se asoma |
+
+### `LevelNode` (Fase 6)
+
+Un nivel en el mapa, 160 × 150: pedestal de piedra, círculo verde con borde crema y el número (Fredoka con contorno), cinta crema con el nombre y una barra oscura con 3 estrellas. Cerrado: el disco gris (`DiscLocked`) y un candado dorado; sugerido: un anillo dorado con resplandor. Widget: `RiveLevelNode` (`lib/app/rive/rive_level_node.dart`); se ancla en el mapa por el centro del círculo (`LevelNodeRive.circleCenter`, 0,5 × 0,32).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `number`, `name` | string | `RiveLevelNode` | El número del círculo y el nombre de la cinta (achica la letra si no entra) |
+| `stars` | number | `RiveLevelNode` | Las estrellas llenas (0 a 3) |
+| `state` | enum `LevelNodeState` (`locked`, `available`, `chosen`) | `RiveLevelNode` | Cerrado, abierto o sugerido |
+| `shake` | trigger | `RiveLevelNode` (cuando sube `shakes`) | El círculo se sacude y el candado se bambolea |
+| `unlock` | trigger | `RiveLevelNode` (cuando sube `unlocks`) | El candado salta y se desvanece y el círculo hace "pop" |
+| `reduceMotion` | boolean | `RiveBindingState` | Sin flotar, sin pulso, sin sacudida ni "pop" |
+
+Lo que se ve u oculta según el estado y las estrellas no usa poses: la opacidad va enlazada al view model con conversores (`IsIcon00` e `IsIcon02` del `IconSet` para "es el primero / el tercero del enum", y los nuevos `EnumNotFirst` y `AtLeast1/2/3`). State machine `Main`: `Float` (`Bob`: el círculo sube y baja 4,5 px en 2 s si no está cerrado / `Still`), `Ring` (`Pulse`: el anillo y el resplandor laten en 1,2 s si es el sugerido / `Calm`) y `Action` (`Rest` → `Shake` 0,45 s o `Unlock` 0,9 s → `Rest`).
+
+### `LevelScene` (Fase 6)
+
+La ilustración de un nivel, 240 × 150: una copia del paisaje del `Valley` (sin animaciones) dentro del grupo `Camera`, escalada al 60 % y encuadrada en la chacra, los andenes o la orilla del lago, con un marco crema. Widget: `RiveLevelScene` (`lib/app/rive/rive_level_scene.dart`, con las esquinas recortadas en Flutter); va en la barra del valle y, en la parte C, en la vista previa y en la tarjeta de desbloqueo.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `level` | enum `LevelId` (`chacra`, `andenes`, `lago`) | `RiveLevelScene` (de `LevelSceneRive.levels`) | Qué parte del valle se ve |
+| `collca` | view model `Collca` | — (instancia `Full`) | La collca de los andenes; `RiveLevelScene` le pone `reduceMotion` |
+
+State machine `Main`: `Framing`, un estado por nivel (`Chacra`, `Andenes`, `Lago`) que mueve `Camera`. Un nivel que el dibujo no conoce usa el respaldo de Flutter.
 
 ### Cambios de la Fase 6 en piezas anteriores
 
@@ -455,6 +481,16 @@ Un gorgojo gruñón que se asoma entre tres hojas, 140 × 110: cada 8 s sube, mi
 ## El título en Flutter (Fase 6, parte A)
 
 `lib/features/menu/presentation/title_screen.dart`: `RiveValley` de fondo; el hondero a la izquierda y la llama masticando a la derecha (alto = mín(68 % del alto, 30 % del ancho), para que en 4:3 no toquen el logo); dos gorgojos asomándose junto a sus pies; y al centro el logo (ancho = mín(42 % del ancho, 1,1 × el alto)), Jugar del ancho de Bestiario y Ajustes juntos, que "respira" (un 4 % cada 1,4 s), y los otros dos debajo. Todo el centro va en un `FittedBox(scaleDown)`. Sin el archivo de Rive, el título de siempre (nombre y lema en Flutter) sobre un degradado de cielo y chacra, sin mascotas ni respiración, así los tests pueden esperar a que se asiente. Claves: `menu-play`, `menu-bestiary`, `menu-settings`.
+
+## El valle en Flutter (Fase 6, parte B)
+
+`lib/features/level_select/presentation/level_select_screen.dart`, sin AppBar:
+
+- De fondo, el `RiveValley`. `ValleyFrame` (`valley_layout.dart`) dice cómo se escala: cubriendo en pantallas de 2:1 o más anchas y, en las más angostas, ajustado al ancho y apoyado abajo. Con la misma transformación se ubican los nodos sobre puntos del dibujo (`valleyAnchors`: la chacra junto a las casitas, los andenes a la derecha de la collca y la orilla sobre la totora). Un nivel que el dibujo no conoce usa el reparto de `valleyNodePositions`.
+- Los nodos (`RiveLevelNode`, 15,5 % del ancho, entre 112 y 150 dp) se tocan en Flutter: abierto → la vista previa; cerrado → se sacude y aparece encima el globo (`RiveTooltip`) con la regla durante 3 s, o hasta tocar el mapa (antes era un snackbar). TalkBack lee "Nombre: N de 3 estrellas" o "Nombre: bloqueado", y el globo al aparecer. El sugerido (`Progression.suggested`: el primero abierto sin estrellas; si no hay, el que tiene menos; con todo en 3, el último abierto) lleva el anillo.
+- El camino de piedritas lo dibuja Flutter (`_TrailPainter`), solo hasta los niveles abiertos. Al ganar, la batalla anota los niveles nuevos en `valleyRevealProvider`; cuando el valle vuelve a estar a la vista, el camino hasta cada uno aparece piedra por piedra en 1,2 s, el candado salta (`unlock`) y suena la estrella. Vive en memoria: si el juego se cierra antes, el camino aparece hecho. Con "Quitar animaciones", también.
+- Arriba: Volver (redondo, `RiveIcon.back`), el `TitleSign` "El valle" y el contador de estrellas (`RiveCounter` con la estrella, "N/9"). Abajo, en un `RivePanel`: la `RiveLevelScene` del sugerido, su nombre y sus estrellas (`RiveStar`) y Jugar, que lleva a su vista previa; con letra grande se achica (hasta el 27 % del alto) para no tapar los niveles.
+- Claves: `level-<id>`, `valley-back`, `valley-play`, `valley-stars`.
 
 ## Paleta
 
@@ -565,3 +601,7 @@ La derrota se midió con las 150 plagas del estrés todavía dibujadas detrás d
 | APK de debug, justo al abrir | 53 FPS (en debug el Dart es mucho más lento; sirve solo para comparar) |
 
 El límite es el hilo de raster: el valle cubre toda la pantalla y se mueve sin parar, e Impeller vuelve a rasterizar la escena entera en cada cuadro (no tiene la caché de raster de Skia). Pasa los 8,3 ms de un cuadro a 120 Hz, pero ninguno llega a 16,7 ms de media, así que en una pantalla de 60 Hz el título no perdería cuadros. Envolver cada widget de Rive en un `RepaintBoundary` (el render box de Rive no lo es) no cambió nada (89–90 FPS con y sin), porque solo ahorra trabajo del hilo de UI: no lo dejamos. Si el mapa del valle (parte B) necesitara más margen, la salida sería dibujar las capas quietas del paisaje una vez a imagen y mover solo las nubes.
+
+## Mediciones de la Fase 6 (parte B)
+
+21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger, el valle asentado con los tres niveles abiertos (las nubes cruzan, los tres nodos flotan y el sugerido late): **86–90 FPS** (28–34 % de cuadros > 16,7 ms; p50 8,4 ms, p95 16,9 ms). Lo mismo que el título: el límite sigue siendo el raster del valle a pantalla completa; los nodos, el camino y la barra no suman casi nada.

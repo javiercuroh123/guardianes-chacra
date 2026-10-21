@@ -25,7 +25,9 @@ flutter run --release
 
 - [ ] Título: de fondo el valle (cordillera, lago, andenes con la collca llena, chacra) con nubes que cruzan; el logo cae y sus tres líneas bajan una tras otra, la cinta del lema hace "pop" y las hojas se mecen; Jugar (ancho, de maíz) respira; el hondero hace girar la honda y parpadea, la llama mastica de a ratos y cada tanto un gorgojo se asoma entre las hojas. Con "Quitar animaciones", todo quieto.
 - [ ] Título: Jugar, Bestiario y Ajustes abren su pantalla; atrás vuelve al título.
-- [ ] Valle (nueva partida): solo Chacra del Valle está abierto; tocar un nivel cerrado dice qué falta para abrirlo.
+- [ ] Valle (nueva partida): de fondo, el valle del título; solo Chacra del Valle está abierto (verde, flota y lleva el anillo dorado de sugerido); los otros, grises y con candado. Tocar uno cerrado lo sacude y muestra encima un globo con lo que falta, que se va solo a los 3 s o al tocar el mapa.
+- [ ] Valle: arriba, Volver (vuelve al título), el cartel "El valle" y las estrellas "N/9"; abajo, la ilustración, el nombre y las estrellas del nivel sugerido y Jugar, que abre su vista previa (igual que tocar el nodo).
+- [ ] Valle: al ganar un nivel que abre otro, al volver al valle el camino de piedritas se dibuja hasta el nuevo, su candado salta y suena la estrella; el anillo pasa al nivel sugerido. Con "Quitar animaciones", el camino ya está y nada flota.
 - [ ] Vista previa: muestra oleadas, plagas en orden de llegada y guardianes disponibles.
 - [ ] Bestiario: lo no descubierto aparece como "Sin descubrir"; después de jugar, con su ficha.
 

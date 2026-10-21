@@ -204,6 +204,18 @@
       }
     }
   },
+  "valleyStarsSemantics": "{stars} de {max} estrellas",
+  "@valleyStarsSemantics": {
+    "description": "Lectura de pantalla del contador de estrellas del valle.",
+    "placeholders": {
+      "stars": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "previewWaves": "{count} oleadas",
   "@previewWaves": {
     "description": "Cantidad de oleadas en la vista previa.",

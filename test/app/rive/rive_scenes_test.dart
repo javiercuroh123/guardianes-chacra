@@ -4,12 +4,18 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/menu/presentation/title_screen.dart';
+import 'package:guardianes_chacra/features/progress/domain/progress.dart';
+import 'package:guardianes_chacra/features/progress/domain/progress_repository.dart';
+import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 import 'package:rive/rive.dart' as rive;
 
+import '../../helpers/real_content.dart';
 import '../../helpers/test_app.dart';
 
 /// Dibuja con el archivo real la pausa, la victoria y la derrota (Fase 5)
@@ -23,6 +29,7 @@ import '../../helpers/test_app.dart';
 ///
 /// Usa las librerías nativas de rive_native (ver `rive_contract_test.dart`).
 void main() {
+  final content = useRealContent();
   late rive.File file;
 
   setUpAll(() async {
@@ -82,60 +89,93 @@ void main() {
     ),
   };
 
-  for (final MapEntry(key: name, value: (overlay, wait)) in scenes.entries) {
-    testWidgets('$name se dibuja con Rive, sin respaldos', (tester) async {
-      // Un teléfono apaisado de 873 × 393 dp.
-      tester.view
-        ..physicalSize = const Size(1746, 786)
-        ..devicePixelRatio = 2;
-      addTearDown(tester.view.reset);
-      final boundary = GlobalKey();
+  /// Dibuja [overlay] durante [wait] y revisa que no haya respaldos.
+  Future<void> drawScene(
+    WidgetTester tester,
+    String name,
+    Widget overlay,
+    Duration wait, {
+    List<Override> overrides = const [],
+  }) async {
+    // Un teléfono apaisado de 873 × 393 dp.
+    tester.view
+      ..physicalSize = const Size(1746, 786)
+      ..devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    final boundary = GlobalKey();
 
-      await tester.pumpWidget(
-        testApp(
-          Scaffold(
-            body: RepaintBoundary(
-              key: boundary,
-              child: ColoredBox(
-                // El pasto del mapa, de fondo.
-                color: const Color(0xFF4F8A3C),
-                child: SizedBox.expand(child: overlay),
-              ),
+    await tester.pumpWidget(
+      testApp(
+        Scaffold(
+          body: RepaintBoundary(
+            key: boundary,
+            child: ColoredBox(
+              // El pasto del mapa, de fondo.
+              color: const Color(0xFF4F8A3C),
+              child: SizedBox.expand(child: overlay),
             ),
           ),
-          overrides: [riveFileProvider.overrideWithValue(file)],
         ),
-      );
-      for (
-        var t = Duration.zero;
-        t < wait;
-        t += const Duration(milliseconds: 50)
-      ) {
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+        overrides: [riveFileProvider.overrideWithValue(file), ...overrides],
+      ),
+    );
+    for (
+      var t = Duration.zero;
+      t < wait;
+      t += const Duration(milliseconds: 50)
+    ) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
-      expect(tester.takeException(), isNull);
-      // Los respaldos usan estos widgets; con Rive no hay ninguno.
-      expect(find.byType(Card), findsNothing);
-      expect(find.byType(FilledButton), findsNothing);
-      expect(find.byType(OutlinedButton), findsNothing);
-      expect(find.textContaining('🦙'), findsNothing);
-      expect(find.byIcon(Icons.warehouse_outlined), findsNothing);
+    expect(tester.takeException(), isNull);
+    // Los respaldos usan estos widgets; con Rive no hay ninguno.
+    expect(find.byType(Card), findsNothing);
+    expect(find.byType(FilledButton), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(find.textContaining('🦙'), findsNothing);
+    expect(find.byIcon(Icons.warehouse_outlined), findsNothing);
 
-      const prefix = String.fromEnvironment('SCENES_PNG');
-      if (prefix.isNotEmpty) {
-        await tester.runAsync(() async {
-          final render =
-              boundary.currentContext!.findRenderObject()!
-                  as RenderRepaintBoundary;
-          final image = await render.toImage(pixelRatio: 2);
-          final png = await image.toByteData(format: ui.ImageByteFormat.png);
-          await io.File('${prefix}_$name.png')
-              .writeAsBytes(png!.buffer.asUint8List());
-        });
-      }
+    const prefix = String.fromEnvironment('SCENES_PNG');
+    if (prefix.isNotEmpty) {
+      await tester.runAsync(() async {
+        final render =
+            boundary.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary;
+        final image = await render.toImage(pixelRatio: 2);
+        final png = await image.toByteData(format: ui.ImageByteFormat.png);
+        await io.File('${prefix}_$name.png')
+            .writeAsBytes(png!.buffer.asUint8List());
+      });
+    }
 
-      await tester.pumpWidget(const SizedBox());
-    });
+    await tester.pumpWidget(const SizedBox());
   }
+
+  for (final MapEntry(key: name, value: (overlay, wait)) in scenes.entries) {
+    testWidgets(
+      '$name se dibuja con Rive, sin respaldos',
+      (tester) => drawScene(tester, name, overlay, wait),
+    );
+  }
+
+  // El primero ganado con 2 estrellas: Andenes sugerido y el lago cerrado.
+  testWidgets('valle se dibuja con Rive, sin respaldos', (tester) async {
+    await drawScene(
+      tester,
+      'valle',
+      const LevelSelectScreen(),
+      const Duration(milliseconds: 1500),
+      overrides: [
+        contentOverride(content()),
+        savedGameProvider.overrideWithValue(
+          const SaveData(
+            progress: Progress(
+              stars: {'chacra_del_valle': 2},
+              unlockedLevels: {'chacra_del_valle', 'andenes'},
+            ),
+          ),
+        ),
+      ],
+    );
+  });
 }

@@ -34,6 +34,7 @@
   "valleyLockedBoth": "Win {level} and collect {stars} stars to open this level (you have {have})",
   "valleyLevelSemantics": "{name}: {stars} of 3 stars",
   "valleyLockedSemantics": "{name}: locked",
+  "valleyStarsSemantics": "{stars} of {max} stars",
   "previewWaves": "{count} waves",
   "previewPests": "Incoming pests",
   "previewNew": "New",

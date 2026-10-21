@@ -39,6 +39,7 @@ import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/valley_reveal.dart';
 import 'package:guardianes_chacra/features/progress/domain/progression.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 import 'package:guardianes_chacra/features/settings/presentation/settings_providers.dart';
@@ -485,11 +486,14 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       case GuardianBuilt(:final guardianType):
         progress.discoverGuardian(guardianType);
       case LevelWon(:final potatoesLeft):
-        session.unlocked = progress.recordResult(
+        final unlocked = progress.recordResult(
           session.level.id,
           stars: _starsFor(session, potatoesLeft),
           progression: _progression,
         );
+        session.unlocked = unlocked;
+        // El valle dibuja el camino hasta cada nivel nuevo al volver a él.
+        ref.read(valleyRevealProvider.notifier).add(unlocked.levels);
         session.game.overlays.add(BattleOverlays.won);
       case LevelLost():
         session.game.overlays.add(BattleOverlays.lost);

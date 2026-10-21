@@ -97,4 +97,54 @@ void main() {
   test('un id que el contenido ya no tiene no está abierto', () {
     expect(progression.canPlay(const Progress(), 'borrado'), isFalse);
   });
+
+  group('el nivel sugerido', () {
+    /// El avance tras ganar cada nivel de [stars], en orden, con las
+    /// reglas (como en el juego).
+    Progress after(Map<String, int> stars) {
+      var progress = const Progress();
+      for (final MapEntry(key: id, value: count) in stars.entries) {
+        (progress, _) = progression.record(progress, id, stars: count);
+      }
+      return progress;
+    }
+
+    test('al empezar, el primero', () {
+      expect(progression.suggested(const Progress()), 'valle');
+    });
+
+    test('el primero abierto que no tiene estrellas', () {
+      expect(progression.suggested(after({'valle': 2})), 'andenes');
+    });
+
+    test('con todo ganado, el que tiene menos estrellas', () {
+      // El lago sigue cerrado (2 + 1 = 3 de 4): conviene volver al valle.
+      expect(
+        progression.suggested(after({'valle': 2, 'andenes': 1})),
+        'andenes',
+      );
+      expect(progression.suggested(after({'valle': 1, 'andenes': 2})), 'valle');
+    });
+
+    test('con todo en 3 estrellas, el último abierto', () {
+      expect(
+        progression.suggested(after({'valle': 3, 'andenes': 3, 'lago': 3})),
+        'lago',
+      );
+    });
+
+    test('con "todo desbloqueado" cuentan todos', () {
+      expect(
+        progression.suggested(after({'valle': 2}), unlockAll: true),
+        'andenes',
+      );
+      expect(
+        progression.suggested(
+          after({'valle': 2, 'andenes': 3}),
+          unlockAll: true,
+        ),
+        'lago',
+      );
+    });
+  });
 }

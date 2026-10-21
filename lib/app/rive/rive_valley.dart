@@ -18,10 +18,22 @@ abstract final class ValleyRive {
 
 /// El valle en capas (cielo, nubes que cruzan, cordillera, lago, andenes
 /// con la collca, chacra y plantas delante), de fondo del título y del
-/// mapa. Cubre a su padre, no recibe toques y TalkBack no lo lee. Sin el
-/// archivo de Rive, el verde de la chacra con un cielo degradado.
+/// mapa. Cubre a su padre (o se ajusta como pida [fit]), no recibe toques y
+/// TalkBack no lo lee. Sin el archivo de Rive, el verde de la chacra con un
+/// cielo degradado.
 class RiveValley extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({
+    this.fit = rive.Fit.cover,
+    this.alignment = Alignment.center,
+    super.key,
+  });
+
+  final rive.Fit fit;
+  final Alignment alignment;
+
+  /// El celeste de arriba del cielo, para lo que quede sin dibujar cuando
+  /// el valle no cubre la pantalla.
+  static const sky = Color(0xFF5FB5E8);
 
   @override
   ConsumerState<RiveValley> createState() => _RiveValleyState();
@@ -52,13 +64,13 @@ class _RiveValleyState extends ConsumerState<RiveValley>
     return IgnorePointer(
       child: ExcludeSemantics(
         child: binding != null
-            ? binding.widget(fit: rive.Fit.cover)
+            ? binding.widget(fit: widget.fit, alignment: widget.alignment)
             : const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0xFF8ED0F0), AppTheme.chacra],
+                    colors: [RiveValley.sky, AppTheme.chacra],
                     stops: [0.25, 0.6],
                   ),
                 ),

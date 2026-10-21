@@ -12,6 +12,8 @@ import 'package:guardianes_chacra/app/rive/rive_corn_rain.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
 import 'package:guardianes_chacra/app/rive/rive_guardian_info.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_level_node.dart';
+import 'package:guardianes_chacra/app/rive/rive_level_scene.dart';
 import 'package:guardianes_chacra/app/rive/rive_llama.dart';
 import 'package:guardianes_chacra/app/rive/rive_logo.dart';
 import 'package:guardianes_chacra/app/rive/rive_mascots.dart';
@@ -435,6 +437,41 @@ void main() {
       viewModel: ValleyRive.viewModel,
       properties: {ValleyRive.collca: rive.DataType.viewModel, ...reduceMotion},
     );
+  });
+
+  test('LevelNode: número, nombre, estrellas, estado y sus dos triggers', () {
+    expectArtboard(
+      LevelNodeRive.artboard,
+      viewModel: LevelNodeRive.viewModel,
+      properties: {
+        LevelNodeRive.number: rive.DataType.string,
+        LevelNodeRive.name: rive.DataType.string,
+        LevelNodeRive.stars: rive.DataType.number,
+        LevelNodeRive.state: rive.DataType.enumType,
+        LevelNodeRive.shake: rive.DataType.trigger,
+        LevelNodeRive.unlock: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
+    final states = file.enums.where((e) => e.name == LevelNodeRive.enumName);
+    expect(states, hasLength(1));
+    expect(states.single.values, [
+      for (final state in LevelNodeState.values) state.name,
+    ]);
+  });
+
+  test('LevelScene: el valle encuadrado en cada nivel, con su collca', () {
+    expectArtboard(
+      LevelSceneRive.artboard,
+      viewModel: LevelSceneRive.viewModel,
+      properties: {
+        LevelSceneRive.level: rive.DataType.enumType,
+        LevelSceneRive.collca: rive.DataType.viewModel,
+      },
+    );
+    final ids = file.enums.where((e) => e.name == LevelSceneRive.enumName);
+    expect(ids, hasLength(1));
+    expect(ids.single.values, containsAll(LevelSceneRive.levels.values));
   });
 
   test('Logo: tres líneas del nombre y el lema', () {
