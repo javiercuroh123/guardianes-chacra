@@ -54,8 +54,8 @@ Future<void> main() async {
   final repository = LocalProgressRepository(SharedPreferencesAsync());
   final saved = await repository.load();
 
-  // La interfaz de Rive (16 KB) también se carga antes del primer cuadro.
-  // Si falla, cada pantalla usa su aspecto de Flutter.
+  // La interfaz de Rive (unos 280 KB) también se carga antes del primer
+  // cuadro. Si falla, cada pantalla usa su aspecto de Flutter.
   final riveFile = await RiveUi.load();
 
   // Anuncios: los de prueba fuera de release; en release, solo si se

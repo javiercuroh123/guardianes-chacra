@@ -42,15 +42,6 @@
       }
     }
   },
-  "hudPotatoes": "Papas en la collca: {amount}",
-  "@hudPotatoes": {
-    "description": "Lectura de pantalla de las vidas.",
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      }
-    }
-  },
   "hudWave": "Oleada {current}/{total}",
   "@hudWave": {
     "description": "Oleada actual y total.",
@@ -75,10 +66,6 @@
   "@battleRetry": {
     "description": "Vuelve a empezar el nivel."
   },
-  "battleExit": "Salir",
-  "@battleExit": {
-    "description": "Sale de la partida."
-  },
   "menuBuild": "Construir {name}: {cost} de maíz",
   "@menuBuild": {
     "description": "Lectura de pantalla de una opción del menú de construcción.",
@@ -90,18 +77,6 @@
         "type": "int"
       }
     }
-  },
-  "menuUpgrade": "Mejorar",
-  "@menuUpgrade": {
-    "description": "Opción del menú de un guardián."
-  },
-  "menuSell": "Vender",
-  "@menuSell": {
-    "description": "Opción del menú de un guardián."
-  },
-  "menuTargeting": "Apuntar",
-  "@menuTargeting": {
-    "description": "Opción del menú de un guardián que cambia a qué plaga apunta."
   },
   "menuConfirmHint": "Toca otra vez para confirmar",
   "@menuConfirmHint": {
@@ -212,15 +187,6 @@
         "type": "int"
       },
       "max": {
-        "type": "int"
-      }
-    }
-  },
-  "previewWaves": "{count} oleadas",
-  "@previewWaves": {
-    "description": "Cantidad de oleadas en la vista previa.",
-    "placeholders": {
-      "count": {
         "type": "int"
       }
     }
@@ -344,55 +310,6 @@
   "@bestiaryUnknown": {
     "description": "Ficha del Bestiario que el jugador todavía no encontró."
   },
-  "statHealth": "Vida: {value}",
-  "@statHealth": {
-    "description": "Dato de una plaga.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statSpeed": "Velocidad: {value} casillas/s",
-  "@statSpeed": {
-    "description": "Dato de una plaga.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statArmor": "Armadura: {value}",
-  "@statArmor": {
-    "description": "Dato de una plaga.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statReward": "Maíz al derrotarla: {value}",
-  "@statReward": {
-    "description": "Dato de una plaga.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statPotatoes": "Papas que se come: {value}",
-  "@statPotatoes": {
-    "description": "Dato de una plaga.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statFlying": "Vuela",
-  "@statFlying": {
-    "description": "Dato de una plaga voladora."
-  },
   "statResistance": "{type} ×{factor}",
   "@statResistance": {
     "description": "Multiplicador de daño de una plaga, por ejemplo \"Fuego ×1,5\".",
@@ -408,40 +325,6 @@
   "statImmune": "Inmune a ralentizar",
   "@statImmune": {
     "description": "Dato de una plaga."
-  },
-  "statCost": "Costo: {value}",
-  "@statCost": {
-    "description": "Dato de un guardián.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statRange": "Alcance: {value} casillas",
-  "@statRange": {
-    "description": "Dato de un guardián.",
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "statTargetsBoth": "Ataca: tierra y aire",
-  "@statTargetsBoth": {
-    "description": "Dato de un guardián."
-  },
-  "statTargetsGround": "Ataca: solo tierra",
-  "@statTargetsGround": {
-    "description": "Dato de un guardián."
-  },
-  "statTargetsFlying": "Ataca: solo aire",
-  "@statTargetsFlying": {
-    "description": "Dato de un guardián."
-  },
-  "statSupport": "No ataca: ayuda a los cercanos",
-  "@statSupport": {
-    "description": "Dato de un guardián de apoyo."
   },
   "damagePhysical": "Físico",
   "@damagePhysical": {

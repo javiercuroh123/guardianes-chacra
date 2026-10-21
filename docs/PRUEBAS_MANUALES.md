@@ -20,6 +20,7 @@ flutter run --release
 - [ ] Al girar el teléfono 180° la imagen gira; nunca pasa a vertical.
 - [ ] Al deslizar desde un borde aparecen las barras del sistema y se vuelven a ocultar solas.
 - [ ] Suena la música del menú.
+- [ ] Del toque en el ícono al título pasa alrededor de un segundo, sin una pantalla negra larga.
 
 ## Menús
 

@@ -64,48 +64,6 @@ class _DevPanelState extends ConsumerState<DevPanel> {
               onChanged: (on) =>
                   ref.read(devOptionsProvider.notifier).debugOverlay = on,
             ),
-            // Debajo de su etiqueta y no al lado: en pantallas angostas el
-            // selector no cabe junto al texto.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Prueba de Rive: contadores animándose'),
-                  const SizedBox(height: 6),
-                  SegmentedButton<RiveBenchMode>(
-                    key: const ValueKey('dev-rive-bench'),
-                    segments: [
-                      for (final mode in RiveBenchMode.values)
-                        ButtonSegment(
-                          value: mode,
-                          label: Text(switch (mode) {
-                            RiveBenchMode.off => 'No',
-                            RiveBenchMode.all => '${mode.count}',
-                            RiveBenchMode.hud =>
-                              '${mode.count} (${mode.animated} cambian)',
-                          }),
-                        ),
-                    ],
-                    selected: {options.riveBench},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selected) =>
-                        ref.read(devOptionsProvider.notifier).riveBench =
-                            selected.single,
-                  ),
-                ],
-              ),
-            ),
-            SwitchListTile(
-              dense: true,
-              key: const ValueKey('dev-rive-shared'),
-              title: const Text(
-                'Prueba de Rive en una sola textura (RivePanel)',
-              ),
-              value: options.riveSharedTexture,
-              onChanged: (on) =>
-                  ref.read(devOptionsProvider.notifier).riveSharedTexture = on,
-            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,

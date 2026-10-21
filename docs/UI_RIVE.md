@@ -682,7 +682,7 @@ En Windows, los tests cargan la DLL de depuración de Rive, que pide el runtime 
 
 19 de octubre de 2026, Redmi Note 14 Pro (pantalla de 120 Hz), APK de profile, Chacra del Valle sin guardianes, collca invencible. "Estrés" = la prueba de 150 plagas del panel de desarrollo, a x2. Los cuadros se midieron con SurfaceFlinger (`dumpsys SurfaceFlinger --latency` sobre la capa del juego): cinco muestras de los últimos ~128 cuadros presentados. A 120 Hz, un cuadro a tiempo dura 8,3 ms; uno de más de 16,7 ms ya baja de 60 FPS.
 
-Las pruebas con varios contadores usan el panel de desarrollo ("Prueba de Rive", `lib/dev/rive_bench.dart`): contadores que cambian cada 250 ms (más seguido que su animación de 0,4 s, así que no paran de animarse).
+Las pruebas con varios contadores usaban el panel de desarrollo ("Prueba de Rive", `lib/dev/rive_bench.dart`, que se borró en la Fase 8 una vez decidido el renderer): contadores que cambiaban cada 250 ms (más seguido que su animación de 0,4 s, así que no paraban de animarse). Para volver a comparar renderers queda `--dart-define=RIVE_RENDERER`.
 
 | Situación | Sin Rive (respaldo) | Renderer de Flutter | Renderer de Rive | Renderer de Rive + `RivePanel` |
 |---|---|---|---|---|
@@ -772,3 +772,66 @@ La animación dura 400 ms; lo que pasa de eso al ir es el tiempo que tarda en ar
 | Ajustes asentados (el valle y la llama) | **91 FPS** | 27 % (p50 8,4 ms, p95 16,9 ms; un tirón suelto de 109 ms) |
 
 Como en el valle y la preparación, el límite es el raster del valle de fondo; la grilla (un solo artboard con su Component List) y los interruptores no suman casi nada. El 95 % de los cuadros no pasa de 16,9 ms (60 FPS).
+
+## Mediciones de la Fase 8 (parte C): cierre
+
+21 de octubre de 2026, el mismo Redmi, APK de profile de arm64. "Sin Rive" es la misma APK compilada con `--dart-define=RIVE_RENDERER=none`: no carga el `.riv` y cada pantalla usa su respaldo de Flutter.
+
+**Partida** (Chacra del Valle sin guardianes, collca invencible, SurfaceFlinger, cinco muestras; el mismo método que en la Fase 4):
+
+| Situación | Antes de Rive (Fase 1) | Fase 4 | **Cierre** |
+|---|---|---|---|
+| Partida normal a x1 | 118 FPS | 116 FPS | **117 FPS** (0 % de cuadros > 16,7 ms) |
+| Estrés (150 plagas) a x2 | 118 FPS | 106 FPS | **113 FPS** (2 % > 16,7 ms; p50 8,4 ms, p95 8,5 ms, el peor 92 ms) |
+
+**Arranque en frío** (`flutter run --use-application-binary <apk> --profile --trace-startup`, tres veces cada una; el juego se cierra antes de cada arranque y solo se abrió con el teléfono en la pantalla de inicio):
+
+| | Sin Rive | Con Rive |
+|---|---|---|
+| Hasta el primer cuadro en pantalla (mediana) | 1079 ms (894–1086) | 900 ms (859–1695) |
+| Desde que arranca Flutter hasta el primer cuadro (lee el guardado, el contenido y el `.riv`) | 492 ms | 512 ms |
+
+La diferencia es menor que lo que varía de un arranque a otro: leer el `.riv` (unos 280 KB) suma unos 20 ms. El de 1,7 s fue uno suelto.
+
+**Memoria** (`dumpsys meminfo`, PSS):
+
+| | Sin Rive | Con Rive |
+|---|---|---|
+| Título asentado (20 s) | 291 MB | 326 MB (+35: Native Heap 44 → 64 MB) |
+| Estrés a x2 con 150 plagas | — | 365 MB |
+
+**Peso** (`flutter build appbundle --release`, leyendo lo que hay dentro del `.aab`):
+
+| Qué baja un teléfono arm64 | Comprimido | Instalado |
+|---|---|---|
+| Motor de Flutter (`libflutter.so`) | 5,2 MB | 11,2 MB |
+| **Rive: `librive_native.so`** | **2,7 MB** | **7,3 MB** |
+| Código Java/Kotlin (anuncios y consentimiento) | 2,4 MB | 4,7 MB |
+| Código Dart (`libapp.so`) | 2,3 MB | 5,8 MB |
+| Audio | 1,0 MB | 1,2 MB |
+| **Rive: `guardianes_ui.riv`** | **0,13 MB** | **0,27 MB** |
+| Fuentes de Flutter (Fredoka y Lilita One) | 0,12 MB | 0,19 MB |
+| Resto (recursos de Android y otros assets) | 0,5 MB | 1,2 MB |
+| **Total** | **~14,3 MB** | **~31,8 MB** |
+
+Rive es el 20 % de la descarga (2,8 MB). El `.aab` pesa 73,6 MB porque trae las tres arquitecturas y los símbolos de depuración (39 MB, no se descargan); Google Play arma para cada teléfono solo lo suyo. Es una estimación (Google Play comprime parecido); la cifra exacta se ve en Play Console al subir el bundle.
+
+**Web**: compilaba, pero se quedaba en blanco desde la Fase 1. En la web, Rive baja su módulo de WebAssembly de jsDelivr al iniciarse y `RiveUi.load` tocaba `Factory.flutter` antes. Ahora espera `RiveNative.init()` (hasta 10 s; si no llega, por ejemplo sin internet, el respaldo). Probado en el navegador: título, valle, preparación y partida con Rive.
+
+## Pendientes y propuestas
+
+Lo que quedó sin hacer o sin comprobar:
+
+- **TalkBack, letra al máximo y "Quitar animaciones" en el teléfono**: no los activé en el Redmi para no cambiar tus ajustes. Los cubren `accessibility_test.dart` y `text_scale_test.dart`, y la lista está en `PRUEBAS_MANUALES.md` ("Accesibilidad").
+- **El globo de un nivel cerrado y el camino que se dibuja al abrir uno** no se vieron en el Redmi, porque la partida ya tiene los tres niveles abiertos. Se revisaron con capturas de los tests; se ven con los datos borrados o en otro teléfono.
+- **El campo de batalla** (mapa, caminos y sprites de plagas y guardianes) sigue con placeholders: no entraba en este plan. Lista de lo que hace falta en `ASSETS.md`.
+- **El original de Rive vive en la nube de Rive**: en git solo está el `.riv` exportado, que no se puede volver a abrir para editar. Conviene bajar desde Rive desktop una copia de respaldo del archivo de trabajo ("Guardianes UI") y guardarla fuera del repositorio.
+- **Artboards del plan gratuito de Rive** (`Watermark`, `NuRive*`): salen en cada exportación, no se dibujan y pesan poco.
+- **La web necesita internet**: CanvasKit y el módulo de Rive se bajan de CDNs. Si algún día se publica la web sin internet, hay que servir los dos desde el propio sitio (el de Rive, con `--dart-define=RIVE_NATIVE_WASM_HOST=<url>`).
+
+Propuestas (las decides tú):
+
+1. **Ilustraciones por rama** en la especialización (referencia 07) y una ilustración grande del guardián en el bestiario (referencia 14): diez retratos nuevos en Rive (dos ramas por guardián).
+2. **El nombre del nivel en la partida** (referencias 04, 08 y 09): una etiqueta chica junto a la barra de oleadas.
+3. **Toda la fila de un ajuste se puede tocar**, no solo el interruptor: más cómodo con el pulgar y con TalkBack.
+4. **Si un teléfono más lento lo necesita**: dibujar una sola vez a imagen las capas quietas del valle (el título, el valle, la preparación y los ajustes están en 77–91 FPS por el raster del valle) y dejar quietas las flechitas del botón x2 después de unas vueltas.

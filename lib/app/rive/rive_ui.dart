@@ -20,21 +20,33 @@ abstract final class RiveUi {
   /// de Rive (75 con `RivePanel`): ver `docs/UI_RIVE.md`. El de Flutter no
   /// tiene *vector feathering*: los brillos y sombras suaves se hacen con
   /// degradados.
-  static rive.Factory? get renderer =>
-      switch (const String.fromEnvironment('RIVE_RENDERER')) {
-        'none' => null,
-        'rive' => rive.Factory.rive,
-        _ => rive.Factory.flutter,
-      };
+  static rive.Factory? get renderer => switch (_rendererName) {
+    'none' => null,
+    'rive' => rive.Factory.rive,
+    _ => rive.Factory.flutter,
+  };
+
+  static const _rendererName = String.fromEnvironment('RIVE_RENDERER');
+
+  /// Cuánto se espera a que Rive se inicie (en Android es inmediato).
+  static const _initTimeout = Duration(seconds: 10);
 
   /// Carga el archivo, o `null` si no se puede (faltan las librerías
   /// nativas, el archivo está roto): entonces cada pantalla usa su aspecto
   /// de Flutter.
   static Future<rive.File?> load() async {
-    final renderer = RiveUi.renderer;
-    if (renderer == null) return null;
+    if (_rendererName == 'none') return null;
     try {
-      return await rive.File.asset(asset, riveFactory: renderer);
+      // En la web, Rive baja su módulo de WebAssembly (de jsDelivr) al
+      // iniciarse: hasta entonces no se puede tocar nada de Rive, tampoco
+      // `Factory.flutter` (la versión web se quedaba en blanco). Si no
+      // llega (sin internet, la espera no termina nunca), el respaldo.
+      final ready = await rive.RiveNative.init().timeout(
+        _initTimeout,
+        onTimeout: () => false,
+      );
+      if (!ready) return null;
+      return await rive.File.asset(asset, riveFactory: renderer!);
     } on Object catch (error) {
       debugPrint('Rive: no se pudo cargar $asset ($error); uso el respaldo.');
       return null;

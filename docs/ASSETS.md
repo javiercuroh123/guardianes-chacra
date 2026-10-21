@@ -70,9 +70,11 @@ La interfaz animada vive en `assets/rive/guardianes_ui.riv` (ver [UI_RIVE.md](UI
 |---|---|---|---|
 | Fuente Lilita One (títulos) | [google/fonts](https://github.com/google/fonts/tree/main/ofl/lilitaone), Juan Montoreano | SIL OFL 1.1 (con nombre reservado "Lilita"): uso comercial permitido, se puede incrustar | Va completa, sin recortar: una versión modificada no podría llamarse "Lilita". También en Flutter: `assets/fonts/LilitaOne-Regular.ttf` + `LilitaOne-OFL.txt`. |
 | Fuente Fredoka (texto) | [google/fonts](https://github.com/google/fonts/tree/main/ofl/fredoka), The Fredoka Project Authors | SIL OFL 1.1 (sin nombre reservado) | Variable 300–700. En Rive va recortada a los caracteres del español y el inglés. En Flutter: `assets/fonts/Fredoka-Variable.ttf` + `Fredoka-OFL.txt`. |
-| Formas, íconos, retratos y animaciones | Dibujados en el editor de Rive para este juego | Propios | |
+| Formas, íconos, retratos, mascotas (la llama y el hondero), escenas de los niveles, la cortina y animaciones | Dibujados en el editor de Rive para este juego | Propios | Todo en vectores: no hay imágenes dentro del `.riv`. |
 
 Las licencias OFL se muestran en la pantalla de licencias de la app (`LicenseRegistry` en `main.dart`). Descargadas el 19 de octubre de 2026 del repositorio oficial de Google Fonts.
+
+Peso al cerrar la interfaz (Fase 8): el `.riv` ocupa 280 KB (130 KB comprimido) y la librería de Rive (`librive_native.so`), 7,3 MB instalada en arm64 (2,7 MB de descarga). El original editable vive en la nube de Rive (archivo "Guardianes UI"); en el repositorio solo está el exportado.
 
 ## Fuentes gratuitas que permiten uso comercial
 

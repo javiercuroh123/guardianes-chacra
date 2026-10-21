@@ -8,34 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// `false` y el compilador quita el código que depende de ella.
 const bool devToolsEnabled = !kReleaseMode;
 
-/// Qué muestra la prueba de Rive del panel de desarrollo (ver
-/// `lib/dev/rive_bench.dart` y `docs/UI_RIVE.md`).
-enum RiveBenchMode {
-  off(count: 0, animated: 0),
-
-  /// El peor caso: muchos widgets animándose sin parar.
-  all(count: 12, animated: 12),
-
-  /// Parecido al HUD de la Fase 4: seis controles y solo dos cambiando
-  /// (el maíz y las papas).
-  hud(count: 6, animated: 2);
-
-  new({required this.count, required this.animated});
-
-  final int count;
-  final int animated;
-}
-
 /// Opciones de desarrollo que duran mientras la app está abierta (no se
 /// guardan): no son del jugador.
 @immutable
 class DevOptions {
-  const new({
-    this.unlockAll = false,
-    this.debugOverlay = false,
-    this.riveBench = RiveBenchMode.off,
-    this.riveSharedTexture = false,
-  });
+  const new({this.unlockAll = false, this.debugOverlay = false});
 
   /// Todos los niveles y guardianes abiertos (para "elegir nivel").
   final bool unlockAll;
@@ -43,23 +20,9 @@ class DevOptions {
   /// Dibuja caminos, alcances, FPS y conteos sobre la partida.
   final bool debugOverlay;
 
-  /// Contadores de Rive animándose sobre la partida, para medir cuánto
-  /// cuestan los widgets de Rive.
-  final RiveBenchMode riveBench;
-
-  /// Los contadores de la prueba dibujan en una sola textura (`RivePanel`).
-  final bool riveSharedTexture;
-
-  DevOptions copyWith({
-    bool? unlockAll,
-    bool? debugOverlay,
-    RiveBenchMode? riveBench,
-    bool? riveSharedTexture,
-  }) => DevOptions(
+  DevOptions copyWith({bool? unlockAll, bool? debugOverlay}) => DevOptions(
     unlockAll: unlockAll ?? this.unlockAll,
     debugOverlay: debugOverlay ?? this.debugOverlay,
-    riveBench: riveBench ?? this.riveBench,
-    riveSharedTexture: riveSharedTexture ?? this.riveSharedTexture,
   );
 }
 
@@ -72,13 +35,6 @@ class DevOptionsController extends Notifier<DevOptions> {
 
   set debugOverlay(bool on) => state = state.copyWith(debugOverlay: on);
   bool get debugOverlay => state.debugOverlay;
-
-  set riveBench(RiveBenchMode mode) => state = state.copyWith(riveBench: mode);
-  RiveBenchMode get riveBench => state.riveBench;
-
-  set riveSharedTexture(bool on) =>
-      state = state.copyWith(riveSharedTexture: on);
-  bool get riveSharedTexture => state.riveSharedTexture;
 }
 
 final devOptionsProvider = NotifierProvider<DevOptionsController, DevOptions>(

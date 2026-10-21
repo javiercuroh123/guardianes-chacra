@@ -59,6 +59,17 @@ En profile siguen estando el botón 🐞 y el panel de desarrollo (no existen en
 
 Con 167 plagas sigue por encima de 60 FPS. El contador de FPS promedia los últimos cuadros, por eso tarda en volver a subir cuando quedan menos plagas.
 
+Con la interfaz de Rive terminada (21 de octubre de 2026, el mismo teléfono, Chacra del Valle sin guardianes, medido con SurfaceFlinger en vez del contador): **117 FPS** en una partida normal a x1 y **113 FPS** con la prueba de estrés a x2 (2 % de cuadros de más de 16,7 ms). La memoria en el estrés: 365 MB. El arranque en frío hasta el primer cuadro: alrededor de 0,9 s. Detalle, comparación sin Rive y peso del App Bundle: `UI_RIVE.md` ("Mediciones de la Fase 8 (parte C)").
+
+Para medir el arranque sin tocar el juego a mano:
+
+```powershell
+flutter build apk --profile --target-platform android-arm64
+flutter run --use-application-binary build\app\outputs\flutter-apk\app-profile.apk --profile --trace-startup
+```
+
+Deja `build/start_up_info.json` con `timeToFirstFrameRasterizedMicros` (cuánto tardó en aparecer el primer cuadro). Repetirlo varias veces: cambia bastante de una a otra.
+
 ### El gráfico de cuadros
 
 En la terminal donde corre `flutter run --profile`, presiona `P` para mostrar u ocultar el *performance overlay*: dos gráficos encima del juego.
