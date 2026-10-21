@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:guardianes_chacra/app/rive/rive_branch_card.dart';
 import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
@@ -457,13 +458,15 @@ class _GuardianCardState extends State<GuardianCard> {
               children: [
                 card,
                 Positioned(
-                  top: -6,
-                  right: -6,
+                  top: -8,
+                  right: -8,
                   child: RiveButton.round(
                     key: const ValueKey('menu-close'),
                     label: l10n.menuClose,
                     icon: RiveIcon.close,
                     size: 44,
+                    // 48 dp para tocar, con el mismo dibujo de 44.
+                    tapPadding: const EdgeInsets.all(2),
                     onPressed: widget.onClose,
                   ),
                 ),
@@ -539,6 +542,13 @@ class _SpecializationWindowState extends State<SpecializationWindow> {
         .where((branch) => widget.preview == 'branch:${branch.id}')
         .firstOrNull;
     final busy = widget.chosen != null;
+    // TalkBack lee el cartel, las tarjetas y al final cerrar y Elegir (sin
+    // el orden, leería los botones antes que las tarjetas).
+    Widget inOrder(int order, Widget child) => Semantics(
+      container: true,
+      sortKey: OrdinalSortKey(order.toDouble()),
+      child: child,
+    );
 
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: TextScaleLimits.battle,
@@ -548,68 +558,87 @@ class _SpecializationWindowState extends State<SpecializationWindow> {
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RiveTitleSign(title: l10n.specializeTitle, width: 270),
-                      const SizedBox(height: 4),
-                      RiveTooltip(
-                        text: _notice ?? l10n.specializeSubtitle,
-                        visible: true,
-                        arrow: false,
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          RiveButton.round(
-                            key: const ValueKey('menu-branch-close'),
-                            label: l10n.menuClose,
-                            icon: RiveIcon.close,
-                            onPressed: busy ? null : widget.onClose,
+              child: Semantics(
+                container: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        inOrder(
+                          0,
+                          RiveTitleSign(
+                            title: l10n.specializeTitle,
+                            width: 270,
                           ),
-                          const SizedBox(width: 12),
-                          RiveButton(
-                            key: const ValueKey('menu-branch-confirm'),
-                            label: l10n.specializeChoose,
-                            icon: RiveIcon.check,
-                            onPressed:
-                                marked == null ||
-                                    busy ||
-                                    !widget.canAfford(marked.level.cost)
-                                ? null
-                                : () => widget.onChoose(_choiceFor(marked)),
+                        ),
+                        const SizedBox(height: 4),
+                        inOrder(
+                          1,
+                          RiveTooltip(
+                            text: _notice ?? l10n.specializeSubtitle,
+                            visible: true,
+                            arrow: false,
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: 18),
+                        inOrder(
+                          2 + def.branches.length,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              RiveButton.round(
+                                key: const ValueKey('menu-branch-close'),
+                                label: l10n.menuClose,
+                                icon: RiveIcon.close,
+                                onPressed: busy ? null : widget.onClose,
+                              ),
+                              const SizedBox(width: 12),
+                              RiveButton(
+                                key: const ValueKey('menu-branch-confirm'),
+                                label: l10n.specializeChoose,
+                                icon: RiveIcon.check,
+                                onPressed:
+                                    marked == null ||
+                                        busy ||
+                                        !widget.canAfford(marked.level.cost)
+                                    ? null
+                                    : () => widget.onChoose(_choiceFor(marked)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+                    for (final (index, branch) in def.branches.indexed) ...[
+                      if (index > 0) const SizedBox(width: 12),
+                      inOrder(
+                        2 + index,
+                        RiveBranchCard(
+                          key: ValueKey('menu-branch-${branch.id}'),
+                          guardianId: def.id,
+                          name: widget.branchNameOf(branch.id),
+                          description: widget.branchDescriptionOf(branch.id),
+                          cost: branch.level.cost,
+                          color: color,
+                          selected: widget.preview == 'branch:${branch.id}',
+                          affordable: widget.canAfford(branch.level.cost),
+                          chosen: widget.chosen == 'branch:${branch.id}',
+                          onTap: () {
+                            if (busy) return;
+                            setState(() => _notice = null);
+                            widget.onChoose(_choiceFor(branch));
+                          },
+                          onDenied: () => setState(
+                            () => _notice = l10n.rejectNotEnoughCorn,
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  const SizedBox(width: 20),
-                  for (final (index, branch) in def.branches.indexed) ...[
-                    if (index > 0) const SizedBox(width: 12),
-                    RiveBranchCard(
-                      key: ValueKey('menu-branch-${branch.id}'),
-                      guardianId: def.id,
-                      name: widget.branchNameOf(branch.id),
-                      description: widget.branchDescriptionOf(branch.id),
-                      cost: branch.level.cost,
-                      color: color,
-                      selected: widget.preview == 'branch:${branch.id}',
-                      affordable: widget.canAfford(branch.level.cost),
-                      chosen: widget.chosen == 'branch:${branch.id}',
-                      onTap: () {
-                        if (busy) return;
-                        setState(() => _notice = null);
-                        widget.onChoose(_choiceFor(branch));
-                      },
-                      onDenied: () =>
-                          setState(() => _notice = l10n.rejectNotEnoughCorn),
-                    ),
                   ],
-                ],
+                ),
               ),
             ),
           ),

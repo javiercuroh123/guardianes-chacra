@@ -379,12 +379,18 @@ class _Page extends StatelessWidget {
           .clamp(0.3, (constraints.maxWidth * 0.5) / gridWidth);
       return Row(
         children: [
-          RivePanel(
-            padding: _padding,
-            child: SizedBox(
-              width: gridWidth * scale,
-              height: gridHeight * scale,
-              child: grid,
+          // La grilla en su propio nodo: TalkBack la lee por filas. Sin él,
+          // el detalle (tan alto como las dos filas) junta las fichas con
+          // él y las lee por columnas.
+          Semantics(
+            container: true,
+            child: RivePanel(
+              padding: _padding,
+              child: SizedBox(
+                width: gridWidth * scale,
+                height: gridHeight * scale,
+                child: grid,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -434,7 +440,8 @@ class _DetailHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        portrait,
+        // El nombre ya va al lado: TalkBack no lo lee dos veces.
+        ExcludeSemantics(child: portrait),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -364,7 +364,7 @@ class _VictoryOverlayState extends ConsumerState<VictoryOverlay>
                   ],
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               _DelayedButtons(
                 ready: _buttons,
                 child: Row(
@@ -378,6 +378,7 @@ class _VictoryOverlayState extends ConsumerState<VictoryOverlay>
                           : RiveButtonKind.secondary,
                       label: l10n.toValley,
                       icon: RiveIcon.home,
+                      tapPadding: _resultTapPadding,
                       onPressed: widget.onExit,
                     ),
                     const SizedBox(width: 10),
@@ -386,6 +387,7 @@ class _VictoryOverlayState extends ConsumerState<VictoryOverlay>
                       kind: RiveButtonKind.secondary,
                       label: l10n.battleRetry,
                       icon: RiveIcon.retry,
+                      tapPadding: _resultTapPadding,
                       onPressed: widget.onRetry,
                     ),
                     if (onNext != null) ...[
@@ -394,6 +396,7 @@ class _VictoryOverlayState extends ConsumerState<VictoryOverlay>
                         key: const ValueKey('victory-next'),
                         label: l10n.victoryNext,
                         icon: RiveIcon.play,
+                        tapPadding: _resultTapPadding,
                         onPressed: onNext,
                       ),
                     ],
@@ -477,19 +480,20 @@ class DefeatOverlay extends StatelessWidget {
                             width: 240,
                             child: _Subtitle(l10n.defeatHint),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 4),
                           RiveButton(
                             key: const ValueKey('battle-retry'),
                             label: l10n.battleRetry,
                             icon: RiveIcon.retry,
+                            tapPadding: _resultTapPadding,
                             onPressed: onRetry,
                           ),
-                          const SizedBox(height: 8),
                           RiveButton(
                             key: const ValueKey('battle-exit'),
                             kind: RiveButtonKind.secondary,
                             label: l10n.toValley,
                             icon: RiveIcon.home,
+                            tapPadding: _resultTapPadding,
                             onPressed: onExit,
                           ),
                         ],
@@ -510,6 +514,7 @@ class DefeatOverlay extends StatelessWidget {
                   kind: RiveButtonKind.secondary,
                   label: l10n.adRevive(revivePotatoes),
                   icon: RiveIcon.ad,
+                  tapPadding: _resultTapPadding,
                   onPressed: onRevive,
                 ),
               ),
@@ -689,3 +694,8 @@ class _Shake extends StatelessWidget {
     );
   }
 }
+
+/// La zona de toque de más de los botones de la victoria y la derrota: el
+/// panel se achica para entrar en el teléfono (a ~0,77) y los botones de
+/// 56 dp quedarían en 43; con 6 arriba y abajo, 68 × 0,77 = 52 dp.
+const _resultTapPadding = EdgeInsets.symmetric(vertical: 6);

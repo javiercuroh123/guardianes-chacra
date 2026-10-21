@@ -60,6 +60,7 @@ class RiveButton extends ConsumerStatefulWidget {
     this.kind = RiveButtonKind.primary,
     this.onDenied,
     this.danger = false,
+    this.tapPadding = EdgeInsets.zero,
     super.key,
   }) : size = height;
 
@@ -71,6 +72,7 @@ class RiveButton extends ConsumerStatefulWidget {
     this.danger = false,
     this.onDenied,
     this.size = 52,
+    this.tapPadding = EdgeInsets.zero,
     super.key,
   }) : kind = RiveButtonKind.round;
 
@@ -87,6 +89,12 @@ class RiveButton extends ConsumerStatefulWidget {
   /// Lado del redondo a escala de letra 1 (los otros miden [height] de
   /// alto y lo que pida su texto de ancho).
   final double size;
+
+  /// Lo que se agranda la zona de toque alrededor del dibujo, sin que se
+  /// vea: para que mida al menos 48 × 48 dp aunque el botón esté achicado
+  /// (dentro de un panel que se encoge para entrar en la pantalla). Cuenta
+  /// para el toque y para TalkBack, y ocupa lugar en el layout.
+  final EdgeInsets tapPadding;
 
   /// Alto de los botones con texto a escala de letra 1.
   static const double height = 56;
@@ -178,7 +186,7 @@ class _RiveButtonState extends ConsumerState<RiveButton>
     final scale = MediaQuery.textScalerOf(context).scale(1);
     final Widget child;
     if (binding == null) {
-      child = _fallback(context);
+      child = Padding(padding: widget.tapPadding, child: _fallback(context));
     } else {
       final round = widget.kind == RiveButtonKind.round;
       final width = round
@@ -191,10 +199,13 @@ class _RiveButtonState extends ConsumerState<RiveButton>
         onTapUp: (_) => _pressed?.value = false,
         onTapCancel: () => _pressed?.value = false,
         onTap: _onTap,
-        child: SizedBox(
-          width: width * scale,
-          height: height * scale,
-          child: binding.widget(fit: rive.Fit.layout, layoutScale: scale),
+        child: Padding(
+          padding: widget.tapPadding,
+          child: SizedBox(
+            width: width * scale,
+            height: height * scale,
+            child: binding.widget(fit: rive.Fit.layout, layoutScale: scale),
+          ),
         ),
       );
     }

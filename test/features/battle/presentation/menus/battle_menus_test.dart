@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_build_option.dart';
 import 'package:guardianes_chacra/app/text_scale.dart';
-import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/features/battle/domain/engine/commands.dart';
 import 'package:guardianes_chacra/features/battle/domain/world/guardian.dart';
 import 'package:guardianes_chacra/features/battle/presentation/menus/battle_menus.dart';
-import 'package:guardianes_chacra/features/content/domain/guardian_def.dart';
 
 import '../../../../helpers/battle_game_helpers.dart';
+import '../../../../helpers/fake_guardian.dart';
 import '../../../../helpers/real_content.dart';
 import '../../../../helpers/test_app.dart';
 
@@ -225,7 +224,7 @@ void main() {
       tester,
     ) async {
       final semantics = tester.ensureSemantics();
-      await pumpCard(tester, _FakeGuardian(content().guardians['hondero']!));
+      await pumpCard(tester, FakeGuardian(content().guardians['hondero']!));
 
       expect(
         find.bySemanticsLabel(
@@ -242,7 +241,7 @@ void main() {
       tester,
     ) async {
       final hondero = content().guardians['hondero']!;
-      await pumpCard(tester, _FakeGuardian(hondero));
+      await pumpCard(tester, FakeGuardian(hondero));
 
       await tester.tap(key('menu-upgrade'));
       await tester.tap(key('menu-sell'));
@@ -265,7 +264,7 @@ void main() {
     testWidgets('sin maíz, Mejorar se sacude y lo dice abajo', (tester) async {
       await pumpCard(
         tester,
-        _FakeGuardian(content().guardians['hondero']!),
+        FakeGuardian(content().guardians['hondero']!),
         corn: 0,
       );
 
@@ -279,7 +278,7 @@ void main() {
     testWidgets('el primer toque pide confirmar abajo', (tester) async {
       await pumpCard(
         tester,
-        _FakeGuardian(content().guardians['hondero']!),
+        FakeGuardian(content().guardians['hondero']!),
         preview: 'upgrade',
       );
 
@@ -290,7 +289,7 @@ void main() {
       final hondero = content().guardians['hondero']!;
       await pumpCard(
         tester,
-        _FakeGuardian(hondero, level: hondero.levels.length),
+        FakeGuardian(hondero, level: hondero.levels.length),
       );
 
       expect(key('menu-upgrade'), findsNothing);
@@ -299,7 +298,7 @@ void main() {
     });
 
     testWidgets('el Pututu no ataca: no tiene Objetivo', (tester) async {
-      await pumpCard(tester, _FakeGuardian(content().guardians['pututu']!));
+      await pumpCard(tester, FakeGuardian(content().guardians['pututu']!));
 
       expect(key('menu-targeting'), findsNothing);
       expect(key('menu-sell'), findsOneWidget);
@@ -319,7 +318,7 @@ void main() {
         testApp(
           Scaffold(
             body: SpecializationWindow(
-              guardian: _FakeGuardian(hondero, level: hondero.levels.length),
+              guardian: FakeGuardian(hondero, level: hondero.levels.length),
               canAfford: (cost) => cost <= corn,
               branchNameOf: (branch) => branch,
               branchDescriptionOf: (branch) => 'Descripción de $branch',
@@ -379,39 +378,4 @@ void main() {
       expect(find.text('No alcanza el maíz'), findsOneWidget);
     });
   });
-}
-
-/// Un guardián construido, sin simulación.
-class _FakeGuardian implements GuardianView {
-  new(this.def, {this.level = 1});
-
-  @override
-  final GuardianDef def;
-
-  @override
-  final int level;
-
-  @override
-  int get id => 1;
-
-  @override
-  String get slotId => 'e1';
-
-  @override
-  Vec2 get position => const Vec2(3, 3);
-
-  @override
-  String? get branchId => null;
-
-  @override
-  String get targetingId => 'first';
-
-  @override
-  double get range => def.levels[level - 1].range;
-
-  @override
-  double get attackSpeedMultiplier => 1;
-
-  @override
-  int get totalSpent => 60;
 }

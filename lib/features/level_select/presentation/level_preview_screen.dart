@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
@@ -370,36 +371,55 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // TalkBack lee primero el nombre del nivel y después las pastillas
+    // (sin el orden, leería "Oleadas" antes que el nombre).
+    Widget inOrder(int order, Widget child) => Semantics(
+      container: true,
+      sortKey: OrdinalSortKey(order.toDouble()),
+      child: child,
+    );
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Row(
-        children: [
-          RiveStatPill(
-            key: const ValueKey('preview-waves'),
-            icon: RiveIcon.flag,
-            label: l10n.previewWavesLabel,
-            value: '$waves',
-            scale: _pillScale,
-          ),
-          const SizedBox(width: 16),
-          RiveTitleSign(title: title, width: 220),
-          const SizedBox(width: 16),
-          RiveStatPill(
-            key: const ValueKey('preview-corn'),
-            icon: RiveIcon.corn,
-            label: l10n.previewCornLabel,
-            value: '$corn',
-            scale: _pillScale,
-          ),
-          const SizedBox(width: 8),
-          RiveStatPill(
-            key: const ValueKey('preview-potatoes'),
-            icon: RiveIcon.potato,
-            label: l10n.previewPotatoesLabel,
-            value: '$potatoes',
-            scale: _pillScale,
-          ),
-        ],
+      child: Semantics(
+        container: true,
+        child: Row(
+          children: [
+            inOrder(
+              1,
+              RiveStatPill(
+                key: const ValueKey('preview-waves'),
+                icon: RiveIcon.flag,
+                label: l10n.previewWavesLabel,
+                value: '$waves',
+                scale: _pillScale,
+              ),
+            ),
+            const SizedBox(width: 16),
+            inOrder(0, RiveTitleSign(title: title, width: 220)),
+            const SizedBox(width: 16),
+            inOrder(
+              2,
+              RiveStatPill(
+                key: const ValueKey('preview-corn'),
+                icon: RiveIcon.corn,
+                label: l10n.previewCornLabel,
+                value: '$corn',
+                scale: _pillScale,
+              ),
+            ),
+            const SizedBox(width: 8),
+            inOrder(
+              3,
+              RiveStatPill(
+                key: const ValueKey('preview-potatoes'),
+                icon: RiveIcon.potato,
+                label: l10n.previewPotatoesLabel,
+                value: '$potatoes',
+                scale: _pillScale,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -426,9 +446,15 @@ class _PestsPanel extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final inner = constraints.maxWidth - _padding.horizontal;
-        final titleHeight =
-            MediaQuery.textScalerOf(context).scale(titleStyle?.fontSize ?? 16) *
-            1.4;
+        // Lo que mide el título de verdad (con la letra del teléfono).
+        final titlePainter = TextPainter(
+          text: TextSpan(text: title, style: titleStyle),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: 1,
+        )..layout(maxWidth: inner);
+        final titleHeight = titlePainter.height;
+        titlePainter.dispose();
         final maxCardHeight =
             constraints.maxHeight - _padding.vertical - titleHeight - 6;
         // Cinco enteras y un poco de la sexta, sin pasarse del alto.

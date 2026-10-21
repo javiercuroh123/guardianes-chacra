@@ -587,6 +587,52 @@ No tiene animaciones con tiempo: los paños y el rombo están atados a `cover` c
 - `buildPage` envuelve la pantalla en `Semantics(scopesRoute: true)`, como `MaterialPageRoute`, para que TalkBack anuncie el cambio.
 - El panel de desarrollo (🐞, solo debug) sigue con `MaterialPageRoute`.
 
+## Revisión contra las referencias (Fase 8)
+
+21 de octubre de 2026: cada referencia de `referencias_ui/2026-10-19/propuestas/` junto a la pantalla del juego en el Redmi (APK de profile, partida de la Chacra del Valle). Las referencias son maquetas hechas con IA: se comparan la distribución, las piezas y el tono, no las cifras ni el arte exacto. "Por qué" remite a las decisiones de CLAUDE.md ("Decisiones (UI)" y las de cada fase).
+
+| Referencia | Coincide | Cambió | Por qué |
+|---|---|---|---|
+| 01 Inicio | Logo en tres líneas, Jugar grande de maíz, Bestiario y Ajustes debajo, el hondero y la llama, el valle en capas de fondo. | El dibujo es más simple que la ilustración; un gorgojo asoma de vez en cuando. | Todo el arte es vectorial hecho en Rive (Prompt 0 de UI); el gorgojo es un detalle animado de la Fase 6A. |
+| 02 Mapa del valle | Volver arriba a la izquierda, el cartel, el contador de estrellas, los tres nodos con su nombre y sus estrellas, la barra de abajo con Jugar. | El camino es una huella de puntos (no ríos ni senderos dibujados) y aparece al abrir un nivel; la barra propone el nivel sugerido. | Fase 6B: el camino no se ve hasta los niveles cerrados y la barra es un atajo al siguiente por jugar (`Progression.suggested`). El arte del mapa no entra en este plan. |
+| 03 Preparación | El nombre del nivel en su cartel, "Plagas que vienen" con tarjetas y el jefe marcado, Comenzar y el anuncio de maíz extra. | Oleadas, maíz y papas son pastillas arriba, junto al nombre (no abajo a la izquierda); Volver va abajo; en lugar del mapa con el camino, la ilustración del nivel. | Fase 6C ("pastillas con etiqueta", Volver abajo) y Prompt 0 de UI (ilustración en Rive hasta que exista el arte del mapa). |
+| 04, 08 y 09 Batallas | Maíz, papas "N/20", la barra de oleadas, x1/x2 y pausa arriba; la siguiente oleada abajo a la derecha. | La siguiente oleada muestra los segundos y el bono ("13 s +18") en vez de "Siguiente oleada +12 de maíz"; no hay etiqueta con el nombre del nivel; 🐞 solo en debug y profile. El mapa, los caminos y los sprites siguen como antes. | No perder la cuenta regresiva (regla del plan) y Prompt 0 de UI (anillo de segundos y bono). El campo de batalla lo dibuja Flame y no entra en este plan. |
+| 05 Construcción | Las opciones alrededor del espacio, con retrato, nombre y costo; las que no alcanzan, apagadas. | Tarjetas cuadradas en abanico en vez de retratos redondos; los bloqueados con candado y su regla; el aviso "Toca un guardián para ver su alcance". | Prompt 0 de UI (bloqueados con candado) y doble toque para confirmar (función que no se pierde): el primer toque muestra el alcance. |
+| 06 Mejoras | Ficha con el nivel, a qué ataca, daño actual → siguiente, alcance, Mejorar con su costo, Objetivo y Vender, y cerrar. | La ficha es más grande y va al lado contrario del guardián, no pegada a él. | Prompt 0 de UI (tarjeta lateral para no tapar el alcance ni al guardián). |
+| 07 Especialización | Cartel "Elige una especialización", "Solo puedes elegir una", dos tarjetas con nombre, descripción y costo, cerrar. | Primero se toca una tarjeta (vista previa del alcance) y después "Elegir", que va junto a cerrar; las tarjetas usan el retrato del guardián, no una ilustración por rama. | Prompt 0 de UI (vista previa y confirmación, como el resto de los menús). Las ilustraciones por rama quedan como propuesta. |
+| 10 Pausa | El sol, el cartel, "La chacra puede esperar" y Continuar, Reintentar y Salir del nivel. | Sin la X de cerrar; el HUD queda oculto bajo el velo. | Fase 5 (la pausa sin X: Continuar ya cierra) y Fase 6 (con un overlay activo se ocultan el HUD y los menús). |
+| 11 Victoria | Cartel "¡Cosecha a salvo!", tres estrellas, papas y maíz en pastillas, tarjetas de desbloqueo, los tres botones, la llama y la lluvia de maíz. | El cartel es algo más chico para que entren dos tarjetas de desbloqueo. | Prompt 0 de UI (hasta dos tarjetas lado a lado) y Fase 5. |
+| 12 Derrota | Cartel "La collca se quedó sin papas", la llama triste, la collca vacía, "0/20", la pista, Reintentar y Volver al valle, y el anuncio para seguir debajo. | Nada importante. | — |
+| 13 Bestiario de plagas | Volver, pestañas Plagas y Guardianes, la grilla y la ficha con sus datos a la derecha. | Las fichas sin descubrir van boca abajo con "?" y la silueta; "Se mueve: Por tierra" es una pastilla, no una etiqueta "Terrestre". | Prompt 0 de UI (silueta "???") y Fase 7 (la ficha se da vuelta al tocarla la primera vez). |
+| 14 Bestiario de guardianes | Niveles I‑II‑III, costo, alcance y a qué ataca, y las dos especializaciones. | Sin la ilustración grande del guardián: el retrato. | Los textos largos van en Flutter y el retrato es la pieza de Rive (Fase 7). |
+| 15 Ajustes | Dos columnas (Sonido y respuesta; Pantalla e idioma), interruptores, el idioma en un selector de tres, la llama. | El interruptor no lleva tilde; "Opciones de privacidad" solo aparece si la ley lo pide y "Desarrollo: todo desbloqueado" solo en debug y profile. | Prompt 0 de UI y Fase 10 (privacidad solo cuando el formulario de Google lo pide). |
+
+Las hojas de comparación (referencia arriba, Redmi abajo) quedaron fuera del repositorio, como las referencias.
+
+## Accesibilidad (Fase 8)
+
+`test/app/accessibility_test.dart` monta cada pantalla y overlay con el `.riv` real y las letras del juego, a 853 × 384:
+
+- **Guías de Flutter** (`meetsGuideline`): todo lo que se toca tiene etiqueta (`labeledTapTargetGuideline`), mide al menos 48 × 48 dp (`androidTapTargetGuideline`) y el texto de Flutter tiene contraste AA (`textContrastGuideline`). En la partida: el HUD, el menú de construcción, la ficha y la especialización.
+- **Letra grande**: los menús y overlays a 2× y la partida a 1,3× sin desbordes (se suma a `text_scale_test.dart`, que usa la letra de prueba). Un desborde llega al test sin decir dónde: el test envuelve `FlutterError.onError` para imprimir el detalle.
+- **Menos movimiento** (`FakeAccessibilityFeatures(disableAnimations: true)`): todo se dibuja sin errores.
+- **Lo que lee TalkBack**: con `--dart-define=SEMANTICS_DIR=<carpeta>`, el test guarda el árbol de semántica de cada pantalla en el orden de lectura (`<carpeta>/<pantalla>.txt`). `uiautomator dump` no sirve en el Redmi: con animaciones continuas responde "could not get idle state".
+
+Lo que encontraron y cómo se arregló:
+
+| Problema | Arreglo |
+|---|---|
+| Los botones de la victoria y la derrota (Reintentar, Volver al valle, Siguiente nivel, el anuncio) miden 56 dp, pero la escena se achica a ~0,77 para entrar en el teléfono y quedaban en 43. | `RiveButton.tapPadding`: margen tocable sin agrandar el dibujo (6 dp arriba y abajo: 68 × 0,77 = 52 dp), con menos espacio entre los botones para que la escena no se achique más. |
+| La X de la ficha del guardián medía 44 dp. | `tapPadding` de 2 dp: 44 dibujados, 48 tocables. |
+| Las pestañas del bestiario medían 46 dp de alto. | `RiveTab` suma 2 dp tocables arriba. |
+| El borde dorado de las cintas de Ajustes, pegado al título, hacía fallar la guía de contraste. | El borde pasa a `onHud` (marrón oscuro), como el texto. |
+| En la preparación, a 2× el título del panel de plagas se medía con `fontSize × 1,4` y se desbordaba. | Se mide con un `TextPainter` con la escala de letra. |
+| El bestiario se leía por columnas (el detalle, tan alto como la grilla, juntaba las dos filas). | La grilla va en su propio nodo de semántica: se lee por filas. El retrato del detalle no repite el nombre. |
+| Ajustes se leía de fila en fila saltando entre las dos columnas, y cada ajuste dos veces (el texto y el interruptor). | Cada columna en su nodo, el título de cada una como encabezado y el texto de la fila excluido cuando el interruptor ya lleva el nombre. |
+| La preparación leía "Oleadas" antes que el nombre del nivel; la especialización, "Cerrar" y "Elegir" antes que las tarjetas. | `OrdinalSortKey`: el nombre primero; las tarjetas antes que los botones. |
+
+El contraste de los textos dibujados por Rive se comprobó con la paleta (tabla de abajo); `textContrastGuideline` solo mide el texto de Flutter. Ojo: esa guía mide el color del texto contra los píxeles que lo rodean, y un borde fino de otro color pegado a un texto puede hacerla fallar aunque el texto se lea bien.
+
 ## Paleta
 
 La misma de CLAUDE.md ("Decisiones (UI)") y de `AppTheme` en Flutter. Combinaciones de texto (WCAG):

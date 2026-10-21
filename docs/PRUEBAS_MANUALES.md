@@ -88,8 +88,9 @@ flutter run --release
 - [ ] **Letra grande**: Ajustes de Android → Pantalla → Tamaño de fuente al máximo. Los menús crecen hasta el doble sin cortarse; el HUD y los menús de la partida crecen un poco (hasta 1,3) y no tapan el mapa.
 - [ ] **Quitar animaciones**: Ajustes de Android → Accesibilidad → Quitar animaciones. Al aparecer el jefe ya no se sacude la cámara. Las pantallas cambian con un fundido corto, sin la cortina.
 - [ ] **TalkBack**: el HUD se lee completo ("Maíz: 220", "Papas en la collca: 20"…) y los botones del menú dicen qué hacen y cuánto cuestan.
+- [ ] **TalkBack, orden de lectura**: en Ajustes, una columna entera y después la otra, cada ajuste una sola vez ("Música, interruptor, activado"); en el bestiario, las fichas por filas; en la preparación, el nombre del nivel antes que las pastillas; en la especialización, las dos tarjetas antes que Cerrar y Elegir. Lo mismo sin teléfono: `flutter test test/app/accessibility_test.dart --dart-define=SEMANTICS_DIR=build/semantics` guarda lo que leería TalkBack en cada pantalla.
 - [ ] **Escala de grises** (Opciones de desarrollador → Simular espacio de color → Monocromía): los efectos de estado se distinguen igual por su forma.
-- [ ] Todos los botones se tocan cómodos con el pulgar.
+- [ ] Todos los botones se tocan cómodos con el pulgar, también los de la victoria y la derrota, la X de la ficha del guardián y las pestañas del bestiario.
 
 ## Herramientas de desarrollo (debug y profile)
 

@@ -211,27 +211,38 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = GameColors.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.star.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.star, width: 1.5),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(color: colors.onHud, fontWeight: FontWeight.w800),
+    // Cada columna en su propio nodo: TalkBack lee una entera y después la
+    // otra, en vez de ir de fila en fila saltando entre las dos.
+    return Semantics(
+      container: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.star.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colors.onHud, width: 1.5),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+              child: Semantics(
+                container: true,
+                header: true,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colors.onHud,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-        for (final child in children) ...[const SizedBox(height: 8), child],
-      ],
+          for (final child in children) ...[const SizedBox(height: 8), child],
+        ],
+      ),
     );
   }
 }
@@ -263,10 +274,16 @@ class _Row extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleSmall
-                ?.copyWith(color: colors.onHud, fontWeight: FontWeight.w700),
+          // Si hay interruptor, ya lleva el nombre: TalkBack no lo lee dos
+          // veces. Si no, el nombre va solo (no pegado al título).
+          child: Semantics(
+            container: trailing == null,
+            excludeSemantics: trailing != null,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(color: colors.onHud, fontWeight: FontWeight.w700),
+            ),
           ),
         ),
         ?trailing,

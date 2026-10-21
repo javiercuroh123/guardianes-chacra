@@ -39,6 +39,8 @@ class RiveTab extends ConsumerStatefulWidget {
 
   static const double height = 46;
 
+  static const _tapTop = 2.0;
+
   /// Ancho a escala 1: el texto (Fredoka 15, peso 700) y los márgenes del
   /// artboard.
   static double widthFor(String label, {required bool hasIcon}) {
@@ -111,10 +113,15 @@ class _RiveTabState extends ConsumerState<RiveTab>
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _tap,
-        child: SizedBox(
-          width: width * scale,
-          height: RiveTab.height * scale,
-          child: binding.widget(fit: rive.Fit.layout, layoutScale: scale),
+        // 2 dp de toque arriba, sin dibujo: la pestaña mide 46 y se toca en
+        // 48 (el mínimo de Android).
+        child: Padding(
+          padding: const EdgeInsets.only(top: RiveTab._tapTop),
+          child: SizedBox(
+            width: width * scale,
+            height: RiveTab.height * scale,
+            child: binding.widget(fit: rive.Fit.layout, layoutScale: scale),
+          ),
         ),
       ),
     );
