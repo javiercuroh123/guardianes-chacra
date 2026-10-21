@@ -158,7 +158,11 @@ void main() {
           testApp(
             victory(
               unlocked: const [
-                UnlockedItem.level(name: 'Andenes', color: Colors.teal),
+                UnlockedItem.level(
+                  levelId: 'andenes',
+                  name: 'Andenes',
+                  color: Colors.teal,
+                ),
                 UnlockedItem.guardian(
                   guardianId: 'pututu',
                   name: 'Pututu',

@@ -234,6 +234,8 @@ class _ValleyState extends ConsumerState<_Valley>
         return GestureDetector(
           // Tocar el mapa fuera de un nivel cierra el globo.
           behavior: HitTestBehavior.translucent,
+          // No es un control: TalkBack no lo ve.
+          excludeFromSemantics: true,
           onTap: _hideBubble,
           child: Stack(
             fit: StackFit.expand,

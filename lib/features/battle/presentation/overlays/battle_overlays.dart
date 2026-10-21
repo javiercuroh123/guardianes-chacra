@@ -99,19 +99,25 @@ class PauseOverlay extends StatelessWidget {
 
 /// Algo que abrió una victoria: un nivel o un guardián.
 class UnlockedItem {
-  const new level({required this.name, required this.color})
-    : guardianId = null;
+  const new level({
+    required String this.levelId,
+    required this.name,
+    required this.color,
+  }) : guardianId = null;
 
   const new guardian({
     required String this.guardianId,
     required this.name,
     required this.color,
-  });
+  }) : levelId = null;
 
   final String name;
 
   /// `null` si es un nivel.
   final String? guardianId;
+
+  /// `null` si es un guardián.
+  final String? levelId;
 
   /// Para el respaldo sin Rive.
   final Color color;
@@ -350,6 +356,7 @@ class _VictoryOverlayState extends ConsumerState<VictoryOverlay>
                         label: l10n.unlockedLabel,
                         name: item.name,
                         guardianId: item.guardianId,
+                        levelId: item.levelId,
                         color: item.color,
                         shown: index < _unlocks,
                       ),

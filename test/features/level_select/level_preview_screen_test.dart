@@ -32,6 +32,8 @@ void main() {
       ),
     );
     await tester.pump();
+    // El panel de las plagas termina de aparecer.
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   testWidgets('muestra las oleadas y las plagas en el orden en que llegan', (
@@ -39,7 +41,9 @@ void main() {
   ) async {
     await pumpPreview(tester);
 
-    expect(find.text('10 oleadas'), findsOneWidget);
+    expect(find.bySemanticsLabel('Oleadas: 10'), findsOneWidget);
+    expect(find.bySemanticsLabel('Maíz inicial: 220'), findsOneWidget);
+    expect(find.bySemanticsLabel('Papas: 20'), findsOneWidget);
     final order = [
       for (final id in [
         'gorgojo',
@@ -50,17 +54,63 @@ void main() {
       ])
         tester.getTopLeft(find.byKey(ValueKey('preview-pest-$id'))),
     ];
-    // En un Wrap, "antes" es más arriba o, en la misma fila, más a la
-    // izquierda.
+    // En la fila, "antes" es más a la izquierda.
     for (var i = 1; i < order.length; i++) {
-      final (previous, current) = (order[i - 1], order[i]);
-      expect(
-        current.dy > previous.dy ||
-            (current.dy == previous.dy && current.dx > previous.dx),
-        isTrue,
-        reason: 'plaga $i',
-      );
+      expect(order[i].dx, greaterThan(order[i - 1].dx), reason: 'plaga $i');
+      expect(order[i].dy, order[i - 1].dy, reason: 'plaga $i');
     }
+    // El jefe lo dice.
+    expect(
+      find.bySemanticsLabel('Rey Gorgojo, Nueva, Jefe final'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tocar una plaga muestra qué hace; tocar fuera lo cierra', (
+    tester,
+  ) async {
+    await pumpPreview(tester);
+    const moth =
+        'Vuela de noche y se cuela por cualquier rendija. '
+        'Frágil, pero muy rápida.';
+
+    await tester.tap(find.byKey(const ValueKey('preview-pest-polilla')));
+    await tester.pump();
+    expect(find.text(moth), findsOneWidget);
+
+    await tester.tapAt(const Offset(60, 360));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(moth), findsNothing);
+  });
+
+  testWidgets('Volver regresa al valle', (tester) async {
+    usePhoneLandscape(tester);
+    await tester.pumpWidget(
+      testApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    const LevelPreviewScreen(levelId: 'chacra_del_valle'),
+              ),
+            ),
+            child: const Text('abrir'),
+          ),
+        ),
+        overrides: [
+          contentOverride(content()),
+          adsServiceProvider.overrideWithValue(
+            FakeAdsService(rewardedReady: false),
+          ),
+        ],
+      ),
+    );
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('preview-back')));
+    await tester.pumpAndSettle();
+    expect(find.byType(LevelPreviewScreen), findsNothing);
   });
 
   testWidgets('las plagas que el jugador no vio llevan "Nueva"', (

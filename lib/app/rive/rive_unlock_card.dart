@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/rive/rive_binding.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_level_scene.dart';
 import 'package:guardianes_chacra/app/rive/rive_portrait.dart';
 
 /// Los nombres del artboard `UnlockCard` (ver `docs/UI_RIVE.md`).
@@ -14,11 +15,12 @@ abstract final class UnlockCardRive {
   static const label = 'label';
   static const name = 'name';
 
-  /// El `Portrait` anidado (un guardián) y el `IconSet` anidado (un nivel).
+  /// El `Portrait` anidado (un guardián) y la `LevelScene` anidada (un
+  /// nivel).
   static const portrait = 'portrait';
-  static const icon = 'icon';
+  static const scene = 'scene';
 
-  /// Muestra el ícono en vez del retrato.
+  /// Muestra la escena en vez del retrato.
   static const isLevel = 'isLevel';
 
   /// Entra con un "pop" y el destello de atrás empieza a girar. Hasta
@@ -26,9 +28,9 @@ abstract final class UnlockCardRive {
   static const enter = 'enter';
 }
 
-/// Lo que abrió una victoria: un guardián (su retrato) o un nivel (por
-/// ahora la bandera; en la Fase 6, la ilustración de la escena). Aparece
-/// con un "pop" cuando [shown] pasa a `true`.
+/// Lo que abrió una victoria: un guardián (su retrato) o un nivel (la
+/// ilustración de su escena). Aparece con un "pop" cuando [shown] pasa a
+/// `true`.
 ///
 /// Sin el archivo de Rive, una tarjeta de Flutter que crece al aparecer.
 class RiveUnlockCard extends ConsumerStatefulWidget {
@@ -37,6 +39,7 @@ class RiveUnlockCard extends ConsumerStatefulWidget {
     required this.name,
     required this.color,
     this.guardianId,
+    this.levelId,
     this.shown = true,
     this.scale = 1,
     super.key,
@@ -47,6 +50,9 @@ class RiveUnlockCard extends ConsumerStatefulWidget {
 
   /// El guardián desbloqueado; `null` si es un nivel.
   final String? guardianId;
+
+  /// El nivel desbloqueado (para su escena); `null` si es un guardián.
+  final String? levelId;
 
   /// El color del guardián (o del nivel), para el respaldo.
   final Color color;
@@ -72,7 +78,10 @@ class _RiveUnlockCardState extends ConsumerState<RiveUnlockCard>
     binding.string(UnlockCardRive.name).value = widget.name;
     final guardianId = widget.guardianId;
     binding.boolean(UnlockCardRive.isLevel).value = guardianId == null;
-    binding.icon(UnlockCardRive.icon).value = RiveIcon.flag.name;
+    final scene = binding.enumerator(
+      '${UnlockCardRive.scene}/${LevelSceneRive.level}',
+    );
+    scene.value = LevelSceneRive.levels[widget.levelId] ?? scene.value;
     binding
         .enumerator('${UnlockCardRive.portrait}/${PortraitRive.guardian}')
         .value = PortraitRive.valueFor(

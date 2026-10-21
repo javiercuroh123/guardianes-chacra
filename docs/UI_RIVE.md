@@ -346,14 +346,14 @@ Una estadística del resultado, 232 × 60: insignia con ícono, etiqueta chica y
 
 ### `UnlockCard` (Fase 5)
 
-Lo que abrió una victoria, 280 × 96 (horizontal, como la referencia): a la izquierda el retrato del guardián o el ícono del nivel sobre un destello dorado que gira; a la derecha "Desbloqueado:" y el nombre. No se ve hasta `enter`. Widget: `RiveUnlockCard` (`lib/app/rive/rive_unlock_card.dart`).
+Lo que abrió una victoria, 280 × 96 (horizontal, como la referencia): a la izquierda el retrato del guardián o la escena del nivel (una `LevelScene` anidada, como postal inclinada, desde la Fase 6) sobre un destello dorado que gira; a la derecha "Desbloqueado:" y el nombre. No se ve hasta `enter`. Widget: `RiveUnlockCard` (`lib/app/rive/rive_unlock_card.dart`).
 
 | Propiedad | Tipo | La escribe | Qué hace |
 |---|---|---|---|
 | `label`, `name` | string | `RiveUnlockCard` | "Desbloqueado:", "Andenes" |
 | `portrait` | view model `Portrait` | `RiveUnlockCard` | El guardián (instancia propia `UnlockPortrait`) |
-| `icon` | view model `IconSet` | `RiveUnlockCard` (bandera) | El nivel, hasta la ilustración de la Fase 6 (instancia `UnlockIcon`) |
-| `isLevel` | boolean | `RiveUnlockCard` | Muestra el ícono en vez del retrato |
+| `scene` | view model `LevelScene` | `RiveUnlockCard` (`scene/level`) | El nivel (desde la Fase 6; antes era la bandera del `IconSet`) |
+| `isLevel` | boolean | `RiveUnlockCard` | Muestra la escena en vez del retrato |
 | `enter` | trigger | `RiveUnlockCard`, al pasar `shown` a `true` | Entra con un "pop" (de 30 % a 112 % y 100 %, 0,47 s) |
 | `reduceMotion` | boolean | `RiveBindingState` | Entra desvaneciéndose y el destello no gira |
 
@@ -441,7 +441,35 @@ La ilustración de un nivel, 240 × 150: una copia del paisaje del `Valley` (sin
 | `level` | enum `LevelId` (`chacra`, `andenes`, `lago`) | `RiveLevelScene` (de `LevelSceneRive.levels`) | Qué parte del valle se ve |
 | `collca` | view model `Collca` | — (instancia `Full`) | La collca de los andenes; `RiveLevelScene` le pone `reduceMotion` |
 
-State machine `Main`: `Framing`, un estado por nivel (`Chacra`, `Andenes`, `Lago`) que mueve `Camera`. Un nivel que el dibujo no conoce usa el respaldo de Flutter.
+State machine `Main`: `Framing`, un estado por nivel (`Chacra`, `Andenes`, `Lago`) que mueve `Camera`. El artboard recorta lo que sale de su marco (`clip`): anidado en la `UnlockCard` no se ve el resto del valle. Un nivel que el dibujo no conoce usa el respaldo de Flutter.
+
+### Los retratos de las plagas y `PestPortrait` (Fase 6)
+
+Un artboard por plaga, 120 × 120, en el estilo de los retratos de los guardianes (plano, contorno `#4A1302` de 2,4, fondo transparente, cejas de pocos amigos): `PestGorgojo` (el gorgojo de trompa larga), `PestReyGorgojo` (el mismo con capa ciruela y corona con gemas), `PestPolilla`, `PestLangosta`, `PestEscarabajo` (caparazón acorazado con cuerno), `PestGranizo` (bola de hielo con púas y dientes apretados), `PestGranizoChico` (más chico y sonriente) y `PestEspirituHelada` (fantasma celeste con copo de nieve en la frente).
+
+`PestPortrait` los anida a los ocho junto con `PortraitUnknown` (la silueta con "?" de los guardianes, el respaldo) y muestra uno: la opacidad de cada componente va enlazada a `pest` con `IsIcon00`…`IsIcon08`. Va anidado en `PestCard`; en la Fase 7, también en el Bestiario.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `pest` | enum `PestId` | `RivePestCard` (`portrait/pest`) | `unknown`, `gorgojo`, `polilla`, `langosta`, `granizo`, `granizo_chico`, `escarabajo`, `espiritu_helada` o `rey_gorgojo` |
+
+Como con los guardianes, el primer valor es el respaldo y `PestPortraitRive.valueFor` cambia un id desconocido por `unknown`. Para sumar una plaga: dibujar su artboard, anidarlo en `PestPortrait`, agregar el valor al final del enum, enlazar su opacidad con `IsIconNN` y sumar el id a `PestPortraitRive.ids` (el test de contrato compara las dos listas).
+
+### `PestCard` (Fase 6)
+
+La tarjeta de una plaga en la preparación, 132 × 180: marco crema (ciruela, el jefe), una ventana del color de la plaga con el `PestPortrait`, el nombre debajo (en dos líneas si no entra; achica la letra si hace falta), la insignia turquesa "Nueva" arriba a la derecha y, el jefe, la cinta "Jefe final" sobre el borde de la ventana y un resplandor dorado detrás de la corona. Widget: `RivePestCard` (`lib/app/rive/rive_pest_card.dart`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `name` | string | `RivePestCard` | El nombre de la plaga |
+| `isNew`, `newLabel` | boolean, string | `RivePestCard` | La insignia "Nueva" (no se vio todavía) |
+| `boss`, `bossLabel` | boolean, string | `RivePestCard` | El marco ciruela, la cinta "Jefe final" y el resplandor |
+| `color` | color | `RivePestCard` (`windowColor`: el color de la plaga mezclado con 60 % de blanco) | El fondo de la ventana |
+| `portrait` | view model `PestPortrait` | `RivePestCard` | El retrato |
+| `enter` | trigger | `RivePestCard`, al pasar `shown` a `true` | Sube 18 px, crece de 92 % a 100 % y aparece (0,4 s) |
+| `reduceMotion` | boolean | `RiveBindingState` | Aparece sin moverse y el resplandor no late |
+
+Lo que depende de `boss` e `isNew` se muestra enlazando la opacidad con `BoolToNumber`. State machine `Main`: `Enter` (`Hidden` → `Enter` o `EnterCalm`, que se quedan en su último cuadro) y `Glow` (`Shine`: el resplandor late en 1,6 s si es el jefe / `Calm`).
 
 ### Cambios de la Fase 6 en piezas anteriores
 
@@ -491,6 +519,16 @@ State machine `Main`: `Framing`, un estado por nivel (`Chacra`, `Andenes`, `Lago
 - El camino de piedritas lo dibuja Flutter (`_TrailPainter`), solo hasta los niveles abiertos. Al ganar, la batalla anota los niveles nuevos en `valleyRevealProvider`; cuando el valle vuelve a estar a la vista, el camino hasta cada uno aparece piedra por piedra en 1,2 s, el candado salta (`unlock`) y suena la estrella. Vive en memoria: si el juego se cierra antes, el camino aparece hecho. Con "Quitar animaciones", también.
 - Arriba: Volver (redondo, `RiveIcon.back`), el `TitleSign` "El valle" y el contador de estrellas (`RiveCounter` con la estrella, "N/9"). Abajo, en un `RivePanel`: la `RiveLevelScene` del sugerido, su nombre y sus estrellas (`RiveStar`) y Jugar, que lleva a su vista previa; con letra grande se achica (hasta el 27 % del alto) para no tapar los niveles.
 - Claves: `level-<id>`, `valley-back`, `valley-play`, `valley-stars`.
+
+## La preparación en Flutter (Fase 6, parte C)
+
+`lib/features/level_select/presentation/level_preview_screen.dart`, sin AppBar, sobre el `RiveValley` (con el mismo `ValleyFrame` del mapa):
+
+- Arriba, en una fila que se achica entera con letra grande: las oleadas (`RiveStatPill` con la bandera), el `TitleSign` con el nombre del nivel, el maíz inicial y las papas (`RiveStatPill` al 60 %). TalkBack lee "Oleadas: 10", etc.
+- A la izquierda, la `RiveLevelScene` del nivel (27 % del ancho, hasta 240 dp). A la derecha, en un `RivePanel`, "Plagas que vienen" y la fila de `RivePestCard` en el orden en que llegan, en un `ListView` horizontal: el ancho de cada tarjeta deja ver cinco enteras y un poco de la sexta, sin pasarse del alto. Entran una tras otra, cada 90 ms (con "Quitar animaciones", todas a la vez).
+- Tocar una tarjeta muestra encima un globo (`RiveTooltip`) con la descripción de la plaga del Bestiario; se va a los 4 s, al tocar fuera o al deslizar la fila. TalkBack lee "Nombre, Nueva, Jefe final" y el globo al aparecer.
+- Abajo: Volver (`preview-back`), "Ver anuncio: +50 de maíz" solo si hay uno cargado (`preview-rewarded`) y Comenzar (`preview-start`). Claves de las tarjetas: `preview-pest-<id>`; de las pastillas, `preview-waves`, `preview-corn` y `preview-potatoes`.
+- El toque que cierra el globo (en el valle y aquí) lleva `excludeFromSemantics`: si no, TalkBack juntaba toda la pantalla en un nodo con el título.
 
 ## Paleta
 
@@ -605,3 +643,7 @@ El límite es el hilo de raster: el valle cubre toda la pantalla y se mueve sin 
 ## Mediciones de la Fase 6 (parte B)
 
 21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger, el valle asentado con los tres niveles abiertos (las nubes cruzan, los tres nodos flotan y el sugerido late): **86–90 FPS** (28–34 % de cuadros > 16,7 ms; p50 8,4 ms, p95 16,9 ms). Lo mismo que el título: el límite sigue siendo el raster del valle a pantalla completa; los nodos, el camino y la barra no suman casi nada.
+
+## Mediciones de la Fase 6 (parte C)
+
+21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger, la preparación de Andenes con las siete tarjetas ya entradas (el valle de fondo sigue animándose y el brillo del jefe late): **77 FPS** (50 % de cuadros > 16,7 ms; p50 16,7 ms, p95 16,9 ms, máx. 25 ms). Más que en el valle porque hay más Rive en pantalla (siete tarjetas con su retrato anidado y una segunda copia del valle en la escena del nivel), pero ningún cuadro baja de 40 FPS y casi todos quedan en 60. Si hiciera falta margen: las tarjetas ya asentadas no repintan; lo caro sigue siendo el valle de fondo.

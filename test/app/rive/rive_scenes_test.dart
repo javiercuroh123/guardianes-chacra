@@ -6,8 +6,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/level_preview_screen.dart';
 import 'package:guardianes_chacra/features/level_select/presentation/level_select_screen.dart';
 import 'package:guardianes_chacra/features/menu/presentation/title_screen.dart';
 import 'package:guardianes_chacra/features/progress/domain/progress.dart';
@@ -15,6 +17,7 @@ import 'package:guardianes_chacra/features/progress/domain/progress_repository.d
 import 'package:guardianes_chacra/features/progress/presentation/save_providers.dart';
 import 'package:rive/rive.dart' as rive;
 
+import '../../helpers/fake_ads_service.dart';
 import '../../helpers/real_content.dart';
 import '../../helpers/test_app.dart';
 
@@ -63,7 +66,11 @@ void main() {
         maxPotatoes: 20,
         cornHarvested: 480,
         unlocked: const [
-          UnlockedItem.level(name: 'Andenes', color: Colors.teal),
+          UnlockedItem.level(
+            levelId: 'andenes',
+            name: 'Andenes',
+            color: Colors.teal,
+          ),
           UnlockedItem.guardian(
             guardianId: 'pututu',
             name: 'Pututu',
@@ -157,6 +164,24 @@ void main() {
       (tester) => drawScene(tester, name, overlay, wait),
     );
   }
+
+  // Andenes con el gorgojo ya visto: las demás llevan "Nueva" y el jefe su
+  // cinta; las tarjetas terminan de entrar a los 0,8 s.
+  testWidgets('preparacion se dibuja con Rive, sin respaldos', (tester) async {
+    await drawScene(
+      tester,
+      'preparacion',
+      const LevelPreviewScreen(levelId: 'andenes'),
+      const Duration(milliseconds: 1500),
+      overrides: [
+        contentOverride(content()),
+        adsServiceProvider.overrideWithValue(FakeAdsService()),
+        savedGameProvider.overrideWithValue(
+          const SaveData(progress: Progress(discoveredPests: {'gorgojo'})),
+        ),
+      ],
+    );
+  });
 
   // El primero ganado con 2 estrellas: Andenes sugerido y el lago cerrado.
   testWidgets('valle se dibuja con Rive, sin respaldos', (tester) async {

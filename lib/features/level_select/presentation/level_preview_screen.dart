@@ -1,21 +1,38 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/app/app_theme.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
+import 'package:guardianes_chacra/app/rive/rive_level_scene.dart';
+import 'package:guardianes_chacra/app/rive/rive_panel.dart';
+import 'package:guardianes_chacra/app/rive/rive_pest_card.dart';
+import 'package:guardianes_chacra/app/rive/rive_stat_pill.dart';
+import 'package:guardianes_chacra/app/rive/rive_title_sign.dart';
+import 'package:guardianes_chacra/app/rive/rive_tooltip.dart';
+import 'package:guardianes_chacra/app/rive/rive_valley.dart';
 import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_assets.dart';
 import 'package:guardianes_chacra/features/battle/presentation/battle_screen.dart';
-import 'package:guardianes_chacra/features/battle/presentation/style/creature_icons.dart';
+import 'package:guardianes_chacra/features/battle/presentation/style/battle_palette.dart';
 import 'package:guardianes_chacra/features/content/domain/content_texts.dart';
 import 'package:guardianes_chacra/features/content/domain/game_content.dart';
+import 'package:guardianes_chacra/features/content/domain/level_def.dart';
 import 'package:guardianes_chacra/features/content/domain/level_pests.dart';
 import 'package:guardianes_chacra/features/content/presentation/content_providers.dart';
+import 'package:guardianes_chacra/features/level_select/presentation/valley_layout.dart';
 import 'package:guardianes_chacra/features/progress/presentation/progress_providers.dart';
 import 'package:guardianes_chacra/l10n/app_localizations.dart';
+import 'package:rive/rive.dart' as rive;
 
-/// Antes de jugar: el nombre del nivel, cuántas oleadas tiene y las plagas
-/// que vienen (las que el jugador todavía no vio llevan "Nueva").
+/// Antes de jugar: el nombre del nivel, su ilustración, cuántas oleadas
+/// tiene, con cuánto maíz y cuántas papas se empieza y las plagas que
+/// vienen, en tarjetas que entran una tras otra (las que el jugador todavía
+/// no vio llevan "Nueva"; el jefe, su cinta). Tocar una tarjeta muestra qué
+/// hace esa plaga.
 ///
 /// Si hay un anuncio recompensado cargado, ofrece verlo para empezar con
 /// maíz extra (`rewardedStartCorn` de `ads.json`).
@@ -30,109 +47,275 @@ class LevelPreviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return switch (ref.watch(gameContentProvider)) {
-      AsyncData(:final value) => _preview(context, ref, value, l10n),
-      AsyncError(:final error) => Scaffold(
-        body: Center(child: Text(l10n.contentLoadError('$error'))),
-      ),
-      _ => const Scaffold(body: Center(child: CircularProgressIndicator())),
-    };
+    return Scaffold(
+      backgroundColor: RiveValley.sky,
+      body: switch (ref.watch(gameContentProvider)) {
+        AsyncData(:final value) => _Preview(
+          content: value,
+          level: value.levels.firstWhere((level) => level.id == levelId),
+          assets: assets,
+        ),
+        AsyncError(:final error) => Center(
+          child: Text(l10n.contentLoadError('$error')),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
+    );
+  }
+}
+
+class _Preview extends ConsumerStatefulWidget {
+  const new({required this.content, required this.level, this.assets});
+
+  final GameContent content;
+  final LevelDef level;
+  final BattleAssets? assets;
+
+  @override
+  ConsumerState<_Preview> createState() => _PreviewState();
+}
+
+class _PreviewState extends ConsumerState<_Preview>
+    with SingleTickerProviderStateMixin {
+  /// Entre tarjeta y tarjeta, al entrar.
+  static const _cardGap = Duration(milliseconds: 90);
+
+  late final List<String> _pests = pestsAppearingIn(widget.level);
+
+  /// Las tarjetas entran una tras otra: este reloj dice cuántas ya.
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: _cardGap * (_pests.length + 1),
+  )..addListener(_onEntrance);
+  int _shown = 0;
+
+  final GlobalKey _stackKey = GlobalKey();
+  late final Map<String, GlobalKey> _cardKeys = {
+    for (final id in _pests) id: GlobalKey(),
+  };
+
+  /// El globo con la descripción de una plaga: su texto y la punta de la
+  /// flecha (el centro de arriba de la tarjeta).
+  ({String text, Offset anchor})? _bubble;
+  bool _bubbleVisible = false;
+  Timer? _bubbleTimer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entrance.value = 1;
+    } else if (!_entrance.isAnimating && _entrance.value == 0) {
+      _entrance.forward();
+    }
   }
 
-  Widget _preview(
-    BuildContext context,
-    WidgetRef ref,
-    GameContent content,
-    AppLocalizations l10n,
-  ) {
+  @override
+  void dispose() {
+    _entrance.dispose();
+    _bubbleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onEntrance() {
+    final shown = math.min(
+      _pests.length,
+      (_entrance.value * (_pests.length + 1)).floor(),
+    );
+    if (shown != _shown) setState(() => _shown = shown);
+  }
+
+  void _showBubble(String pestId, String text) {
+    final card = _cardKeys[pestId]?.currentContext?.findRenderObject();
+    final stack = _stackKey.currentContext?.findRenderObject();
+    if (card is! RenderBox || stack is! RenderBox) return;
+    final topLeft = card.localToGlobal(Offset.zero, ancestor: stack);
+    _bubbleTimer?.cancel();
+    setState(() {
+      _bubble = (text: text, anchor: topLeft + Offset(card.size.width / 2, 2));
+      _bubbleVisible = true;
+    });
+    _bubbleTimer = Timer(const Duration(seconds: 4), _hideBubble);
+  }
+
+  void _hideBubble() {
+    _bubbleTimer?.cancel();
+    if (!_bubbleVisible) return;
+    setState(() => _bubbleVisible = false);
+    // Lo saca del todo cuando termina de desvanecerse.
+    _bubbleTimer = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() => _bubble = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
-    final level = content.levels.firstWhere((level) => level.id == levelId);
+    final content = widget.content;
+    final level = widget.level;
     final discovered = ref.watch(
       progressProvider.select((progress) => progress.discoveredPests),
     );
-    final textTheme = Theme.of(context).textTheme;
     final ads = ref.watch(adsServiceProvider);
     final extraCorn = content.ads.rewardedStartCorn;
     String text(String key) => content.texts.text(key, language: language);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(text(ContentTexts.levelName(level.id)))),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest;
+        final frame = ValleyFrame.of(size);
+        final sceneWidth = math.min<double>(size.width * 0.27, 240);
+        return GestureDetector(
+          // Tocar fuera de una tarjeta cierra el globo.
+          behavior: HitTestBehavior.translucent,
+          // No es un control: TalkBack no lo ve.
+          excludeFromSemantics: true,
+          onTap: _hideBubble,
+          child: Stack(
+            key: _stackKey,
+            fit: StackFit.expand,
             children: [
-              // Solo los botones quedan fijos abajo: con letra grande, el
-              // resto se desplaza.
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.previewWaves(level.waves.length),
-                        style: textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(l10n.previewPests, style: textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 8,
+              RiveValley(
+                fit: frame.cover ? rive.Fit.cover : rive.Fit.fitWidth,
+                alignment: frame.cover
+                    ? Alignment.center
+                    : Alignment.bottomCenter,
+              ),
+              SafeArea(
+                minimum: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    _TopBar(
+                      title: text(ContentTexts.levelName(level.id)),
+                      waves: level.waves.length,
+                      corn: level.startingCorn,
+                      potatoes: level.startingPotatoes,
+                    ),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Row(
                         children: [
-                          for (final pestId in pestsAppearingIn(level))
-                            _PestChip(
-                              key: ValueKey('preview-pest-$pestId'),
-                              icon: PestIcon(
-                                def: content.pests[pestId]!,
-                                size: 32,
+                          SizedBox(
+                            width: sceneWidth,
+                            child: Center(
+                              child: RiveLevelScene(
+                                levelId: level.id,
+                                width: sceneWidth,
                               ),
-                              name: text(ContentTexts.pestName(pestId)),
-                              isNew: !discovered.contains(pestId),
-                              newLabel: l10n.previewNew,
                             ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification: (_) {
+                                _hideBubble();
+                                return false;
+                              },
+                              child: _PestsPanel(
+                                title: l10n.previewPests,
+                                cards: [
+                                  for (final (index, pestId) in _pests.indexed)
+                                    _pestCard(
+                                      pestId: pestId,
+                                      name: text(ContentTexts.pestName(pestId)),
+                                      description: text(
+                                        ContentTexts.pestDescription(pestId),
+                                      ),
+                                      isNew: !discovered.contains(pestId),
+                                      shown: index < _shown,
+                                      l10n: l10n,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ValueListenableBuilder<AdsStatus>(
-                valueListenable: ads.status,
-                builder: (context, status, _) => Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    RiveButton(
-                      kind: RiveButtonKind.secondary,
-                      label: l10n.back,
-                      icon: RiveIcon.back,
-                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    if (status.rewardedReady && extraCorn > 0)
-                      RiveButton(
-                        key: const ValueKey('preview-rewarded'),
-                        kind: RiveButtonKind.secondary,
-                        label: l10n.adStartCorn(extraCorn),
-                        icon: RiveIcon.ad,
-                        onPressed: () => _startWithAd(context, ads, extraCorn),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<AdsStatus>(
+                      valueListenable: ads.status,
+                      builder: (context, status, _) => _Buttons(
+                        onBack: () => Navigator.of(context).maybePop(),
+                        onStart: () => _start(context),
+                        rewardedLabel: status.rewardedReady && extraCorn > 0
+                            ? l10n.adStartCorn(extraCorn)
+                            : null,
+                        onRewarded: () => _startWithAd(context, ads, extraCorn),
                       ),
-                    RiveButton(
-                      key: const ValueKey('preview-start'),
-                      label: l10n.previewStart,
-                      icon: RiveIcon.play,
-                      onPressed: () => _start(context),
                     ),
                   ],
                 ),
               ),
+              if (_bubble case (:final text, :final anchor))
+                _bubbleAt(text: text, anchor: anchor, screen: size),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  /// Una tarjeta tocable, para un ancho: su globo dice qué hace la plaga.
+  Widget Function(double width) _pestCard({
+    required String pestId,
+    required String name,
+    required String description,
+    required bool isNew,
+    required bool shown,
+    required AppLocalizations l10n,
+  }) {
+    final def = widget.content.pests[pestId];
+    final boss = def?.boss ?? false;
+    return (width) => Semantics(
+      key: ValueKey('preview-pest-$pestId'),
+      container: true,
+      button: true,
+      label: [
+        name,
+        if (isNew) l10n.previewNew,
+        if (boss) l10n.previewBoss,
+      ].join(', '),
+      excludeSemantics: true,
+      child: GestureDetector(
+        key: _cardKeys[pestId],
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _showBubble(pestId, description),
+        child: RivePestCard(
+          pestId: pestId,
+          name: name,
+          color: colorFor(pestId, def?.color),
+          newLabel: l10n.previewNew,
+          bossLabel: l10n.previewBoss,
+          isNew: isNew,
+          boss: boss,
+          shown: shown,
+          width: width,
         ),
       ),
+    );
+  }
+
+  /// El globo sobre una tarjeta ([anchor], la punta de la flecha), sin
+  /// salirse de la pantalla.
+  Widget _bubbleAt({
+    required String text,
+    required Offset anchor,
+    required Size screen,
+  }) {
+    // El ancho máximo de siempre del globo (240).
+    final bubble =
+        RiveTooltip.sizeFor(text, 240) *
+        MediaQuery.textScalerOf(context).scale(1);
+    final left = (anchor.dx - bubble.width / 2).clamp(
+      8.0,
+      screen.width - bubble.width - 8,
+    );
+    return Positioned(
+      left: left,
+      top: math.max(4, anchor.dy - bubble.height),
+      child: RiveTooltip(text: text, visible: _bubbleVisible),
     );
   }
 
@@ -140,8 +323,8 @@ class LevelPreviewScreen extends ConsumerWidget {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => BattleScreen(
-            levelId: levelId,
-            assets: assets,
+            levelId: widget.level.id,
+            assets: widget.assets,
             extraCorn: extraCorn,
           ),
         ),
@@ -166,49 +349,169 @@ class LevelPreviewScreen extends ConsumerWidget {
   }
 }
 
-class _PestChip extends StatelessWidget {
+/// El cartel con el nombre del nivel y, a los lados, las oleadas, el maíz
+/// inicial y las papas. Con letra grande se achica entera.
+class _TopBar extends StatelessWidget {
   const new({
-    required this.icon,
-    required this.name,
-    required this.isNew,
-    required this.newLabel,
-    super.key,
+    required this.title,
+    required this.waves,
+    required this.corn,
+    required this.potatoes,
   });
 
-  final Widget icon;
-  final String name;
-  final bool isNew;
-  final String newLabel;
+  final String title;
+  final int waves;
+  final int corn;
+  final int potatoes;
+
+  static const _pillScale = 0.6;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Chip(
-      avatar: icon,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
+    final l10n = AppLocalizations.of(context);
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
         children: [
-          Text(name),
-          if (isNew) ...[
-            const SizedBox(width: 6),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.tertiary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  newLabel,
-                  style: TextStyle(
-                    color: scheme.onTertiary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+          RiveStatPill(
+            key: const ValueKey('preview-waves'),
+            icon: RiveIcon.flag,
+            label: l10n.previewWavesLabel,
+            value: '$waves',
+            scale: _pillScale,
+          ),
+          const SizedBox(width: 16),
+          RiveTitleSign(title: title, width: 220),
+          const SizedBox(width: 16),
+          RiveStatPill(
+            key: const ValueKey('preview-corn'),
+            icon: RiveIcon.corn,
+            label: l10n.previewCornLabel,
+            value: '$corn',
+            scale: _pillScale,
+          ),
+          const SizedBox(width: 8),
+          RiveStatPill(
+            key: const ValueKey('preview-potatoes'),
+            icon: RiveIcon.potato,
+            label: l10n.previewPotatoesLabel,
+            value: '$potatoes',
+            scale: _pillScale,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Plagas que vienen" y la fila de tarjetas, que se desliza: se ven cinco
+/// y asoma la sexta.
+class _PestsPanel extends StatelessWidget {
+  const new({required this.title, required this.cards});
+
+  final String title;
+
+  /// Cada tarjeta, para un ancho.
+  final List<Widget Function(double width)> cards;
+
+  static const _padding = EdgeInsets.fromLTRB(22, 14, 22, 16);
+  static const _gap = 8.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = GameColors.of(context);
+    final titleStyle = Theme.of(context).textTheme.titleMedium
+        ?.copyWith(color: colors.onHud, fontWeight: FontWeight.w800);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final inner = constraints.maxWidth - _padding.horizontal;
+        final titleHeight =
+            MediaQuery.textScalerOf(context).scale(titleStyle?.fontSize ?? 16) *
+            1.4;
+        final maxCardHeight =
+            constraints.maxHeight - _padding.vertical - titleHeight - 6;
+        // Cinco enteras y un poco de la sexta, sin pasarse del alto.
+        final width = math.min(
+          (inner - 5 * _gap) / 5.4,
+          maxCardHeight / PestCardRive.aspect,
+        );
+        return Center(
+          child: RivePanel(
+            padding: _padding,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: titleStyle),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: inner,
+                  height: width * PestCardRive.aspect,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: cards.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: _gap),
+                    itemBuilder: (_, index) => cards[index](width),
                   ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Volver, el anuncio (si hay uno cargado) y Comenzar.
+class _Buttons extends StatelessWidget {
+  const new({
+    required this.onBack,
+    required this.onStart,
+    required this.onRewarded,
+    this.rewardedLabel,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onStart;
+  final VoidCallback onRewarded;
+
+  /// `null` si no hay anuncio para ofrecer.
+  final String? rewardedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rewardedLabel = this.rewardedLabel;
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RiveButton(
+            key: const ValueKey('preview-back'),
+            kind: RiveButtonKind.secondary,
+            label: l10n.back,
+            icon: RiveIcon.back,
+            onPressed: onBack,
+          ),
+          if (rewardedLabel != null) ...[
+            const SizedBox(width: 16),
+            RiveButton(
+              key: const ValueKey('preview-rewarded'),
+              kind: RiveButtonKind.secondary,
+              label: rewardedLabel,
+              icon: RiveIcon.ad,
+              onPressed: onRewarded,
             ),
           ],
+          const SizedBox(width: 16),
+          RiveButton(
+            key: const ValueKey('preview-start'),
+            label: l10n.previewStart,
+            icon: RiveIcon.play,
+            onPressed: onStart,
+          ),
         ],
       ),
     );

@@ -237,6 +237,22 @@
   "@previewStart": {
     "description": "Empieza el nivel desde la vista previa."
   },
+  "previewWavesLabel": "Oleadas",
+  "@previewWavesLabel": {
+    "description": "Etiqueta de la cantidad de oleadas en la preparación."
+  },
+  "previewCornLabel": "Maíz inicial",
+  "@previewCornLabel": {
+    "description": "Etiqueta del maíz con que empieza el nivel."
+  },
+  "previewPotatoesLabel": "Papas",
+  "@previewPotatoesLabel": {
+    "description": "Etiqueta de las papas de la collca al empezar."
+  },
+  "previewBoss": "Jefe final",
+  "@previewBoss": {
+    "description": "Cinta de la tarjeta del jefe en la preparación."
+  },
   "hudNextWave": "+{bonus}",
   "@hudNextWave": {
     "description": "Botón de siguiente oleada: maíz extra por llamarla antes.",

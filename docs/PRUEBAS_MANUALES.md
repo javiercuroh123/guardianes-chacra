@@ -28,7 +28,9 @@ flutter run --release
 - [ ] Valle (nueva partida): de fondo, el valle del título; solo Chacra del Valle está abierto (verde, flota y lleva el anillo dorado de sugerido); los otros, grises y con candado. Tocar uno cerrado lo sacude y muestra encima un globo con lo que falta, que se va solo a los 3 s o al tocar el mapa.
 - [ ] Valle: arriba, Volver (vuelve al título), el cartel "El valle" y las estrellas "N/9"; abajo, la ilustración, el nombre y las estrellas del nivel sugerido y Jugar, que abre su vista previa (igual que tocar el nodo).
 - [ ] Valle: al ganar un nivel que abre otro, al volver al valle el camino de piedritas se dibuja hasta el nuevo, su candado salta y suena la estrella; el anillo pasa al nivel sugerido. Con "Quitar animaciones", el camino ya está y nada flota.
-- [ ] Vista previa: muestra oleadas, plagas en orden de llegada y guardianes disponibles.
+- [ ] Preparación: de fondo el valle; arriba las oleadas, el cartel con el nombre del nivel, el maíz inicial y las papas; a la izquierda la ilustración del nivel; a la derecha las tarjetas de las plagas en el orden en que llegan, que entran una tras otra (en Andenes y la Orilla se ven cinco y asoma la sexta; la fila se desliza). Las que no viste llevan "Nueva"; el Rey Gorgojo, marco ciruela, la cinta "Jefe final" y un brillo que late detrás de la corona.
+- [ ] Preparación: tocar una plaga muestra un globo con lo que hace; se va solo, al tocar fuera o al deslizar. Volver regresa al valle; Comenzar empieza; "Ver anuncio: +50 de maíz" aparece solo con un anuncio cargado.
+- [ ] Victoria que abre un nivel: la tarjeta "Desbloqueado" muestra la escena de ese nivel (postal inclinada) en vez de la bandera.
 - [ ] Bestiario: lo no descubierto aparece como "Sin descubrir"; después de jugar, con su ficha.
 
 ## Partida

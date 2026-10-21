@@ -19,6 +19,7 @@ import 'package:guardianes_chacra/app/rive/rive_logo.dart';
 import 'package:guardianes_chacra/app/rive/rive_mascots.dart';
 import 'package:guardianes_chacra/app/rive/rive_next_wave.dart';
 import 'package:guardianes_chacra/app/rive/rive_panel.dart';
+import 'package:guardianes_chacra/app/rive/rive_pest_card.dart';
 import 'package:guardianes_chacra/app/rive/rive_portrait.dart';
 import 'package:guardianes_chacra/app/rive/rive_scene_sign.dart';
 import 'package:guardianes_chacra/app/rive/rive_segmented.dart';
@@ -399,7 +400,7 @@ void main() {
     );
   });
 
-  test('UnlockCard: retrato o ícono, nombre y entrada', () {
+  test('UnlockCard: retrato o escena del nivel, nombre y entrada', () {
     expectArtboard(
       UnlockCardRive.artboard,
       viewModel: UnlockCardRive.viewModel,
@@ -407,7 +408,7 @@ void main() {
         UnlockCardRive.label: rive.DataType.string,
         UnlockCardRive.name: rive.DataType.string,
         UnlockCardRive.portrait: rive.DataType.viewModel,
-        UnlockCardRive.icon: rive.DataType.viewModel,
+        UnlockCardRive.scene: rive.DataType.viewModel,
         UnlockCardRive.isLevel: rive.DataType.boolean,
         UnlockCardRive.enter: rive.DataType.trigger,
         ...reduceMotion,
@@ -472,6 +473,35 @@ void main() {
     final ids = file.enums.where((e) => e.name == LevelSceneRive.enumName);
     expect(ids, hasLength(1));
     expect(ids.single.values, containsAll(LevelSceneRive.levels.values));
+  });
+
+  test('PestPortrait: un enum elige la plaga, en el orden de los ids', () {
+    expectArtboard(
+      PestPortraitRive.artboard,
+      viewModel: PestPortraitRive.viewModel,
+      properties: {PestPortraitRive.pest: rive.DataType.enumType},
+    );
+    final ids = file.enums.where((e) => e.name == PestPortraitRive.enumName);
+    expect(ids, hasLength(1));
+    expect(ids.single.values, PestPortraitRive.ids);
+  });
+
+  test('PestCard: nombre, insignias, color, retrato y entrada', () {
+    expectArtboard(
+      PestCardRive.artboard,
+      viewModel: PestCardRive.viewModel,
+      properties: {
+        PestCardRive.name: rive.DataType.string,
+        PestCardRive.isNew: rive.DataType.boolean,
+        PestCardRive.newLabel: rive.DataType.string,
+        PestCardRive.boss: rive.DataType.boolean,
+        PestCardRive.bossLabel: rive.DataType.string,
+        PestCardRive.color: rive.DataType.color,
+        PestCardRive.portrait: rive.DataType.viewModel,
+        PestCardRive.enter: rive.DataType.trigger,
+        ...reduceMotion,
+      },
+    );
   });
 
   test('Logo: tres líneas del nombre y el lema', () {

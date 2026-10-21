@@ -284,7 +284,11 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
       unlocked: [
         if (unlocked != null) ...[
           for (final id in unlocked.levels)
-            UnlockedItem.level(name: _levelName(id), color: colorForId(id)),
+            UnlockedItem.level(
+              levelId: id,
+              name: _levelName(id),
+              color: colorForId(id),
+            ),
           for (final id in unlocked.guardians)
             UnlockedItem.guardian(
               guardianId: id,

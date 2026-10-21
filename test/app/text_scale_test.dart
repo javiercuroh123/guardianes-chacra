@@ -87,7 +87,11 @@ void main() {
             maxPotatoes: 20,
             cornHarvested: 1234,
             unlocked: const [
-              UnlockedItem.level(name: 'Orilla del Lago', color: Colors.teal),
+              UnlockedItem.level(
+                levelId: 'orilla_del_lago',
+                name: 'Orilla del Lago',
+                color: Colors.teal,
+              ),
               UnlockedItem.guardian(
                 guardianId: 'condor',
                 name: 'Cóndor',
