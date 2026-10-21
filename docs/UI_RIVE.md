@@ -376,6 +376,52 @@ La collca vacía de la derrota, 120 × 120: silo de adobe con techo de paja y la
 |---|---|---|---|
 | `reduceMotion` | boolean | `RiveBindingState` | El polvo quieto |
 
+### `Valley` (Fase 6)
+
+El paisaje del valle, 960 × 432, en capas: cielo degradado, cuatro nubes, cordillera con nieve, colinas con árboles, lago con isla de totora y un bote, andenes de piedra con la `Collca` llena encima, la chacra (campo, matas de maíz y dos casitas de techo rojo), el camino y delante hojas grandes, quínoa, piedras y dos mazorcas. Fondo del título (y del mapa en la parte B). Widget: `RiveValley` (`lib/app/rive/rive_valley.dart`), cubre a su padre (`Fit.cover`).
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `collca` | view model `Collca` | — (instancia `Full`, con `full` = true) | La collca de los andenes; `RiveValley` le pone `reduceMotion` |
+| `reduceMotion` | boolean | `RiveBindingState` | Todo quieto |
+
+State machine `Main`: `Layer 1` (`Drift`: las nubes cruzan en 60 s y vuelven a entrar por la izquierda, la cordillera va y viene 6 px y el primer plano 10 px al revés, como parallax / `Still`) y `Glint` (destellos del lago cada 3 s / `Steady`).
+
+### `Logo` (Fase 6)
+
+El logo del título, 520 × 250: cartel de madera con rombo turquesa arriba, hojas y mazorcas a los lados, tres líneas del nombre (crema, la última dorada) y la cinta del lema. Widget: `RiveLogo` (`lib/app/rive/rive_logo.dart`); TalkBack lee el nombre y el lema.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `line1`, `line2`, `line3` | string | `RiveLogo` (`logoLine1/2/3` de los ARB) | "GUARDIANES" / "DE LA" / "CHACRA" |
+| `tagline` | string | `RiveLogo` (`tagline`) | El lema de la cinta |
+| `reduceMotion` | boolean | `RiveBindingState` | Aparece armado y sin vaivén |
+
+State machine `Main`: `Layer 1` (`Drop`: el cartel cae, las líneas bajan escalonadas con rebote y la cinta hace "pop", 0,93 s; o `Shown` con menos movimiento) y `Ambient` (`Sway`: hojas ±5° y mazorcas en bucle de 4 s / `Calm`). Las letras caen por línea: el MCP no crea modificadores de texto (letra por letra).
+
+### `Hondero` (Fase 6)
+
+El hondero de cuerpo entero, 200 × 300: la cabeza del retrato (chullo, orejeras, cara) agrandada 1,5×, poncho rojo con franjas turquesa y dorada, un brazo alzado con la honda y sandalias. Widget: `RiveHondero` (`lib/app/rive/rive_mascots.dart`), decoración.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `reduceMotion` | boolean | `RiveBindingState` | Quieto y con la honda en reposo |
+
+State machine `Main`: `Layer 1` (`Idle`: la cabeza respira y se ladea 2,5°, parpadea cada 3 s / `Still`) y `Sling` (`Spin`: la honda da una vuelta cada 0,8 s / `Hold`).
+
+### `GorgojoPeek` (Fase 6)
+
+Un gorgojo gruñón que se asoma entre tres hojas, 140 × 110: cada 8 s sube, mira a un lado y al otro y se esconde. Widget: `RiveGorgojoPeek` (`lib/app/rive/rive_mascots.dart`, `mirrored` para el de la derecha), decoración.
+
+| Propiedad | Tipo | La escribe | Qué hace |
+|---|---|---|---|
+| `reduceMotion` | boolean | `RiveBindingState` | No se asoma |
+
+### Cambios de la Fase 6 en piezas anteriores
+
+- `Llama`: propiedad `chewing` (boolean; `RiveLlama(chewing:)`) y capa `Chew` (tres mordiscos y una pausa, bucle de 2 s; no con menos movimiento). La masca en el título.
+- `Collca`: propiedad `full` (boolean) y capa `Fill`: con papas en la puerta y sin polvo. La de la derrota sigue vacía.
+
 ## El kit en Flutter (Fase 3)
 
 - `RiveBinding` (`lib/app/rive/rive_binding.dart`) crea el controlador de un artboard con la state machine `Main` y ata su view model por defecto (`DataBind.auto()`: cada widget tiene su propia instancia, también la del ícono anidado). Pide las propiedades por nombre y lanza `RiveContractException` si falta alguna.
@@ -405,6 +451,10 @@ La collca vacía de la derrota, 120 × 120: silo de adobe con techo de paja y la
 - Datos: `BattleScreen` pasa las estrellas, `Simulation.potatoes` y `startingPotatoes`, `BattleStats.cornHarvested`, `Unlocked` (niveles con su nombre y color, guardianes con su id para el retrato) y `AdsStatus`.
 - Claves: `pause-resume`, `victory-next`, `battle-retry`, `battle-exit`, `battle-revive` y `victory-unlocked` (la fila de tarjetas).
 - `test/app/rive/rive_scenes_test.dart` dibuja las tres en un teléfono apaisado con el archivo real y las letras del juego (sin ellas los botones miden de más) y falla si algo cae a su respaldo; con `--dart-define=SCENES_PNG=build/scene` guarda `build/scene_pausa.png`, etc. `test/features/battle/presentation/overlays/battle_overlays_test.dart` prueba la coreografía con y sin Rive.
+
+## El título en Flutter (Fase 6, parte A)
+
+`lib/features/menu/presentation/title_screen.dart`: `RiveValley` de fondo; el hondero a la izquierda y la llama masticando a la derecha (alto = mín(68 % del alto, 30 % del ancho), para que en 4:3 no toquen el logo); dos gorgojos asomándose junto a sus pies; y al centro el logo (ancho = mín(42 % del ancho, 1,1 × el alto)), Jugar del ancho de Bestiario y Ajustes juntos, que "respira" (un 4 % cada 1,4 s), y los otros dos debajo. Todo el centro va en un `FittedBox(scaleDown)`. Sin el archivo de Rive, el título de siempre (nombre y lema en Flutter) sobre un degradado de cielo y chacra, sin mascotas ni respiración, así los tests pueden esperar a que se asiente. Claves: `menu-play`, `menu-bestiary`, `menu-settings`.
 
 ## Paleta
 
@@ -503,3 +553,15 @@ La única animación que no para es la de las flechitas del botón de velocidad 
 | Derrota tras la prueba de estrés (llama, polvo y 150 plagas detrás) | 107 | 11 % (p95 16,8 ms) |
 
 La derrota se midió con las 150 plagas del estrés todavía dibujadas detrás del velo; la victoria, con la misma llama y sin plagas, da 116, así que la diferencia es de Flame y no de las escenas. La coreografía de la victoria dura unos 3 s y la lluvia se detiene sola (sus máquinas se asientan).
+
+## Mediciones de la Fase 6 (parte A)
+
+20 de octubre de 2026, el mismo Redmi y SurfaceFlinger (cinco muestras), APK de profile, el título ya armado (más de 15 s después de abrir el juego), con todo animándose: nubes y parallax del valle, hojas del logo, honda, llama masticando, gorgojos y Jugar respirando.
+
+| Medición | Resultado |
+|---|---|
+| Cuadros presentados | **90 FPS** (30 % > 16,7 ms; p50 8,4 ms, p95 16,9 ms, máx. 25–34 ms) |
+| Overlay de rendimiento de Flutter | raster 10,7 ms por cuadro de media (máx. 13,6); UI 5,4 ms (máx. 8,8) |
+| APK de debug, justo al abrir | 53 FPS (en debug el Dart es mucho más lento; sirve solo para comparar) |
+
+El límite es el hilo de raster: el valle cubre toda la pantalla y se mueve sin parar, e Impeller vuelve a rasterizar la escena entera en cada cuadro (no tiene la caché de raster de Skia). Pasa los 8,3 ms de un cuadro a 120 Hz, pero ninguno llega a 16,7 ms de media, así que en una pantalla de 60 Hz el título no perdería cuadros. Envolver cada widget de Rive en un `RepaintBoundary` (el render box de Rive no lo es) no cambió nada (89–90 FPS con y sin), porque solo ahorra trabajo del hilo de UI: no lo dejamos. Si el mapa del valle (parte B) necesitara más margen, la salida sería dibujar las capas quietas del paisaje una vez a imagen y mover solo las nubes.

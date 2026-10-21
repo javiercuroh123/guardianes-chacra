@@ -13,6 +13,8 @@ import 'package:guardianes_chacra/app/rive/rive_counter.dart';
 import 'package:guardianes_chacra/app/rive/rive_guardian_info.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_llama.dart';
+import 'package:guardianes_chacra/app/rive/rive_logo.dart';
+import 'package:guardianes_chacra/app/rive/rive_mascots.dart';
 import 'package:guardianes_chacra/app/rive/rive_next_wave.dart';
 import 'package:guardianes_chacra/app/rive/rive_panel.dart';
 import 'package:guardianes_chacra/app/rive/rive_portrait.dart';
@@ -27,6 +29,7 @@ import 'package:guardianes_chacra/app/rive/rive_toggle.dart';
 import 'package:guardianes_chacra/app/rive/rive_tooltip.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/app/rive/rive_unlock_card.dart';
+import 'package:guardianes_chacra/app/rive/rive_valley.dart';
 import 'package:guardianes_chacra/app/rive/rive_wave_bar.dart';
 import 'package:rive/rive.dart' as rive;
 
@@ -369,6 +372,7 @@ void main() {
       properties: {
         LlamaRive.mood: rive.DataType.enumType,
         LlamaRive.celebrate: rive.DataType.trigger,
+        LlamaRive.chewing: rive.DataType.boolean,
         ...reduceMotion,
       },
     );
@@ -417,13 +421,44 @@ void main() {
     );
   });
 
-  test('Collca: solo menos movimiento', () {
+  test('Collca: llena o vacía', () {
     expectArtboard(
       CollcaRive.artboard,
       viewModel: CollcaRive.viewModel,
-      properties: reduceMotion,
+      properties: {CollcaRive.full: rive.DataType.boolean, ...reduceMotion},
     );
   });
+
+  test('Valley: el paisaje, con su collca anidada', () {
+    expectArtboard(
+      ValleyRive.artboard,
+      viewModel: ValleyRive.viewModel,
+      properties: {ValleyRive.collca: rive.DataType.viewModel, ...reduceMotion},
+    );
+  });
+
+  test('Logo: tres líneas del nombre y el lema', () {
+    expectArtboard(
+      LogoRive.artboard,
+      viewModel: LogoRive.viewModel,
+      properties: {
+        LogoRive.line1: rive.DataType.string,
+        LogoRive.line2: rive.DataType.string,
+        LogoRive.line3: rive.DataType.string,
+        LogoRive.tagline: rive.DataType.string,
+        ...reduceMotion,
+      },
+    );
+  });
+
+  for (final (artboard, viewModel) in [
+    (MascotsRive.hondero, 'Hondero'),
+    (MascotsRive.gorgojoPeek, 'GorgojoPeek'),
+  ]) {
+    test('$artboard: solo menos movimiento', () {
+      expectArtboard(artboard, viewModel: viewModel, properties: reduceMotion);
+    });
+  }
 
   // Sin datos propios: solo tienen que existir con su state machine. El
   // Catalog muestra todos los componentes en todos sus estados (sus datos

@@ -6,6 +6,10 @@ import 'package:guardianes_chacra/app/rive/rive_binding.dart';
 abstract final class CollcaRive {
   static const artboard = 'Collca';
   static const viewModel = 'Collca';
+
+  /// Con papas en la puerta y sin polvo (la del valle). La de la derrota,
+  /// vacía.
+  static const full = 'full';
 }
 
 /// La collca vacía de la derrota: el silo de adobe con la puerta abierta y

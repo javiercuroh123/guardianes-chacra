@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
+import 'package:guardianes_chacra/features/menu/presentation/title_screen.dart';
 import 'package:rive/rive.dart' as rive;
 
 import '../../helpers/test_app.dart';
@@ -41,6 +42,8 @@ void main() {
   tearDownAll(() => file.dispose());
 
   final scenes = <String, (Widget, Duration)>{
+    // El logo termina de armarse al segundo.
+    'titulo': (const TitleScreen(), const Duration(milliseconds: 1500)),
     'pausa': (
       PauseOverlay(onResume: () {}, onRetry: () {}, onExit: () {}),
       const Duration(seconds: 1),

@@ -13,6 +13,9 @@ abstract final class LlamaRive {
 
   /// Un saltito de festejo.
   static const celebrate = 'celebrate';
+
+  /// Mastica de a ratos (en el título).
+  static const chewing = 'chewing';
 }
 
 enum LlamaMood {
@@ -30,6 +33,7 @@ class RiveLlama extends ConsumerStatefulWidget {
   const new({
     required this.mood,
     this.celebrations = 0,
+    this.chewing = false,
     this.height = 150,
     super.key,
   });
@@ -38,6 +42,9 @@ class RiveLlama extends ConsumerStatefulWidget {
 
   /// Cada vez que sube, la llama salta (con 0 no salta).
   final int celebrations;
+
+  /// Mastica de a ratos (tres mordiscos y una pausa).
+  final bool chewing;
 
   /// Alto a escala de letra 1 (el artboard mide 240 × 270).
   final double height;
@@ -57,6 +64,7 @@ class _RiveLlamaState extends ConsumerState<RiveLlama>
   void bind(RiveBinding binding) {
     binding.trigger(LlamaRive.celebrate);
     binding.enumerator(LlamaRive.mood).value = widget.mood.name;
+    binding.boolean(LlamaRive.chewing).value = widget.chewing;
     if (widget.celebrations > 0) {
       binding.trigger(LlamaRive.celebrate).trigger();
     }
@@ -68,6 +76,7 @@ class _RiveLlamaState extends ConsumerState<RiveLlama>
     final binding = this.binding;
     if (binding == null) return;
     binding.viewModel.enumerator(LlamaRive.mood)?.value = widget.mood.name;
+    binding.viewModel.boolean(LlamaRive.chewing)?.value = widget.chewing;
     if (widget.celebrations > oldWidget.celebrations) {
       binding.viewModel.trigger(LlamaRive.celebrate)?.trigger();
     }

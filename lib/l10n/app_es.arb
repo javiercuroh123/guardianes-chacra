@@ -8,6 +8,18 @@
   "@tagline": {
     "description": "Lema que aparece bajo el título del juego."
   },
+  "logoLine1": "GUARDIANES",
+  "@logoLine1": {
+    "description": "Primera línea del nombre en el cartel del título, en mayúsculas."
+  },
+  "logoLine2": "DE LA",
+  "@logoLine2": {
+    "description": "Segunda línea (corta) del nombre en el cartel del título."
+  },
+  "logoLine3": "CHACRA",
+  "@logoLine3": {
+    "description": "Tercera línea del nombre en el cartel del título, en mayúsculas."
+  },
   "titlePlay": "Jugar",
   "@titlePlay": {
     "description": "Botón de la pantalla de título que abre el primer nivel (provisional hasta la selección de nivel)."

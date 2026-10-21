@@ -23,6 +23,7 @@ flutter run --release
 
 ## Menús
 
+- [ ] Título: de fondo el valle (cordillera, lago, andenes con la collca llena, chacra) con nubes que cruzan; el logo cae y sus tres líneas bajan una tras otra, la cinta del lema hace "pop" y las hojas se mecen; Jugar (ancho, de maíz) respira; el hondero hace girar la honda y parpadea, la llama mastica de a ratos y cada tanto un gorgojo se asoma entre las hojas. Con "Quitar animaciones", todo quieto.
 - [ ] Título: Jugar, Bestiario y Ajustes abren su pantalla; atrás vuelve al título.
 - [ ] Valle (nueva partida): solo Chacra del Valle está abierto; tocar un nivel cerrado dice qué falta para abrirlo.
 - [ ] Vista previa: muestra oleadas, plagas en orden de llegada y guardianes disponibles.
