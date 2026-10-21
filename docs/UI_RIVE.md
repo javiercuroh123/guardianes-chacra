@@ -495,6 +495,16 @@ State machine `Main`, capa `Face`: `FaceUp` y `FaceDown` (según `faceDown`, tam
 |---|---|---|
 | `entries` | lista (de `BestiaryEntry`) | Las fichas, en orden |
 
+### `Curtain` (Fase 8)
+
+La cortina entre pantallas, 853 × 384 (el Redmi en dp) y dibujada cubriendo la pantalla: dos paños de aguayo (franjas ciruela, terracota, maíz, turquesa y crema, zigzag, rombos y triángulos, pliegues sombreados y un borde dorado y marrón) que entran desde los costados y se juntan en el medio, donde aparece un rombo como el del logo. El paño derecho es el izquierdo espejado (escala X −100).
+
+| Propiedad | Tipo | Qué hace |
+|---|---|---|
+| `cover` | number | Cuánto tapa, de 0 (abierta: los paños fuera de la pantalla) a 100 (cerrada); en el rebote pasa un poco de 100 |
+
+No tiene animaciones con tiempo: los paños y el rombo están atados a `cover` con convertidores de fórmula (`CurtainLeftX` = `{Input} * 4.7 - 470`, `CurtainRightX` = `1323 - {Input} * 4.7`, `CurtainMedallionScaleRaw` = `max(0, {Input} - 75) * 0.04`, `CurtainMedallionSpinRad` = `({Input} - 100) * 0.0628`: el rombo aparece desde 75 y llega a su tamaño girando un cuarto de vuelta). Ojo: un enlace de datos escribe el valor crudo de la propiedad, no el del inspector: la escala va en veces (1 = 100 %) y el giro en radianes. La state machine `Main` tiene solo `Rest`, vacía. El tiempo lo pone Flutter (ver más abajo): así la pantalla se cambia siempre con la cortina cerrada, aunque se pierda un cuadro al armar la pantalla nueva (con un trigger y una animación de Rive, los dos relojes podían desfasarse justo al entrar a la batalla). Widget: `RiveCurtain` (`lib/app/rive/rive_curtain.dart`).
+
 ### Cambios de la Fase 6 en piezas anteriores
 
 - `Llama`: propiedad `chewing` (boolean; `RiveLlama(chewing:)`) y capa `Chew` (tres mordiscos y una pausa, bucle de 2 s; no con menos movimiento). La masca en el título.
@@ -563,6 +573,19 @@ State machine `Main`, capa `Face`: `FaceUp` y `FaceDown` (según `faceDown`, tam
 - **Los textos largos van en Flutter** (la descripción, los nombres del detalle, las especializaciones): el texto de Rive tiene un tamaño fijo en el artboard (no sigue la letra grande del teléfono salvo escalando el artboard entero, que en un panel con texto que se parte en líneas y se desplaza no sirve) y TalkBack no lo lee. En Rive quedan los nombres cortos de las fichas (achican la letra si no entran), los retratos, los íconos y las pastillas.
 
 `lib/features/settings/presentation/settings_screen.dart`, sobre el valle y con la llama a la izquierda: Volver redondo (`settings-back`), el `TitleSign` y un `RivePanel` con dos columnas, "Sonido y respuesta" (Música, Efectos, Vibración) y "Pantalla e idioma" (Números de daño, Idioma con el `RiveSegmented`: Sistema / Español / English). Cada fila lleva un azulejo con su ícono (`RiveIconView`, `lib/app/rive/rive_icon_view.dart`) y un `RiveToggle` (`settings-music`, `settings-effects`, `settings-vibration`, `settings-damage-numbers`). "Opciones de privacidad" (`settings-privacy`) aparece abajo solo si la ley lo pide; "Desarrollo: todo desbloqueado" (`settings-dev-unlock`), solo en debug. "El del teléfono" pasó a llamarse "Sistema" ("System"), como la referencia: entra en el selector.
+
+## La cortina entre pantallas en Flutter (Fase 8)
+
+`CurtainRoute` (`lib/app/curtain_route.dart`) reemplaza a `MaterialPageRoute` en todas las pantallas del juego: título → valle, bestiario y ajustes; valle → preparación; preparación → batalla; victoria → siguiente nivel; y al volver de cada una. Dura 400 ms al ir y al volver:
+
+- `RiveCurtain.coverAt(t)` da cuánto tapa la cortina según el avance de la ruta: se cierra hasta el 42 % (curva que frena con un rebote de 3 %), queda cerrada del 42 al 58 % y se abre hasta el final (acelerando). Al volver la ruta corre de 1 a 0 y la cortina hace lo mismo al revés.
+- La pantalla que llega se arma recién con la cortina cerrada (al 42 %) y se ve de la mitad en adelante (`Opacity` 0 o 1): el cambio cae siempre con la cortina cerrada y el cuadro que tarda en armarse la pantalla (en el Redmi, 150–200 ms el bestiario) queda tapado. Ojo: en el primer cuadro de una `PageRoute`, el `HeroController` la arma fuera de la pantalla con la animación terminada para medir los Hero; la transición no la arma en ese cuadro (`ModalRoute.offstage`), y el juego no usa Hero.
+- El reloj de la ruta es un `SteadyClock`: avanza lo que pasó entre cuadros pero como mucho 34 ms, así un cuadro lento retrasa la cortina en vez de saltarse el cierre o la apertura. Solo en profile y release (`CurtainRoute.steadyClock`); en debug y en los tests, que adelantan el tiempo de a saltos con `pump`, el reloj normal.
+- Mientras la pantalla que llega está tapada (al ir) o la cortina tapa la que se va (al volver), un `AbsorbPointer` no deja tocar nada: unos 200 ms en cada sentido (más lo que tarde en armarse la pantalla nueva).
+- La cortina existe solo mientras la ruta se anima; cuando termina, se libera.
+- Con "menos movimiento", la ruta dura 150 ms y es un fundido, sin cortina. Sin el archivo de Rive, la cortina es un fundido al ciruela del tejido (`RiveCurtain.color`) con el mismo tiempo.
+- `buildPage` envuelve la pantalla en `Semantics(scopesRoute: true)`, como `MaterialPageRoute`, para que TalkBack anuncie el cambio.
+- El panel de desarrollo (🐞, solo debug) sigue con `MaterialPageRoute`.
 
 ## Paleta
 
@@ -681,6 +704,17 @@ El límite es el hilo de raster: el valle cubre toda la pantalla y se mueve sin 
 ## Mediciones de la Fase 6 (parte C)
 
 21 de octubre de 2026, el mismo Redmi, APK de profile y SurfaceFlinger, la preparación de Andenes con las siete tarjetas ya entradas (el valle de fondo sigue animándose y el brillo del jefe late): **77 FPS** (50 % de cuadros > 16,7 ms; p50 16,7 ms, p95 16,9 ms, máx. 25 ms). Más que en el valle porque hay más Rive en pantalla (siete tarjetas con su retrato anidado y una segunda copia del valle en la escena del nivel), pero ningún cuadro tarda más de 25 ms y el 95 % no pasa de 16,9 ms (60 FPS). Si hiciera falta margen: las tarjetas ya asentadas no repintan; lo caro sigue siendo el valle de fondo.
+
+## Mediciones de la Fase 8 (parte A)
+
+21 de octubre de 2026, el mismo Redmi, APK de profile, grabando la pantalla (`adb shell screenrecord`) y separando los cuadros con ffmpeg a 60 por segundo:
+
+| Cambio | Cierre | Cerrada | Apertura | Total |
+|---|---|---|---|---|
+| Título → bestiario | ~130 ms | ~180 ms (se arma el bestiario detrás) | ~160 ms | ~470 ms |
+| Bestiario → título | ~170 ms | ~80 ms | ~120 ms | ~370 ms |
+
+La animación dura 400 ms; lo que pasa de eso al ir es el tiempo que tarda en armarse la pantalla nueva, con la cortina cerrada. Antes de armarla con la cortina cerrada y del `SteadyClock`, el primer cuadro tardaba tanto que la cortina aparecía ya cerrada (el cierre no se veía).
 
 ## Mediciones de la Fase 7
 

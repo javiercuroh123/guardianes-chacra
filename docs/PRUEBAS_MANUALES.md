@@ -25,6 +25,7 @@ flutter run --release
 
 - [ ] Título: de fondo el valle (cordillera, lago, andenes con la collca llena, chacra) con nubes que cruzan; el logo cae y sus tres líneas bajan una tras otra, la cinta del lema hace "pop" y las hojas se mecen; Jugar (ancho, de maíz) respira; el hondero hace girar la honda y parpadea, la llama mastica de a ratos y cada tanto un gorgojo se asoma entre las hojas. Con "Quitar animaciones", todo quieto.
 - [ ] Título: Jugar, Bestiario y Ajustes abren su pantalla; atrás vuelve al título.
+- [ ] Cambio de pantalla (en todas, al ir y al volver): dos paños de tejido andino entran desde los costados, se juntan con un rombo en el medio y se abren; detrás ya está la otra pantalla. Dura alrededor de medio segundo (si la pantalla nueva tarda en armarse, la cortina espera cerrada) y la pantalla nueva nunca se ve a medio cambiar; el cierre siempre se ve. Al entrar a la batalla, igual.
 - [ ] Valle (nueva partida): de fondo, el valle del título; solo Chacra del Valle está abierto (verde, flota y lleva el anillo dorado de sugerido); los otros, grises y con candado. Tocar uno cerrado lo sacude y muestra encima un globo con lo que falta, que se va solo a los 3 s o al tocar el mapa.
 - [ ] Valle: arriba, Volver (vuelve al título), el cartel "El valle" y las estrellas "N/9"; abajo, la ilustración, el nombre y las estrellas del nivel sugerido y Jugar, que abre su vista previa (igual que tocar el nodo).
 - [ ] Valle: al ganar un nivel que abre otro, al volver al valle el camino de piedritas se dibuja hasta el nuevo, su candado salta y suena la estrella; el anillo pasa al nivel sugerido. Con "Quitar animaciones", el camino ya está y nada flota.
@@ -85,7 +86,7 @@ flutter run --release
 ## Accesibilidad
 
 - [ ] **Letra grande**: Ajustes de Android → Pantalla → Tamaño de fuente al máximo. Los menús crecen hasta el doble sin cortarse; el HUD y los menús de la partida crecen un poco (hasta 1,3) y no tapan el mapa.
-- [ ] **Quitar animaciones**: Ajustes de Android → Accesibilidad → Quitar animaciones. Al aparecer el jefe ya no se sacude la cámara.
+- [ ] **Quitar animaciones**: Ajustes de Android → Accesibilidad → Quitar animaciones. Al aparecer el jefe ya no se sacude la cámara. Las pantallas cambian con un fundido corto, sin la cortina.
 - [ ] **TalkBack**: el HUD se lee completo ("Maíz: 220", "Papas en la collca: 20"…) y los botones del menú dicen qué hacen y cuánto cuestan.
 - [ ] **Escala de grises** (Opciones de desarrollador → Simular espacio de color → Monocromía): los efectos de estado se distinguen igual por su forma.
 - [ ] Todos los botones se tocan cómodos con el pulgar.

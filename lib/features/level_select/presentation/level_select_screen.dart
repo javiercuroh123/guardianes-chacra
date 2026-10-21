@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/curtain_route.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
@@ -166,9 +167,7 @@ class _ValleyState extends ConsumerState<_Valley>
       _bubbleVisible = false;
     });
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LevelPreviewScreen(levelId: levelId),
-      ),
+      CurtainRoute<void>(builder: (_) => LevelPreviewScreen(levelId: levelId)),
     );
   }
 

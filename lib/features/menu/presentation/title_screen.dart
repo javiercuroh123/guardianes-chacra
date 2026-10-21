@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/curtain_route.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_llama.dart';
@@ -29,8 +30,7 @@ class TitleScreen extends ConsumerWidget {
     final withRive = ref.watch(riveFileProvider) != null;
 
     void open(Widget screen) =>
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => screen));
+        Navigator.of(context).push(CurtainRoute<void>(builder: (_) => screen));
 
     return Scaffold(
       backgroundColor: AppTheme.chacra,

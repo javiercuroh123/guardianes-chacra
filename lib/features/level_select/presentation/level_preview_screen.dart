@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/app_theme.dart';
+import 'package:guardianes_chacra/app/curtain_route.dart';
 import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_level_scene.dart';
@@ -321,7 +322,7 @@ class _PreviewState extends ConsumerState<_Preview>
 
   void _start(BuildContext context, {int extraCorn = 0}) =>
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
+        CurtainRoute<void>(
           builder: (_) => BattleScreen(
             levelId: widget.level.id,
             assets: widget.assets,

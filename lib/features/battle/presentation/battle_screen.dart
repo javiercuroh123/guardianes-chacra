@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:guardianes_chacra/app/ads.dart';
 import 'package:guardianes_chacra/app/analytics.dart';
 import 'package:guardianes_chacra/app/audio.dart';
+import 'package:guardianes_chacra/app/curtain_route.dart';
 import 'package:guardianes_chacra/app/haptics.dart';
 import 'package:guardianes_chacra/core/math/vec2.dart';
 import 'package:guardianes_chacra/core/services/ads_service.dart';
@@ -306,7 +307,7 @@ class _BattleScreenState extends ConsumerState<BattleScreen> {
           : () => _leaveResult(
               session,
               () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute<void>(
+                CurtainRoute<void>(
                   builder: (_) => LevelPreviewScreen(levelId: next.id),
                 ),
               ),

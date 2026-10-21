@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardianes_chacra/app/ads.dart';
+import 'package:guardianes_chacra/app/rive/rive_curtain.dart';
 import 'package:guardianes_chacra/app/rive/rive_ui.dart';
 import 'package:guardianes_chacra/core/services/ads_service.dart';
 import 'package:guardianes_chacra/features/battle/presentation/overlays/battle_overlays.dart';
@@ -57,6 +58,15 @@ void main() {
   final scenes = <String, (Widget, Duration)>{
     // El logo termina de armarse al segundo.
     'titulo': (const TitleScreen(), const Duration(milliseconds: 1500)),
+    // La cortina entre pantallas, cerrándose y cerrada (Fase 8).
+    'cortina_cerrandose': (
+      const RiveCurtain(progress: AlwaysStoppedAnimation(0.15)),
+      const Duration(milliseconds: 100),
+    ),
+    'cortina_cerrada': (
+      const RiveCurtain(progress: AlwaysStoppedAnimation(0.5)),
+      const Duration(milliseconds: 100),
+    ),
     'pausa': (
       PauseOverlay(onResume: () {}, onRetry: () {}, onExit: () {}),
       const Duration(seconds: 1),

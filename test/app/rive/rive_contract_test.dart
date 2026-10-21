@@ -11,6 +11,7 @@ import 'package:guardianes_chacra/app/rive/rive_button.dart';
 import 'package:guardianes_chacra/app/rive/rive_collca.dart';
 import 'package:guardianes_chacra/app/rive/rive_corn_rain.dart';
 import 'package:guardianes_chacra/app/rive/rive_counter.dart';
+import 'package:guardianes_chacra/app/rive/rive_curtain.dart';
 import 'package:guardianes_chacra/app/rive/rive_guardian_info.dart';
 import 'package:guardianes_chacra/app/rive/rive_icons.dart';
 import 'package:guardianes_chacra/app/rive/rive_level_node.dart';
@@ -530,6 +531,14 @@ void main() {
         BestiaryGridRive.reveal: rive.DataType.trigger,
         ...reduceMotion,
       },
+    );
+  });
+
+  test('Curtain: cuánto tapa la cortina', () {
+    expectArtboard(
+      CurtainRive.artboard,
+      viewModel: CurtainRive.viewModel,
+      properties: {CurtainRive.cover: rive.DataType.number},
     );
   });
 
