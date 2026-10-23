@@ -1,0 +1,96 @@
+{
+  "images": [
+    {
+      "file": "propuestas/01_inicio.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2706391
+    },
+    {
+      "file": "propuestas/02_mapa_del_valle.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 3001457
+    },
+    {
+      "file": "propuestas/03_preparacion.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2692094
+    },
+    {
+      "file": "propuestas/04_batalla_valle.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 3130666
+    },
+    {
+      "file": "propuestas/05_construccion.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 3028369
+    },
+    {
+      "file": "propuestas/06_mejoras.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2852303
+    },
+    {
+      "file": "propuestas/07_especializacion.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2557584
+    },
+    {
+      "file": "propuestas/08_batalla_andenes.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 3354279
+    },
+    {
+      "file": "propuestas/09_batalla_lago.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 3153460
+    },
+    {
+      "file": "propuestas/10_pausa.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2370381
+    },
+    {
+      "file": "propuestas/11_victoria.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2343505
+    },
+    {
+      "file": "propuestas/12_derrota.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2429670
+    },
+    {
+      "file": "propuestas/13_bestiario_plagas.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2193734
+    },
+    {
+      "file": "propuestas/14_bestiario_guardianes.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2199880
+    },
+    {
+      "file": "propuestas/15_ajustes.png",
+      "width": 1870,
+      "height": 841,
+      "bytes": 2223288
+    }
+  ],
+  "capturas_android": 13,
+  "code_changed": false
+}
